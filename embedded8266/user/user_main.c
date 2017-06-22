@@ -52,7 +52,7 @@ void ICACHE_FLASH_ATTR user_rf_pre_init()
 extern uint8_t gCOLORCHORD_OUTPUT_DRIVER;
 
 //Call this once we've stacked together one full colorchord frame.
-static void NewFrame()
+static void ICACHE_FLASH_ATTR NewFrame()
 {
 	if( !gCOLORCHORD_ACTIVE ) return;
         gFRAMECOUNT_MOD_SHIFT_INTERVAL++;
@@ -93,9 +93,7 @@ static void ICACHE_FLASH_ATTR HandleIPStuff()
 		char stret[256];
 		char *stt = &stret[0];
 		struct ip_info ipi;
-
 		int stat = wifi_station_get_connect_status();
-
 		//printf( "STAT: %d %d\n", stat, wifi_get_opmode() );
 
 		if( stat == STATION_WRONG_PASSWORD || stat == STATION_NO_AP_FOUND || stat == STATION_CONNECT_FAIL )
@@ -104,7 +102,7 @@ static void ICACHE_FLASH_ATTR HandleIPStuff()
 			stt += ets_sprintf( stt, "Connection failed: %d\n", stat );
 			uart0_sendStr(stret);
 		}
-
+	
 		if( stat == STATION_GOT_IP && !printed_ip )
 		{
 			wifi_station_get_config( &wcfg );
@@ -119,7 +117,7 @@ static void ICACHE_FLASH_ATTR HandleIPStuff()
 		}
 }
 
-static void procTask(os_event_t *events)
+static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 {
 	system_os_post(procTaskPrio, 0, 0 );
 
@@ -196,6 +194,18 @@ void ICACHE_FLASH_ATTR charrx( uint8_t c )
 void ICACHE_FLASH_ATTR user_init(void)
 {
 	uart_init(BIT_RATE_115200, BIT_RATE_115200);
+
+struct rst_info *rtc_info = system_get_rst_info();
+printf("reset reason: %x\n", rtc_info->reason);
+if (rtc_info->reason==REASON_WDT_RST|| rtc_info->reason==REASON_EXCEPTION_RST||rtc_info->reason==REASON_SOFT_WDT_RST) {
+    if (rtc_info->reason== REASON_EXCEPTION_RST) {
+        printf("Fatal exception (%d):\n", rtc_info->exccause);
+    }
+    printf("epc1=0x%08x, epc2=0x%08x, epc3=0x%08x, excvaddr=0x%08x, depc=0x%08x\n", rtc_info->epc1, rtc_info->epc2, rtc_info->epc3, rtc_info->excvaddr, rtc_info->depc);
+}
+
+
+
 	int wifiMode = wifi_get_opmode();
 
 	uart0_sendStr("\r\nColorChord\r\n");
