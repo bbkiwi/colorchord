@@ -54,7 +54,7 @@ uint16 hs_adc_read(void)
 	uint32_t sar_dout = 0;
 
     while (GET_PERI_REG_BITS(0x60000D50, 26, 24) > 0); //wait r_state == 0
-    read_sar_dout(&sardata);
+    read_sar_dout(sardata);
 
     for (i = 0; i < 8; i++) {
         sar_dout += sardata[i];
