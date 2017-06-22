@@ -46,11 +46,11 @@ void ICACHE_FLASH_ATTR hs_adc_start(void)
     SET_PERI_REG_MASK(0x60000D50, 0x02);    //force_en=1
 }
 
-uint16 sardata[16];
 
 uint16 hs_adc_read(void)
 {
-    uint8 i;
+   uint16 sardata[8];
+   uint8 i;
 	uint32_t sar_dout = 0;
 
     while (GET_PERI_REG_BITS(0x60000D50, 26, 24) > 0); //wait r_state == 0
