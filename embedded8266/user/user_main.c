@@ -52,7 +52,7 @@ void ICACHE_FLASH_ATTR user_rf_pre_init()
 extern uint8_t gCOLORCHORD_OUTPUT_DRIVER;
 
 //Call this once we've stacked together one full colorchord frame.
-static void NewFrame()
+static void ICACHE_FLASH_ATTR NewFrame()
 {
 	if( !gCOLORCHORD_ACTIVE ) return;
         gFRAMECOUNT_MOD_SHIFT_INTERVAL++;
@@ -119,7 +119,7 @@ static void ICACHE_FLASH_ATTR HandleIPStuff()
 		}
 }
 
-static void procTask(os_event_t *events)
+static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 {
 	system_os_post(procTaskPrio, 0, 0 );
 
