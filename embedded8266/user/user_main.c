@@ -42,7 +42,7 @@ extern volatile uint16_t soundhead;
 uint16_t soundtail;
 extern uint8_t gCOLORCHORD_ACTIVE;
 static uint8_t hpa_running = 0;
-
+static uint8_t hpa_is_paused_for_wifi;
 void ICACHE_FLASH_ATTR CustomStart( );
 
 void ICACHE_FLASH_ATTR user_rf_pre_init()
@@ -169,6 +169,12 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 static void ICACHE_FLASH_ATTR myTimer(void *arg)
 {
 	CSTick( 1 );
+
+	if( hpa_is_paused_for_wifi && printed_ip )
+	{
+		StartHPATimer(); //Init the high speed  ADC timer.
+		hpa_running = 1;
+	}
 //	uart0_sendStr(".");
 //	printf( "%d/%d\n",soundtail,soundhead );
 //	printf( "%d/%d\n",soundtail,soundhead );
@@ -246,8 +252,16 @@ void ICACHE_FLASH_ATTR user_init(void)
 
 	InitColorChord(); //Init colorchord
 
-	StartHPATimer(); //Init the high speed  ADC timer.
-	hpa_running = 1;
+	//Tricky: If we are in station mode, wait for that to get resolved before enabling the high speed timer.
+	if( wifi_get_opmode() == 1 )
+	{
+		hpa_is_paused_for_wifi = 1;
+	}
+	else
+	{
+		StartHPATimer(); //Init the high speed  ADC timer.
+		hpa_running = 1;
+	}
 
 	ws2812_init();
 
