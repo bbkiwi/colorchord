@@ -42,7 +42,7 @@ extern volatile uint16_t soundhead;
 uint16_t soundtail;
 extern uint8_t gCOLORCHORD_ACTIVE;
 static uint8_t hpa_running = 0;
-static uint8_t hpa_is_paused_for_wifi;
+static uint8_t hpa_is_paused_for_wifi = 0;
 void ICACHE_FLASH_ATTR CustomStart( );
 
 void ICACHE_FLASH_ATTR user_rf_pre_init()

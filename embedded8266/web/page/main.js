@@ -13,6 +13,7 @@ function mainticker()
 	KickLEDs();
 
 	QueueOperation( "CVR", ReceiveParameters );
+// lower time out of 100 may improve noise
 	setTimeout( mainticker, 1000 );
 }
 
@@ -124,12 +125,16 @@ function GotOScope(req,data)
 	{
 		var x2 = (i+1) * canvas.clientWidth / samps;
 		var samp = parseInt( data.substr(i*2+2,2),16 );
-		var y2 = ( 0.5 - mult* (samp / 255 - 0.33) ) * canvas.clientHeight;
+		//var y2 = ( 0.5 - mult* (samp / 255 - 0.5) ) * canvas.clientHeight;
+		var y2 = ( 1.0 - mult * samp / 255 ) * canvas.clientHeight;  
+                // after use make init3v3 and disconnect A0 to see if noice in power
+		// 3.3v gives 255, 0v gives 0
 		
 		if( i == 0 )
 		{
 			var x1 = i * canvas.clientWidth / samps;
-			var y1 =  ( 0.5 - mult* (lastsamp / 255 - 0.33) ) * canvas.clientHeight;
+			//var y1 =  ( 0.5 - mult* (lastsamp / 255 - 0.5) ) * canvas.clientHeight;
+			var y1 =  (1.0 - mult * lastsamp / 255 ) * canvas.clientHeight;
 			ctx.moveTo( x1, y1 );
 		}
 

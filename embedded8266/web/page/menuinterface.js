@@ -245,7 +245,8 @@ function onMessage(evt)
 		}
 	}
 
-	doSend('wx'); //Request RSSI.
+	//doSend('wx'); //Request RSSI. Makes noise espeicially in station mode
+	doSend('e'); //Needed to keep socket alive if commented out very flaky web gui
 }
 
 function onError(evt)
