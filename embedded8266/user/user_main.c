@@ -107,24 +107,24 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 #ifdef PROFILE
 	WRITE_PERI_REG( PERIPHS_GPIO_BASEADDR + GPIO_ID_PIN(0), 1 );
 #endif
-//Need to sample sound only when active, probable want to turn off leds when inactive
-if( gCOLORCHORD_ACTIVE && hpa_running )
-{
-	while( soundtail != soundhead )
+	//Need to sample sound only when active, probable want to turn off leds when inactive
+	if( gCOLORCHORD_ACTIVE && hpa_running )
 	{
-		int16_t samp = sounddata[soundtail];
-		samp_iir = samp_iir - (samp_iir>>10) + samp;
-		PushSample32( (samp - (samp_iir>>10))*16 );
-		soundtail = (soundtail+1)&(HPABUFFSIZE-1);
-
-		wf++;
-		if( wf == 128 )
+		while( soundtail != soundhead )
 		{
-			NewFrame();
-			wf = 0; 
+			int16_t samp = sounddata[soundtail];
+			samp_iir = samp_iir - (samp_iir>>10) + samp;
+			PushSample32( (samp - (samp_iir>>10))*16 );
+			soundtail = (soundtail+1)&(HPABUFFSIZE-1);
+
+			wf++;
+			if( wf == 128 )
+			{
+				NewFrame();
+				wf = 0; 
+			}
 		}
 	}
-}
 #ifdef PROFILE
 	WRITE_PERI_REG( PERIPHS_GPIO_BASEADDR + GPIO_ID_PIN(0), 0 );
 #endif
@@ -140,11 +140,12 @@ if( gCOLORCHORD_ACTIVE && hpa_running )
 static void ICACHE_FLASH_ATTR myTimer(void *arg)
 {
 	CSTick( 1 );
-	if( hpa_is_paused_for_wifi && (wifi_station_get_connect_status() == STATION_GOT_IP))
-//	if( hpa_is_paused_for_wifi && printed_ip )
+//	if( hpa_is_paused_for_wifi && (wifi_station_get_connect_status() == STATION_GOT_IP))
+	if( hpa_is_paused_for_wifi && printed_ip ) // which implies it is connected to the station
 	{
 		StartHPATimer(); //Init the high speed  ADC timer.
 		hpa_running = 1;
+		hpa_is_paused_for_wifi = 0; // only need to do once
 	}
 //	uart0_sendStr(".");
 //	printf( "%d/%d\n",soundtail,soundhead );
@@ -242,7 +243,7 @@ void ICACHE_FLASH_ATTR user_init(void)
 void EnterCritical()
 {
 	PauseHPATimer();
-	//hpa_running = 0;
+	//hpa_running = 0; // if put this here loops
 	//ets_intr_lock();
 }
 
