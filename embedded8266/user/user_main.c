@@ -93,20 +93,23 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 
 	if( gCOLORCHORD_ACTIVE && !hpa_running )
 	{
-		ExitCritical();
+		ExitCritical(); //continue hpatimer
 		hpa_running = 1;
 	}
 
 	if( !gCOLORCHORD_ACTIVE && hpa_running )
 	{
-		EnterCritical();
-		hpa_running = 0;
+		EnterCritical(); //pause hpatimer
+		hpa_running = 0; 
 	}
 	
 	//For profiling so we can see how much CPU is spent in this loop.
 #ifdef PROFILE
 	WRITE_PERI_REG( PERIPHS_GPIO_BASEADDR + GPIO_ID_PIN(0), 1 );
 #endif
+//Need to sample sound only when active, probable want to turn off leds when inactive
+if( gCOLORCHORD_ACTIVE && hpa_running )
+{
 	while( soundtail != soundhead )
 	{
 		int16_t samp = sounddata[soundtail];
@@ -121,6 +124,7 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 			wf = 0; 
 		}
 	}
+}
 #ifdef PROFILE
 	WRITE_PERI_REG( PERIPHS_GPIO_BASEADDR + GPIO_ID_PIN(0), 0 );
 #endif
@@ -136,8 +140,8 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 static void ICACHE_FLASH_ATTR myTimer(void *arg)
 {
 	CSTick( 1 );
-
-	if( hpa_is_paused_for_wifi && printed_ip )
+	if( hpa_is_paused_for_wifi && (wifi_station_get_connect_status() == STATION_GOT_IP))
+//	if( hpa_is_paused_for_wifi && printed_ip )
 	{
 		StartHPATimer(); //Init the high speed  ADC timer.
 		hpa_running = 1;
@@ -184,7 +188,7 @@ void ICACHE_FLASH_ATTR user_init(void)
 
 	CSPreInit();
 
-    pUdpServer = (struct espconn *)os_zalloc(sizeof(struct espconn));
+	pUdpServer = (struct espconn *)os_zalloc(sizeof(struct espconn));
 	ets_memset( pUdpServer, 0, sizeof( struct espconn ) );
 	espconn_create( pUdpServer );
 	pUdpServer->type = ESPCONN_UDP;
@@ -208,13 +212,13 @@ void ICACHE_FLASH_ATTR user_init(void)
 	os_timer_arm(&some_timer, 100, 1);
 
 	//Set GPIO16 for Input
-    WRITE_PERI_REG(PAD_XPD_DCDC_CONF,
+	WRITE_PERI_REG(PAD_XPD_DCDC_CONF,
                    (READ_PERI_REG(PAD_XPD_DCDC_CONF) & 0xffffffbc) | (uint32)0x1); 	// mux configuration for XPD_DCDC and rtc_gpio0 connection
 
-    WRITE_PERI_REG(RTC_GPIO_CONF,
+	WRITE_PERI_REG(RTC_GPIO_CONF,
                    (READ_PERI_REG(RTC_GPIO_CONF) & (uint32)0xfffffffe) | (uint32)0x0);	//mux configuration for out enable
 
-    WRITE_PERI_REG(RTC_GPIO_ENABLE,
+	WRITE_PERI_REG(RTC_GPIO_ENABLE,
                    READ_PERI_REG(RTC_GPIO_ENABLE) & (uint32)0xfffffffe);	//out disable
 
 	InitColorChord(); //Init colorchord
@@ -238,6 +242,7 @@ void ICACHE_FLASH_ATTR user_init(void)
 void EnterCritical()
 {
 	PauseHPATimer();
+	//hpa_running = 0;
 	//ets_intr_lock();
 }
 
@@ -245,6 +250,7 @@ void ExitCritical()
 {
 	//ets_intr_unlock();
 	ContinueHPATimer();
+	//hpa_running = 1;
 }
 
 
