@@ -15,6 +15,7 @@
 #include "ccconfig.h"
 #include <embeddednf.h>
 #include <embeddedout.h>
+#include <commonservices.h> 
 #include "ets_sys.h"
 #include "gpio.h"
 
@@ -80,44 +81,11 @@ static void ICACHE_FLASH_ATTR NewFrame()
 }
 
 os_event_t    procTaskQueue[procTaskQueueLen];
-static uint8_t printed_ip = 0;
 uint32_t samp_iir = 0;
 int wf = 0;
 
 //Tasks that happen all the time.
 
-static void ICACHE_FLASH_ATTR HandleIPStuff()
-{
-		//Idle Event.
-		struct station_config wcfg;
-		char stret[256];
-		char *stt = &stret[0];
-		struct ip_info ipi;
-
-		int stat = wifi_station_get_connect_status();
-
-		//printf( "STAT: %d %d\n", stat, wifi_get_opmode() );
-
-		if( stat == STATION_WRONG_PASSWORD || stat == STATION_NO_AP_FOUND || stat == STATION_CONNECT_FAIL )
-		{
-			wifi_set_opmode_current( 2 );
-			stt += ets_sprintf( stt, "Connection failed: %d\n", stat );
-			uart0_sendStr(stret);
-		}
-
-		if( stat == STATION_GOT_IP && !printed_ip )
-		{
-			wifi_station_get_config( &wcfg );
-			wifi_get_ip_info(0, &ipi);
-			stt += ets_sprintf( stt, "STAT: %d\n", stat );
-			stt += ets_sprintf( stt, "IP: %d.%d.%d.%d\n", (ipi.ip.addr>>0)&0xff,(ipi.ip.addr>>8)&0xff,(ipi.ip.addr>>16)&0xff,(ipi.ip.addr>>24)&0xff );
-			stt += ets_sprintf( stt, "NM: %d.%d.%d.%d\n", (ipi.netmask.addr>>0)&0xff,(ipi.netmask.addr>>8)&0xff,(ipi.netmask.addr>>16)&0xff,(ipi.netmask.addr>>24)&0xff );
-			stt += ets_sprintf( stt, "GW: %d.%d.%d.%d\n", (ipi.gw.addr>>0)&0xff,(ipi.gw.addr>>8)&0xff,(ipi.gw.addr>>16)&0xff,(ipi.gw.addr>>24)&0xff );
-			stt += ets_sprintf( stt, "WCFG: /%s/%s/\n", wcfg.ssid, wcfg.password );
-			uart0_sendStr(stret);
-			printed_ip = 1;
-		}
-}
 
 static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 {
@@ -160,7 +128,6 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 	if( events->sig == 0 && events->par == 0 )
 	{
 		CSTick( 0 );
-		HandleIPStuff();
 	}
 
 }
