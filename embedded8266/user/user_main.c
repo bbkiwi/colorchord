@@ -93,10 +93,12 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 {
 	system_os_post(procTaskPrio, 0, 0 );
 
-	if( gCOLORCHORD_ACTIVE && !hpa_running && hpa_can_continue)
-	{
+	if( gCOLORCHORD_ACTIVE && hpa_can_continue)
+	{	if ( !hpa_running)
+		{
 		ExitCritical(); //continue hpatimer
 		hpa_running = 1;
+		}
 		hpa_can_continue = 0;
 	}
 
@@ -111,7 +113,7 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 #ifdef PROFILE
 	WRITE_PERI_REG( PERIPHS_GPIO_BASEADDR + GPIO_ID_PIN(0), 1 );
 #endif
-	//Need to sample sound only when active, probable want to turn off leds when inactive
+	//Need to send sound sample for DFT only when active, probably want to turn off leds when inactive and stop oscope
 	if( gCOLORCHORD_ACTIVE && hpa_running )
 	{
 		while( soundtail != soundhead )

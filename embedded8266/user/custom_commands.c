@@ -127,14 +127,19 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 
 	case 'm': case 'M': //Oscilloscope
 	{
-		int i, it = soundhead;
-		buffend += ets_sprintf( buffend, "CM\t512\t" );
-		for( i = 0; i < 512; i++ )
+		if( gCOLORCHORD_ACTIVE && hpa_running )
 		{
-			uint8_t samp = sounddata[it++];
-			it = it & (HPABUFFSIZE-1);
-			*(buffend++) = tohex1( samp>>4 );
-			*(buffend++) = tohex1( samp&0x0f );
+			int i, it = soundhead;
+			buffend += ets_sprintf( buffend, "CM\t512\t" );
+			for( i = 0; i < 512; i++ )
+			{
+				uint8_t samp = sounddata[it++];
+				it = it & (HPABUFFSIZE-1);
+				*(buffend++) = tohex1( samp>>4 );
+				*(buffend++) = tohex1( samp&0x0f );
+			}
+		} else {
+			buffend += ets_sprintf( buffend, "CM\t1\t100" );
 		}
 		return buffend-buffer;
 	}
