@@ -46,6 +46,24 @@ void ICACHE_FLASH_ATTR hs_adc_start(void)
     SET_PERI_REG_MASK(0x60000D50, 0x02);    //force_en=1
 }
 
+/* Attempt to write own version
+extern volatile uint32 sar_[64]; // 0x60000D00
+//#define SAR_BASE		sar_		// 0x60000D00
+#define SAR_BASE	0x60000D00
+
+void read_sar_dout(uint16 * buf)
+{
+   volatile uint32 * sar_regs = &SAR_BASE[32]; // 8 regs 0x60000D80...
+   int i;
+   for(i = 0; i < 8; i++) {
+      int x = ~(*sar_regs++);
+      int z = (x & 0xFF) - 21;
+      x &= 0x700;
+      if(z > 0) x = ((z * 279) >> 8) + x;
+      buf[i] = x;
+   }
+}
+//*/
 uint16 hs_adc_read(void)
 {
     uint8 i;
@@ -56,9 +74,11 @@ uint16 hs_adc_read(void)
 
     read_sar_dout(sardata);
 
+    // This is a type of averaging
     for (i = 0; i < 8; i++) {
         sar_dout += sardata[i];
     }
+    //sar_dout = sardata[0] << 3; //slightly noisier 
 
 #ifdef OLDWAY_NEEDS_RESTART
     //tout = (sar_dout + 8) >> 4;   //tout is 10 bits fraction

@@ -42,8 +42,10 @@ extern volatile uint8_t sounddata[HPABUFFSIZE];
 extern volatile uint16_t soundhead;
 uint16_t soundtail;
 extern uint8_t gCOLORCHORD_ACTIVE;
-static uint8_t hpa_running = 0;
+//static uint8_t hpa_running = 0;
 static uint8_t hpa_is_paused_for_wifi = 0;
+extern uint8_t hpa_running;
+//extern uint8_t hpa_is_paused_for_wifi;
 void ICACHE_FLASH_ATTR CustomStart( );
 
 void ICACHE_FLASH_ATTR user_rf_pre_init()
@@ -91,16 +93,18 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 {
 	system_os_post(procTaskPrio, 0, 0 );
 
-	if( gCOLORCHORD_ACTIVE && !hpa_running )
+	if( gCOLORCHORD_ACTIVE && !hpa_running && hpa_can_continue)
 	{
 		ExitCritical(); //continue hpatimer
 		hpa_running = 1;
+		hpa_can_continue = 0;
 	}
 
 	if( !gCOLORCHORD_ACTIVE && hpa_running )
 	{
 		EnterCritical(); //pause hpatimer
 		hpa_running = 0; 
+		hpa_can_continue = 1;
 	}
 	
 	//For profiling so we can see how much CPU is spent in this loop.
@@ -116,7 +120,7 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 			samp_iir = samp_iir - (samp_iir>>10) + samp;
 			PushSample32( (samp - (samp_iir>>10))*16 );
 			soundtail = (soundtail+1)&(HPABUFFSIZE-1);
-
+			//printf("%d 0 255\n", samp); //can use usb monitor to plot not gui slows down
 			wf++;
 			if( wf == 128 )
 			{
@@ -149,13 +153,13 @@ static void ICACHE_FLASH_ATTR myTimer(void *arg)
 	}
 //	uart0_sendStr(".");
 //	printf( "%d/%d\n",soundtail,soundhead );
-//	printf( "%d/%d\n",soundtail,soundhead );
+//	printf( "%d/%d b\n",soundtail,soundhead );
 //	uint8_t ledout[] = { 0x00, 0xff, 0xaa, 0x00, 0xff, 0xaa, };
 //	ws2812_push( ledout, 6 );
 }
 
 
-//Called when new packet comes in.
+//Called when new packet comes in e.g. using newwork output from colorchord2 to drive LEDs
 static void ICACHE_FLASH_ATTR udpserver_recv(void *arg, char *pusrdata, unsigned short len)
 {
 	struct espconn *pespconn = (struct espconn *)arg;
@@ -210,8 +214,9 @@ void ICACHE_FLASH_ATTR user_init(void)
 	//Timer example
 	os_timer_disarm(&some_timer);
 	os_timer_setfn(&some_timer, (os_timer_func_t *)myTimer, NULL);
-	os_timer_arm(&some_timer, 100, 1);
+	os_timer_arm(&some_timer, 100, 1); //10000 gives about 1 sec gpio00 not work then, original was 100
 
+//TODO What is GPIO16 used for? Why is it not in gui?
 	//Set GPIO16 for Input
 	WRITE_PERI_REG(PAD_XPD_DCDC_CONF,
                    (READ_PERI_REG(PAD_XPD_DCDC_CONF) & 0xffffffbc) | (uint32)0x1); 	// mux configuration for XPD_DCDC and rtc_gpio0 connection
