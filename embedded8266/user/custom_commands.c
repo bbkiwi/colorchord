@@ -139,7 +139,7 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 				*(buffend++) = tohex1( samp&0x0f );
 			}
 		} else {
-			buffend += ets_sprintf( buffend, "CM\t1\t100" );
+			buffend += ets_sprintf( buffend, "CM\t10\t7f7f7f7f7f7f7f7f7f7f" ); // flat line
 		}
 		return buffend-buffer;
 	}

@@ -71,7 +71,8 @@ uint16 hs_adc_read(void)
 	uint16_t sar_dout = 0;
 
     while (GET_PERI_REG_BITS(0x60000D50, 26, 24) > 0); //wait r_state == 0
-
+    //sar_dout = 8128;
+    //return sar_dout;
     read_sar_dout(sardata);
 
     // This is a type of averaging
