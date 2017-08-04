@@ -58,14 +58,16 @@ void ICACHE_FLASH_ATTR StartHPATimer()
 	hs_adc_start();
 }
 
-void ICACHE_FLASH_ATTR PauseHPATimer()
+//void ICACHE_FLASH_ATTR PauseHPATimer()
+void PauseHPATimer()
 {
     TM1_EDGE_INT_DISABLE();
     ETS_FRC1_INTR_DISABLE();
 	system_timer_reinit();
 }
 
-void ICACHE_FLASH_ATTR ContinueHPATimer()
+//void ICACHE_FLASH_ATTR ContinueHPATimer()
+void ContinueHPATimer()
 {
     TM1_EDGE_INT_ENABLE();
     ETS_FRC1_INTR_ENABLE();

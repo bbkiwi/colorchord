@@ -35,14 +35,15 @@ int gROTATIONSHIFT = 0; //Amount of spinning of pattern around a LED ring
 static volatile os_timer_t some_timer;
 static struct espconn *pUdpServer;
 
-void EnterCritical();
-void ExitCritical();
+//void EnterCritical();
+//void ExitCritical();
 
 extern volatile uint8_t sounddata[HPABUFFSIZE];
 extern volatile uint16_t soundhead;
 uint16_t soundtail;
 extern uint8_t gCOLORCHORD_ACTIVE;
 static uint8_t hpa_running = 0;
+static uint8_t hpa_started = 0;
 static uint8_t hpa_is_paused_for_wifi = 0;
 void ICACHE_FLASH_ATTR CustomStart( );
 
@@ -77,7 +78,21 @@ static void ICACHE_FLASH_ATTR NewFrame()
 	};
 
 	//SendSPI2812( ledOut, NUM_LIN_LEDS );
+#ifdef SUPRESS_ADC_WHEN_PUSH_LEDS
+	//Adding Enter and Exit Critical with time delay
+	//  makes ADC output center 1/2 way
+	//  for vcc/2, starts stable when no websockets
+	//  but becomes unstatble after a time
+	//  unstable especially with large # LEDs
+	EnterCritical();
+printf("p");
+#endif
 	ws2812_push( ledOut, NUM_LIN_LEDS * 3 );
+#ifdef SUPRESS_ADC_WHEN_PUSH_LEDS
+	//ets_delay_us( 5000 ); // thought might supress noice but just slows down
+printf("c\n");
+	ExitCritical();
+#endif
 }
 
 os_event_t    procTaskQueue[procTaskQueueLen];
@@ -91,8 +106,10 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 {
 	system_os_post(procTaskPrio, 0, 0 );
 
+
 	if( gCOLORCHORD_ACTIVE && !hpa_running )
 	{
+printf("c\n");
 		ExitCritical(); //continue hpatimer
 		hpa_running = 1;
 	}
@@ -100,6 +117,7 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 	if( !gCOLORCHORD_ACTIVE && hpa_running )
 	{
 		EnterCritical(); //pause hpatimer
+printf("p");
 		hpa_running = 0; 
 	}
 	
@@ -186,6 +204,13 @@ void ICACHE_FLASH_ATTR user_init(void)
 #ifdef PROFILE
 	GPIO_OUTPUT_SET(GPIO_ID_PIN(0), 0);
 #endif
+//	TEST	starting HPATimer early assuming starting in AP mode
+//	   then CSPreInit(); which calls Enter and Exit Critical will
+//         pause a timer that is started.
+//         seems if put other statements e.g. prints, if etc in EnterCritical
+//         will make reset unless timer is already going
+//	StartHPATimer(); //Init the high speed  ADC timer.
+//	hpa_running = 1;
 
 	CSPreInit();
 
@@ -194,6 +219,7 @@ void ICACHE_FLASH_ATTR user_init(void)
 	espconn_create( pUdpServer );
 	pUdpServer->type = ESPCONN_UDP;
 	pUdpServer->proto.udp = (esp_udp *)os_zalloc(sizeof(esp_udp));
+//TODO should this be COM_PORT instead of 7777?
 	pUdpServer->proto.udp->local_port = 7777;
 	espconn_regist_recvcb(pUdpServer, udpserver_recv);
 
@@ -236,22 +262,43 @@ void ICACHE_FLASH_ATTR user_init(void)
 	}
 
 	ws2812_init();
+	printf("Colorchord Finish user_init\n");
 
 	system_os_post(procTaskPrio, 0, 0 );
 }
 
+// Tried this wrapper and using in EnterCritical and ExitCritical
+//    but doesn't work. Wanted to try having hpa_running static in
+//    the helper funciton. 
+void CriticalHelper(bool pause)
+{	if (pause) {
+		PauseHPATimer();
+	} else {
+		ContinueHPATimer();
+	}
+}
+
+// With TEST fiddle starting HPATimer early for AP mode could
+//    put print and setting hpa_running = 0; but not if statments
+//    couldn't add any more to ExitCritical though. ???
 void EnterCritical()
 {
+//	CriticalHelper(1);
+//	if (!hpa_running) return;
 	PauseHPATimer();
-	//hpa_running = 0; // if put this here loops
+//printf("e"); // if put this here loops
+//	hpa_running = 0; // if put this here loops
 	//ets_intr_lock();
 }
 
 void ExitCritical()
 {
+//	CriticalHelper(0);
 	//ets_intr_unlock();
+//	if (hpa_running) return;
+//printf("x\n");
+//	hpa_running = 1;
 	ContinueHPATimer();
-	//hpa_running = 1;
 }
 
 
