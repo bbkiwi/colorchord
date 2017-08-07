@@ -49,7 +49,7 @@ void ICACHE_FLASH_ATTR user_rf_pre_init()
 
 
 //Call this once we've stacked together one full colorchord frame.
-static void NewFrame()
+static void ICACHE_FLASH_ATTR NewFrame()
 {
 	if( !COLORCHORD_ACTIVE ) return;
 
@@ -77,7 +77,7 @@ int wf = 0;
 
 //Tasks that happen all the time.
 
-static void procTask(os_event_t *events)
+static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 {
 	system_os_post(procTaskPrio, 0, 0 );
 
