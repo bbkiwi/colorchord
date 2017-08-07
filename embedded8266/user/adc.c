@@ -76,7 +76,7 @@ uint16 hs_adc_read(void)
     SET_PERI_REG_MASK(0x60000D50, 0x02);    //force_en=1
 #endif
 
-    return sar_dout;      //tout is 10 bits fraction
+    return sar_dout + 8;      //sar_dout + 8 is 14 bits
 }
 
 
