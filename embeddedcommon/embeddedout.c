@@ -36,7 +36,7 @@ void UpdateLinearLEDs()
 	//Color them according to note_peak_freq with brightness related to amps2
 	//Put this linear array on a ring with NUM_LIN_LEDS and optionally rotate it with optionally direction changes on peak amps2
 
-	uint8_t i;
+	int i; // uint8_t i; caused instability especially for large no of LEDS
 	int8_t k;
 	uint16_t j, l;
 	uint32_t total_size_all_notes = 0;
@@ -47,7 +47,7 @@ void UpdateLinearLEDs()
 	uint32_t total_note_a = 0;
 	int diff_a = 0;
 	int8_t shift_dist = 0;
-	int8_t jshift;
+	int jshift; // int8_t jshift; caused instability especially for large no of LEDS
 
 #if DEBUGPRINT
 	printf( "Note Peak Freq: " );
@@ -364,7 +364,7 @@ void UpdateAllSameLEDs()
 void UpdateRotatingLEDs()
 {
 	int i;
-	int8_t jshift;
+	int jshift; // int8_t jshift; caused instability especially for large no of LEDs
 	int8_t shift_dist;
 	uint8_t freq = 0;
 	uint16_t amp = 0;
