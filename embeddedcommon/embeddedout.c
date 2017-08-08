@@ -17,13 +17,13 @@ int diff_a_prev = 0;
 int rot_dir = 1; // initial rotation direction 1
 
 //Testing ..
-int gROTATIONSHIFT = 0; //Amount of spinning of pattern around a LED ring
+//int gROTATIONSHIFT = 0; //Amount of spinning of pattern around a LED ring
 uint8_t gCOLORCHORD_SHIFT_INTERVAL = 0; // controls speed of shifting if 0 no shift
 uint8_t gCOLORCHORD_FLIP_ON_PEAK = 0; //if non-zero gives flipping at peaks of shift direction, 0 no flip
 int8_t gCOLORCHORD_SHIFT_DISTANCE = 0; //distance of shift
 uint8_t gCOLORCHORD_SORT_NOTES = 0; // 0 no sort, 1 inc freq, 2 dec amps, 3 dec amps2
 uint8_t gCOLORCHORD_LIN_WRAPAROUND = 0; // 0 no adjusting, else current led display has minimum deviation to prev
-int gFRAMECOUNT_MOD_SHIFT_INTERVAL = 0;
+//int gFRAMECOUNT_MOD_SHIFT_INTERVAL = 0;
 
 void UpdateLinearLEDs()
 {

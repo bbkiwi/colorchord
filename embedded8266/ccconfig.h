@@ -29,11 +29,11 @@
 #define USE_NUM_LIN_LEDS	CCS.gUSE_NUM_LIN_LEDS
 #define COLORCHORD_OUTPUT_DRIVER	CCS.gCOLORCHORD_OUTPUT_DRIVER
 #define COLORCHORD_ACTIVE	CCS.gCOLORCHORD_ACTIVE
-
-//We are not enabling these for the ESP8266 port.
-#define LIN_WRAPAROUND 0 
-#define SORT_NOTES 0
-
+#define COLORCHORD_SHIFT_INTERVAL	CCS.gCOLORCHORD_SHIFT_INTERVAL
+#define COLORCHORD_FLIP_ON_PEAK	CCS.gCOLORCHORD_FLIP_ON_PEAK
+#define COLORCHORD_SHIFT_DISTANCE	CCS.gCOLORCHORD_SHIFT_DISTANCE
+#define COLORCHORD_SORT_NOTES	CCS.gCOLORCHORD_SORT_NOTES
+#define COLORCHORD_LIN_WRAPAROUND	CCS.gCOLORCHORD_LIN_WRAPAROUND
 
 struct CCSettings
 {
@@ -54,6 +54,11 @@ struct CCSettings
 	uint8_t gUSE_NUM_LIN_LEDS;                  // = NUM_LIN_LEDS
 	uint8_t gCOLORCHORD_ACTIVE;
 	uint8_t gCOLORCHORD_OUTPUT_DRIVER;
+	uint8_t gCOLORCHORD_SHIFT_INTERVAL; // ==0 controls speed of shifting if 0 no shift
+	uint8_t gCOLORCHORD_FLIP_ON_PEAK; //==0 if non-zero gives flipping at peaks of shift direction, 0 no flip
+	int8_t gCOLORCHORD_SHIFT_DISTANCE; //==0 distance of shift
+	uint8_t gCOLORCHORD_SORT_NOTES; //==0  0 no sort, 1 inc freq, 2 dec amps, 3 dec amps2
+	uint8_t gCOLORCHORD_LIN_WRAPAROUND; //==0  0 no adjusting, else current led display has minimum deviation to prev
 };
 
 extern struct CCSettings CCS;
