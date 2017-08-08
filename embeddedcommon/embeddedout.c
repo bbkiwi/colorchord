@@ -45,7 +45,7 @@ void UpdateLinearLEDs()
 	//Color them according to note_peak_freq with brightness related to amps2
 	//Put this linear array on a ring with NUM_LIN_LEDS and optionally rotate it with optionally direction changes on peak amps2
 
-	int i; // uint8_t i;
+	int i; // uint8_t i; caused instability especially for large no of LEDS
 	int8_t k;
 	uint16_t j, l;
 	uint32_t total_size_all_notes = 0;
@@ -56,7 +56,7 @@ void UpdateLinearLEDs()
 	uint32_t total_note_a = 0;
 	int diff_a = 0;
 	int8_t shift_dist = 0;
-	int jshift; //int8_t jshift;
+	int jshift; // int8_t jshift; caused instability especially for large no of LEDS
 
 #if DEBUGPRINT
 	printf( "Note Peak Freq: " );
@@ -99,6 +99,7 @@ void UpdateLinearLEDs()
 		sorted_note_map[sorted_map_count] = i;
 		sorted_map_count++;
 	}
+
 	if ( gCOLORCHORD_SORT_NOTES ) {
 		// note local_note_jumped_to still give original indices of notes (which may not even been inclued
 		//    due to being eliminated as too small amplitude
@@ -319,7 +320,6 @@ void UpdateLinearLEDs()
 //TODO this could be sped up in case NUM_LIN_LEDS is much greater than USE_NUM_LIN_LEDS
 //      by blacking out only previous gCOLORCHORD_SHIFT_DISTANCE LEDs that were not overwritten 
 //      but if direction changing might be tricky
-
 	for( l = USE_NUM_LIN_LEDS; l < NUM_LIN_LEDS; l++, jshift++ )
 	{
 		if( jshift >= NUM_LIN_LEDS ) jshift = 0;
@@ -373,7 +373,7 @@ void UpdateAllSameLEDs()
 void UpdateRotatingLEDs()
 {
 	int i;
-	int jshift; // had int8_t jshift and makes unstable!!
+	int jshift; // int8_t jshift; caused instability especially for large no of LEDs
 	int8_t shift_dist;
 	uint8_t freq = 0;
 	uint16_t amp = 0;
@@ -411,7 +411,7 @@ void UpdateRotatingLEDs()
 	uint32_t color = ECCtoHEX( (freq+RootNoteOffset)%NOTERANGE, 255, 255 );
 
 	// can have led_arc_len a fixed size or proportional to amp2
-	//led_arc_len = 10;
+	//led_arc_len = 5;
 	led_arc_len = (amp * (NUM_LIN_LEDS + 1) ) >> 8;
 	//printf("amp2 = %d, amp = %d, led_arc_len = %d, NOTE_FINAL_AMP = %d\n", amp2,  amp, led_arc_len, NOTE_FINAL_AMP );
 	//stt += ets_sprintf( stt, "amp2 = %d, amp = %d, led_arc_len = %d, NOTE_FINAL_AMP = %d\n", amp2,  amp, led_arc_len, NOTE_FINAL_AMP );
@@ -437,8 +437,6 @@ void UpdateRotatingLEDs()
 	jshift = ( gROTATIONSHIFT - led_arc_len/2 ) % NUM_LIN_LEDS; // neg % pos is neg so fix
 	if ( jshift < 0 ) jshift += NUM_LIN_LEDS;
 
-
-
 	for( i = 0; i < led_arc_len; i++, jshift++ )
 	{
 		// even if led_arc_len exceeds NUM_LIN_LEDS using jshift will prevent over running ledOut
@@ -457,7 +455,6 @@ void UpdateRotatingLEDs()
 	}
 	total_note_a_prev = total_note_a;
 	diff_a_prev = diff_a;
-
 
 }
 

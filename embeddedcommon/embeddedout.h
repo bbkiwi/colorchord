@@ -24,7 +24,7 @@ extern uint8_t gCOLORCHORD_LIN_WRAPAROUND; // 0 no adjusting, else current led d
 
 //Controls brightness
 #ifndef NOTE_FINAL_AMP
-#define NOTE_FINAL_AMP  12   //Number from 0...255
+#define NOTE_FINAL_AMP  150   //Number from 0...255
 #endif
 
 //Controls, basically, the minimum size of the splotches.
@@ -40,18 +40,19 @@ extern uint8_t gCOLORCHORD_LIN_WRAPAROUND; // 0 no adjusting, else current led d
 #define USE_NUM_LIN_LEDS NUM_LIN_LEDS
 #endif
 
-
+/*
 #ifndef LIN_WRAPAROUND
 //Whether the output lights wrap around.
 //(Can't easily run on embedded systems)
 //(might be ok on ESP8266)
 #define LIN_WRAPAROUND 0
 #endif
-
+*/
+/*
 #ifndef SORT_NOTES
-#define SORT_NOTES 0     //FIXED 0 no sort, 1 sort on inc freq, 2 on dec amps, 3 on dec amps2, default inc freq
+#define SORT_NOTES 1     //FIXED 0 no sort, 1 sort on inc freq, 2 on dec amps, 3 on dec amps2, default inc freq
 #endif
-
+*/
 extern uint8_t ledArray[];
 extern uint8_t ledOut[]; //[NUM_LIN_LEDS*3]
 extern uint8_t RootNoteOffset; //Set to define what the root note is.  0 = A.
