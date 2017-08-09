@@ -6,7 +6,6 @@
 //uint8_t ledArray[NUM_LIN_LEDS]; //Points to which notes correspond to these LEDs
 uint8_t ledOut[NUM_LIN_LEDS*3];
 
-uint16_t minimizingShift;
 uint16_t ledAmpOut[NUM_LIN_LEDS];
 uint8_t ledFreqOut[NUM_LIN_LEDS];
 uint8_t ledFreqOutOld[NUM_LIN_LEDS];
@@ -24,6 +23,7 @@ void UpdateLinearLEDs()
 		extern uint16_t note_peak_amps[];  //[MAXNOTES] 
 		extern uint16_t note_peak_amps2[];  //[MAXNOTES]  (Responds quicker)
 		extern uint8_t  note_jumped_to[]; //[MAXNOTES] When a note combines into another one,
+		extern int gFRAMECOUNT_MOD_SHIFT_INTERVAL; // modular count of calls to NewFrame() in user_main.c
 		(from ccconfig.h or defaults defined in embeddedout.h
 		COLORCHORD_SHIFT_INTERVAL; // controls speed of shifting if 0 no shift
 		COLORCHORD_FLIP_ON_PEAK; //if non-zero gives flipping at peaks of shift direction, 0 no flip
@@ -37,9 +37,9 @@ void UpdateLinearLEDs()
 	//Color them according to note_peak_freq with brightness related to amps2
 	//Put this linear array on a ring with NUM_LIN_LEDS and optionally rotate it with optionally direction changes on peak amps2
 
-	int i; // uint8_t i; caused instability especially for large no of LEDS
-	int8_t k;
-	uint16_t j, l;
+	int16_t i; // uint8_t i; caused instability especially for large no of LEDS
+	int16_t j, l;
+	int16_t minimizingShift;
 	uint32_t total_size_all_notes = 0;
 	int32_t porpamps[MAXNOTES]; //number of LEDs for each corresponding note.
 	uint8_t sorted_note_map[MAXNOTES]; //mapping from which note into the array of notes from the rest of the system.
@@ -48,7 +48,7 @@ void UpdateLinearLEDs()
 	uint32_t total_note_a = 0;
 	int diff_a = 0;
 	int8_t shift_dist = 0;
-	int jshift; // int8_t jshift; caused instability especially for large no of LEDS
+	int16_t jshift; // int8_t jshift; caused instability especially for large no of LEDS
 
 #if DEBUGPRINT
 	printf( "Note Peak Freq: " );
@@ -334,7 +334,7 @@ void UpdateLinearLEDs()
 
 void UpdateAllSameLEDs()
 {
-	int i;
+	int16_t i;
 	int8_t j;
 	uint8_t freq = 0;
 	uint16_t amp = 0;
@@ -364,8 +364,8 @@ void UpdateAllSameLEDs()
 
 void UpdateRotatingLEDs()
 {
-	int i;
-	int jshift; // int8_t jshift; caused instability especially for large no of LEDs
+	int16_t i;
+	int16_t jshift; // int8_t jshift; caused instability especially for large no of LEDs
 	int8_t shift_dist;
 	uint8_t freq = 0;
 	uint16_t amp = 0;
