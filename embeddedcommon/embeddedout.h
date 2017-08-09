@@ -9,12 +9,6 @@
 
 extern int gFRAMECOUNT_MOD_SHIFT_INTERVAL;
 extern int gROTATIONSHIFT; //Amount of spinning of pattern around a LED ring
-extern uint8_t gCOLORCHORD_SHIFT_INTERVAL; //how frame interval between shifts. if 0 no shift
-extern uint8_t gCOLORCHORD_FLIP_ON_PEAK; //if non-zero will cause flipping shift on peaks
-extern int8_t gCOLORCHORD_SHIFT_DISTANCE; //distance of shift
-extern uint8_t gCOLORCHORD_SORT_NOTES; // 0 no sort, 1 inc freq, 2 dec amps, 3 dec amps2
-extern uint8_t gCOLORCHORD_LIN_WRAPAROUND; // 0 no adjusting, else current led display has minimum deviation to prev
-
 
 //TODO fix
 // print debug info wont work on esp8266 need debug to go to usb there
@@ -40,19 +34,26 @@ extern uint8_t gCOLORCHORD_LIN_WRAPAROUND; // 0 no adjusting, else current led d
 #define USE_NUM_LIN_LEDS NUM_LIN_LEDS
 #endif
 
-/*
-#ifndef LIN_WRAPAROUND
-//Whether the output lights wrap around.
-//(Can't easily run on embedded systems)
-//(might be ok on ESP8266)
-#define LIN_WRAPAROUND 0
+#ifndef COLORCHORD_SHIFT_INTERVAL
+#define COLORCHORD_SHIFT_INTERVAL 0 //how frame interval between shifts. if 0 no shift
 #endif
-*/
-/*
-#ifndef SORT_NOTES
-#define SORT_NOTES 1     //FIXED 0 no sort, 1 sort on inc freq, 2 on dec amps, 3 on dec amps2, default inc freq
+
+#ifndef COLORCHORD_FLIP_ON_PEAK
+#define COLORCHORD_FLIP_ON_PEAK 0 //if non-zero will cause flipping shift on peaks
 #endif
-*/
+
+#ifndef COLORCHORD_SHIFT_DISTANCE
+#define COLORCHORD_SHIFT_DISTANCE 0 //distance of shift
+#endif
+
+#ifndef COLORCHORD_SORT_NOTES
+#define COLORCHORD_SORT_NOTES 0 // 0 no sort, 1 inc freq, 2 dec amps, 3 dec amps2
+#endif
+
+#ifndef COLORCHORD_LIN_WRAPAROUND
+#define COLORCHORD_LIN_WRAPAROUND 0// 0 no adjusting, else current led display has minimum deviation to prev
+#endif
+
 extern uint8_t ledArray[];
 extern uint8_t ledOut[]; //[NUM_LIN_LEDS*3]
 extern uint8_t RootNoteOffset; //Set to define what the root note is.  0 = A.

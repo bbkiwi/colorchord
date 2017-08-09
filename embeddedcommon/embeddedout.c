@@ -16,15 +16,6 @@ uint32_t total_note_a_prev = 0;
 int diff_a_prev = 0;
 int rot_dir = 1; // initial rotation direction 1
 
-//Testing ..
-//int gROTATIONSHIFT = 0; //Amount of spinning of pattern around a LED ring
-uint8_t gCOLORCHORD_SHIFT_INTERVAL = 0; // controls speed of shifting if 0 no shift
-uint8_t gCOLORCHORD_FLIP_ON_PEAK = 0; //if non-zero gives flipping at peaks of shift direction, 0 no flip
-int8_t gCOLORCHORD_SHIFT_DISTANCE = 0; //distance of shift
-uint8_t gCOLORCHORD_SORT_NOTES = 0; // 0 no sort, 1 inc freq, 2 dec amps, 3 dec amps2
-uint8_t gCOLORCHORD_LIN_WRAPAROUND = 0; // 0 no adjusting, else current led display has minimum deviation to prev
-//int gFRAMECOUNT_MOD_SHIFT_INTERVAL = 0;
-
 void UpdateLinearLEDs()
 {
 	//Source material:
@@ -33,11 +24,12 @@ void UpdateLinearLEDs()
 		extern uint16_t note_peak_amps[];  //[MAXNOTES] 
 		extern uint16_t note_peak_amps2[];  //[MAXNOTES]  (Responds quicker)
 		extern uint8_t  note_jumped_to[]; //[MAXNOTES] When a note combines into another one,
-		extern uint8_t gCOLORCHORD_SHIFT_INTERVAL; // controls speed of shifting if 0 no shift
-		extern uint8_t gCOLORCHORD_FLIP_ON_PEAK; //if non-zero gives flipping at peaks of shift direction, 0 no flip
-		extern int8_t gCOLORCHORD_SHIFT_DISTANCE; //distance of shift
-		extern uint8_t gCOLORCHORD_SORT_NOTES; // 0 no sort, 1 inc freq, 2 dec amps, 3 dec amps2
-		extern uint8_t gCOLORCHORD_LIN_WRAPAROUND; // 0 no adjusting, else current led display has minimum deviation to prev
+		(from ccconfig.h or defaults defined in embeddedout.h
+		COLORCHORD_SHIFT_INTERVAL; // controls speed of shifting if 0 no shift
+		COLORCHORD_FLIP_ON_PEAK; //if non-zero gives flipping at peaks of shift direction, 0 no flip
+		COLORCHORD_SHIFT_DISTANCE; //distance of shift
+		COLORCHORD_SORT_NOTES; // 0 no sort, 1 inc freq, 2 dec amps, 3 dec amps2
+		COLORCHORD_LIN_WRAPAROUND; // 0 no adjusting, else current led display has minimum deviation to prev
 	*/
 
 	//Notes are found above a minimum amplitude
@@ -100,7 +92,7 @@ void UpdateLinearLEDs()
 		sorted_map_count++;
 	}
 
-	if ( gCOLORCHORD_SORT_NOTES ) {
+	if ( COLORCHORD_SORT_NOTES ) {
 		// note local_note_jumped_to still give original indices of notes (which may not even been inclued
 		//    due to being eliminated as too small amplitude
 		//    bubble sort on a specified key to reorder sorted_note_map
@@ -112,7 +104,7 @@ void UpdateLinearLEDs()
 			change = 0;
 			for( j = 0; j < sorted_map_count -1 - i; j++ )
 			{
-				switch(gCOLORCHORD_SORT_NOTES) {
+				switch(COLORCHORD_SORT_NOTES) {
 					case 2 : // amps decreasing
 						not_correct_order = note_peak_amps[sorted_note_map[j]] < note_peak_amps[sorted_note_map[j+1]];
 					break;
@@ -239,7 +231,7 @@ void UpdateLinearLEDs()
 	}
 
 	//This part possibly run on an embedded system with small number of LEDs.
-	if (gCOLORCHORD_LIN_WRAPAROUND ) {
+	if (COLORCHORD_LIN_WRAPAROUND ) {
 		//printf("NOTERANGE: %d ", NOTERANGE); //192
 		// finds an index minimizingShift so that shifting the used leds will have the minimum deviation
 		//    from the previous linear pattern
@@ -272,17 +264,17 @@ void UpdateLinearLEDs()
 		minimizingShift = 0;
 	}
 	// if option change direction on max peaks of total amplitude
-	if (gCOLORCHORD_FLIP_ON_PEAK ) {
+	if (COLORCHORD_FLIP_ON_PEAK ) {
 		if (diff_a_prev < 0 && diff_a > 0) {
 			rot_dir *= -1;
 		}
 	} else rot_dir = 1;
 
         // want possible extra spin to relate to changes peak intensity
-	// now every gCOLORCHORD_SHIFT_INTERVAL th frame
-	if (gCOLORCHORD_SHIFT_INTERVAL != 0 ) {
+	// now every COLORCHORD_SHIFT_INTERVAL th frame
+	if (COLORCHORD_SHIFT_INTERVAL != 0 ) {
 		if ( gFRAMECOUNT_MOD_SHIFT_INTERVAL == 0 ) {
-			gROTATIONSHIFT += rot_dir * gCOLORCHORD_SHIFT_DISTANCE;
+			gROTATIONSHIFT += rot_dir * COLORCHORD_SHIFT_DISTANCE;
 		        //printf("tnap tna %d %d dap da %d %d rot_dir %d, j shift %d\n",total_note_a_prev, total_note_a, diff_a_prev,  diff_a, rot_dir, j);
 		}
 	} else {
@@ -302,7 +294,7 @@ void UpdateLinearLEDs()
 	{
 		if( jshift >= NUM_LIN_LEDS ) jshift = 0;
 		//lefFreqOutOld and adjusting minimizingShift needed only if wraparound
-		if ( gCOLORCHORD_LIN_WRAPAROUND ) {
+		if ( COLORCHORD_LIN_WRAPAROUND ) {
 			if( minimizingShift >= USE_NUM_LIN_LEDS ) minimizingShift = 0;
 			ledFreqOutOld[l] = ledFreqOut[minimizingShift];
 		}
@@ -318,7 +310,7 @@ void UpdateLinearLEDs()
 	}
 	// blackout remaining LEDs on ring
 //TODO this could be sped up in case NUM_LIN_LEDS is much greater than USE_NUM_LIN_LEDS
-//      by blacking out only previous gCOLORCHORD_SHIFT_DISTANCE LEDs that were not overwritten 
+//      by blacking out only previous COLORCHORD_SHIFT_DISTANCE LEDs that were not overwritten 
 //      but if direction changing might be tricky
 	for( l = USE_NUM_LIN_LEDS; l < NUM_LIN_LEDS; l++, jshift++ )
 	{
@@ -418,16 +410,16 @@ void UpdateRotatingLEDs()
 	//uart0_sendStr(stret);
 
         // want possible extra spin to relate to changes peak intensity
-	if (gCOLORCHORD_FLIP_ON_PEAK ) {
+	if (COLORCHORD_FLIP_ON_PEAK ) {
 		if (diff_a_prev < 0 && diff_a > 0) {
 			rot_dir *= -1;
 		}
 	} else rot_dir = 1;
 
-	// now every gCOLORCHORD_SHIFT_INTERVAL th frame
-	if (gCOLORCHORD_SHIFT_INTERVAL != 0 ) {
+	// now every COLORCHORD_SHIFT_INTERVAL th frame
+	if (COLORCHORD_SHIFT_INTERVAL != 0 ) {
 		if ( gFRAMECOUNT_MOD_SHIFT_INTERVAL == 0 ) {
-			gROTATIONSHIFT += rot_dir * gCOLORCHORD_SHIFT_DISTANCE;
+			gROTATIONSHIFT += rot_dir * COLORCHORD_SHIFT_DISTANCE;
 		        //printf("tnap tna %d %d dap da %d %d rot_dir %d, j shift %d\n",total_note_a_prev, total_note_a, diff_a_prev,  diff_a, rot_dir, j);
 		}
 	} else {
