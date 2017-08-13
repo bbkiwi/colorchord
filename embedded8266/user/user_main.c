@@ -158,6 +158,7 @@ static void ICACHE_FLASH_ATTR myTimer(void *arg)
 		StartHPATimer(); //Init the high speed  ADC timer.
 		hpa_running = 1;
 		hpa_is_paused_for_wifi = 0; // only need to do once prevents unstable ADC
+		printf("start HPATimer for station\n");
 	}
 //	uart0_sendStr(".");
 //	printf( "%d/%d\n",soundtail,soundhead );
@@ -253,6 +254,7 @@ void ICACHE_FLASH_ATTR user_init(void)
 	{
 		StartHPATimer(); //Init the high speed  ADC timer.
 		hpa_running = 1;
+		printf("start HPATimer for AP\n");
 	}
 
 	ws2812_init();
