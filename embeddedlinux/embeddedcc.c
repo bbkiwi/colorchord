@@ -32,9 +32,18 @@ void NewFrame()
 	if ( gFRAMECOUNT_MOD_SHIFT_INTERVAL >= COLORCHORD_SHIFT_INTERVAL ) gFRAMECOUNT_MOD_SHIFT_INTERVAL = 0;
 	//printf("MOD FRAME %d ******\n", gFRAMECOUNT_MOD_SHIFT_INTERVAL);
 	HandleFrameInfo();
-	UpdateLinearLEDs();
-	//UpdateAllSameLEDs();
-	//UpdateRotatingLEDs();
+	switch( COLORCHORD_OUTPUT_DRIVER )
+	{
+	case 0:
+		UpdateLinearLEDs();
+		break;
+	case 1:
+		UpdateAllSameLEDs();
+		break;
+	case 2:
+		UpdateRotatingLEDs();
+		break;
+	};
 
 	buffer[0] = 0;
 	buffer[1] = 0;
