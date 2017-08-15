@@ -21,10 +21,8 @@ SOUNDDEVICE:= --device=alsa_input.pci-0000_00_05.0.analog-stereo # to use mic
 #By leading this blank it takes a default output which works 
 #SOUNDDEVICE:= 
 
-#OUTIP:=192.168.20.9
-#OUTIP:=192.168.1.5 # not work for ubuntu guest in Virtual Machine
-#OUTIP:=10.0.2.15 # works for ubuntu guest in Virtual Machine
-OUTIP:=127.0.0.1 # works for ubuntu guest in Virtual Machine
+#OUTIP:=127.0.0.1 # works for ubuntu guest in Virtual Machine using ./dummy_leds (very slow compiz 90%)
+OUTIP:=192.168.1.100 # works for ubuntu guest in Virtual Machine
 
 runembedded : embeddedcc
 	parec  --format=u8 --rate=16000 --channels=1 $(SOUNDDEVICE) --latency=128 | ./embeddedcc $(OUTIP) 1 
