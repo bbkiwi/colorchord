@@ -350,7 +350,7 @@ void UpdateAllSameLEDs()
 			amp = ist;
 		}
 	}
-	amp = (((uint32_t)(amp))*NOTE_FINAL_AMP)>>10;
+	amp = (((uint32_t)(amp))*NOTE_FINAL_AMP)>>MAX_AMP2_LOG2;
 
 	if( amp > 255 ) amp = 255;
 	uint32_t color = ECCtoHEX( (freq+RootNoteOffset)%NOTERANGE, 255, amp );
@@ -397,7 +397,7 @@ void UpdateRotatingLEDs()
 	diff_a = total_note_a_prev - total_note_a;
 
 	// can set color intensity using amp2
-	amp = (((uint32_t)(amp2))*NOTE_FINAL_AMP)>>10; // for PC 14;
+	amp = (((uint32_t)(amp2))*NOTE_FINAL_AMP)>>MAX_AMP2_LOG2; // for PC 14;
 	if( amp > 255 ) amp = 255;
 	//uint32_t color = ECCtoHEX( (freq+RootNoteOffset)%NOTERANGE, 255, amp );
 	uint32_t color = ECCtoHEX( (freq+RootNoteOffset)%NOTERANGE, 255, 255 );

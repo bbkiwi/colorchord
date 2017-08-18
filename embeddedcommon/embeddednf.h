@@ -5,6 +5,11 @@
 
 #include <ccconfig.h>
 
+#ifndef MAX_AMP2_LOG2
+#define MAX_AMP2_LOG2 10
+#endif
+
+
 //Use a 32-bit DFT.  It won't work for AVRs, but for any 32-bit systems where
 //they can multiply quickly, this is the bees knees.
 #define USE_32DFT

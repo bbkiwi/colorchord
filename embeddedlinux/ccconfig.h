@@ -3,21 +3,21 @@
 
 
 #define CCEMBEDDED
-#define DEBUGPRINT 1
+#define DEBUGPRINT 0
 #define RING
-#define LEDS_PER_ROW 16
-#define NUM_LIN_LEDS 16
-#define USE_NUM_LIN_LEDS 16
+#define LEDS_PER_ROW 18
+#define NUM_LIN_LEDS 18
+#define USE_NUM_LIN_LEDS 3
 #define DFREQ 16000
 #define NOTE_FINAL_AMP  255		//Final brightness Number from 0...255
 
 //Controls, basically, the minimum size of the splotches.
 #define NERF_NOTE_PORP 15 //value from 0 to 255
 
-#define COLORCHORD_OUTPUT_DRIVER 0     // 0 UpdateLinearLEDs, 1 UpdateAllSameLEDs, 2 UpdateRotatingLEDs
-#define COLORCHORD_SHIFT_INTERVAL 0  // shift after this many frames, 0 no shifts
+#define COLORCHORD_OUTPUT_DRIVER 1    // 0 UpdateLinearLEDs, 1 UpdateAllSameLEDs, 2 UpdateRotatingLEDs
+#define COLORCHORD_SHIFT_INTERVAL 5  // shift after this many frames, 0 no shifts
 #define COLORCHORD_FLIP_ON_PEAK 0      // non-zero will flip on peak total amp2
-#define COLORCHORD_SHIFT_DISTANCE 25    // distance of shift + anticlockwise, - clockwise, 0 no shift
+#define COLORCHORD_SHIFT_DISTANCE 8    // distance of shift + anticlockwise, - clockwise, 0 no shift (if divisor of NUM_LIN_LEDS strobe effects)
 #define COLORCHORD_SORT_NOTES 0        // 0 no sort, 1 inc freq, 2 dec amps, 3 dec amps2
 #define COLORCHORD_LIN_WRAPAROUND 0    // 0 no adjusting, else current led display has minimum deviation to prev
 
@@ -49,14 +49,15 @@
 //the response for the slow-response, or what we use to determine size of
 //splotches, AMP 2 is the quick response, or what we use to see the visual
 //strength of the notes.
-#define AMP_1_IIR_BITS 4
-#define AMP_2_IIR_BITS 2
+#define AMP_1_IIR_BITS 3 // 3 fastest below 3 blows up
+#define AMP_2_IIR_BITS 0 // 0 fastest reactions
 //This is the amplitude, coming from folded_bins.  If the value is below this
 //it is considered a non-note.
 #define MIN_AMP_FOR_NOTE 80
 //If the strength of a note falls below this, the note will disappear, and be
 //recycled back into the unused list of notes.
 #define MINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR 64
+#define MAX_AMP2_LOG2 13 // used to scale AMP2
 
 #endif
 
