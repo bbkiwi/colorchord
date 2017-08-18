@@ -75,19 +75,7 @@ static void ICACHE_FLASH_ATTR NewFrame()
 	};
 
 	//SendSPI2812( ledOut, NUM_LIN_LEDS );
-#ifdef SUPRESS_ADC_WHEN_PUSH_LEDS
-	//Adding Enter and Exit Critical with time delay
-	//  makes ADC output center 1/2 way
-	//  for vcc/2, starts stable when no websockets
-	//  but becomes unstatble after a time
-	//  unstable especially with large # LEDs
-	EnterCritical();
-#endif
 	ws2812_push( ledOut, NUM_LIN_LEDS * 3 );
-#ifdef SUPRESS_ADC_WHEN_PUSH_LEDS
-	//ets_delay_us( 5000 ); // thought might supress noice but just 
-	ExitCritical();
-#endif
 }
 
 os_event_t    procTaskQueue[procTaskQueueLen];
@@ -125,7 +113,19 @@ printf("p");
 		{
 			int16_t samp = sounddata[soundtail];
 			samp_iir = samp_iir - (samp_iir>>10) + samp;
+			// cleans noise and shows vcc/2 when oscope open or gui not showing page
+			//  if showing gui and oscope closed or off get noise!, if gpio open less noise
+			//  when oscope closed or off for NUM_LEDS 18 more noise than when 255
+			//  still very sharp spikes dropping to vcc/3. Previously noise was drops
+			//  to vcc/3 for longer periods so on oscope looked like square wave pulses
+			//  the delays below and changing menuinterface.js improve, interferance seems
+			//  to be occurring when system HZ in gui is too fast (400MHz) when oscope open it slows down.
+			EnterCritical();
+			ets_delay_us( 1 ); // try slight delay 1 before and after improves but still dist when oscope closed
+			//  in menuinterface.js using dosend('e') rather than dosend('wx') improves greatly oscope issue
 			PushSample32( (samp - (samp_iir>>10))*16 );
+			ets_delay_us( 1 );
+			ExitCritical();
 			soundtail = (soundtail+1)&(HPABUFFSIZE-1);
 
 			wf++;
