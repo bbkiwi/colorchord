@@ -75,7 +75,11 @@ static void ICACHE_FLASH_ATTR NewFrame()
 	};
 
 	//SendSPI2812( ledOut, NUM_LIN_LEDS );
+	//EnterCritical();
+	//ets_delay_us( 1 );
 	ws2812_push( ledOut, NUM_LIN_LEDS * 3 );
+	//ets_delay_us( 1 );
+	//ExitCritical();
 }
 
 os_event_t    procTaskQueue[procTaskQueueLen];
@@ -90,7 +94,7 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 
 	if( COLORCHORD_ACTIVE && !hpa_running )
 	{
-printf("c\n"); 
+//printf("c\n");
 		ExitCritical(); //continue hpatimer
 		hpa_running = 1;
 	}
@@ -98,7 +102,7 @@ printf("c\n");
 	if( !COLORCHORD_ACTIVE && hpa_running )
 	{
 		EnterCritical(); //pause hpatimer
-printf("p");
+//printf("p");
 		hpa_running = 0;
 	}
 	
@@ -114,18 +118,21 @@ printf("p");
 			int16_t samp = sounddata[soundtail];
 			samp_iir = samp_iir - (samp_iir>>10) + samp;
 			// cleans noise and shows vcc/2 when oscope open or gui not showing page
+			//    seems more sensitive to mic too.
 			//  if showing gui and oscope closed or off get noise!, if gpio open less noise
 			//  when oscope closed or off for NUM_LEDS 18 more noise than when 255
 			//  still very sharp spikes dropping to vcc/3. Previously noise was drops
 			//  to vcc/3 for longer periods so on oscope looked like square wave pulses
 			//  the delays below and changing menuinterface.js improve, interferance seems
 			//  to be occurring when system HZ in gui is too fast (400MHz) when oscope open it slows down.
-			EnterCritical();
-			ets_delay_us( 1 ); // try slight delay 1 before and after improves but still dist when oscope closed
+			//  BUT freq response is different when gui open: with C# is blue, without C# is red. Which is correct freq?
+			//      when gui is shut C# red both ways
+			///EnterCritical();
+			///ets_delay_us( 1 ); // try slight delay 1 before and after improves but still dist when oscope closed
 			//  in menuinterface.js using dosend('e') rather than dosend('wx') improves greatly oscope issue
 			PushSample32( (samp - (samp_iir>>10))*16 );
-			ets_delay_us( 1 );
-			ExitCritical();
+			///ets_delay_us( 1 );
+			///ExitCritical();
 			soundtail = (soundtail+1)&(HPABUFFSIZE-1);
 
 			wf++;
