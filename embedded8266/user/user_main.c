@@ -39,7 +39,7 @@ void ExitCritical();
 
 extern volatile uint8_t sounddata[HPABUFFSIZE];
 extern volatile uint16_t soundhead;
-uint16_t soundtail;
+volatile uint16_t soundtail;
 
 static uint8_t hpa_running = 0;
 static uint8_t hpa_started = 0;
@@ -114,9 +114,23 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 	if( COLORCHORD_ACTIVE && hpa_running )
 	{
 		while( soundtail != soundhead )
+//		while( 1 ) // tried breaking and protecting accessing soundhead, made very slow
 		{
+//			EnterCritical();
+//			bool checkdiff = (soundtail == soundhead);
+//			ExitCritical();
+//			if (checkdiff) break;
+#if PROTECT_SOUNDDATA
+			EnterCritical();
+			ets_delay_us( 1 );
+#endif
 			int16_t samp = sounddata[soundtail];
+#if PROTECT_SOUNDDATA
+			ets_delay_us( 1 );
+			ExitCritical();
+#endif
 			samp_iir = samp_iir - (samp_iir>>10) + samp;
+			// #if PROTECT_SOUNDDATA code
 			// cleans noise and shows vcc/2 when oscope open or gui not showing page
 			//    seems more sensitive to mic too.
 			//  if showing gui and oscope closed or off get noise!, if gpio open less noise
@@ -127,6 +141,7 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 			//  to be occurring when system HZ in gui is too fast (400MHz) when oscope open it slows down.
 			//  BUT freq response is different when gui open: with C# is blue, without C# is red. Which is correct freq?
 			//      when gui is shut C# red both ways
+			//  Also less stable when running off lipo 3.7 v
 			///EnterCritical();
 			///ets_delay_us( 1 ); // try slight delay 1 before and after improves but still dist when oscope closed
 			//  in menuinterface.js using dosend('e') rather than dosend('wx') improves greatly oscope issue

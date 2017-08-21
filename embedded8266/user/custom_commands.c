@@ -120,8 +120,11 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 
 	case 'm': case 'M': //Oscilloscope
 	{
-		int i, it = soundhead;
 		buffend += ets_sprintf( buffend, "CM\t512\t" );
+#if PROTECT_OSOUNDDATA
+		EnterCritical();
+#endif
+		int i, it = soundhead;
 		for( i = 0; i < 512; i++ )
 		{
 			uint8_t samp = sounddata[it++];
@@ -129,6 +132,9 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 			*(buffend++) = tohex1( samp>>4 );
 			*(buffend++) = tohex1( samp&0x0f );
 		}
+#if PROTECT_OSOUNDDATA
+		ExitCritical();
+#endif
 		return buffend-buffer;
 	}
 
