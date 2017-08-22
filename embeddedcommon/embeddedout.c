@@ -265,7 +265,7 @@ void UpdateLinearLEDs()
 	}
 	// if option change direction on max peaks of total amplitude
 	if (COLORCHORD_FLIP_ON_PEAK ) {
-		if (diff_a_prev < 0 && diff_a > 0) {
+		if (diff_a_prev <= 0 && diff_a > 0) {
 			rot_dir *= -1;
 		}
 	} else rot_dir = 1;
@@ -378,6 +378,7 @@ void UpdateRotatingLEDs()
 	char stret[256];
 	char *stt = &stret[0];
 
+	//printf("%5d %5d %5d \n", bass, mid, treb);
 
 	for( i = 0; i < MAXNOTES; i++ )
 	{
@@ -389,10 +390,11 @@ void UpdateRotatingLEDs()
 				freq = ifrq;
 				amp2 = ist;
 			}
-			total_note_a += note_peak_amps[i];
+			//total_note_a += note_peak_amps[i]; // or see outside loop to use bass
 			//total_note_a2 += ist;
 		}
 	}
+	total_note_a = bass;
 
 	diff_a = total_note_a_prev - total_note_a;
 
@@ -411,7 +413,7 @@ void UpdateRotatingLEDs()
 
         // want possible extra spin to relate to changes peak intensity
 	if (COLORCHORD_FLIP_ON_PEAK ) {
-		if (diff_a_prev < 0 && diff_a > 0) {
+		if (diff_a_prev <= 0 && diff_a > 0) {
 			rot_dir *= -1;
 		}
 	} else rot_dir = 1;

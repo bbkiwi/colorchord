@@ -10,6 +10,7 @@ uint8_t  note_peak_freqs[MAXNOTES];
 uint16_t note_peak_amps[MAXNOTES];
 uint16_t note_peak_amps2[MAXNOTES];
 uint8_t  note_jumped_to[MAXNOTES];
+uint16_t bass, mid, treb;
 
 
 #ifndef PRECOMPUTE_FREQUENCY_TABLE
@@ -108,6 +109,38 @@ void InitColorChord()
 	UpdateFreqs();
 }
 
+/*
+void HandleFrameInfoShort()
+{
+	int i, j, k;
+	uint8_t hitnotes[MAXNOTES];
+	memset( hitnotes, 0, sizeof( hitnotes ) );
+
+#ifdef USE_32DFT
+	uint16_t * strens;
+	UpdateOutputBins32();
+	strens = embeddedbins32;
+#else
+	uint16_t * strens = embeddedbins;
+#endif
+	bass = 0;
+	mid = 0;
+	treb = 0;
+	//Copy out the bins from the DFT to our fuzzed bins.
+	for( i = 0; i < FIXBINS; i++ )
+	{
+		fuzzed_bins[i] = (fuzzed_bins[i] + (strens[i]>>FUZZ_IIR_BITS) -
+			(fuzzed_bins[i]>>FUZZ_IIR_BITS));
+	if (i < FIXBINS/3) bass += fuzzed_bins[i];
+	else if (i < 2*FIXBINS/3) mid += fuzzed_bins[i];
+	else treb += fuzzed_bins[i];
+	//printf("%4d ", fuzzed_bins[i]);
+	}
+	//printf("\n");
+	//printf("%5d %5d %5d \n", bass, mid, treb);
+}
+*/
+
 void HandleFrameInfo()
 {
 	int i, j, k;
@@ -121,12 +154,18 @@ void HandleFrameInfo()
 #else
 	uint16_t * strens = embeddedbins;
 #endif
+	bass = 0;
+	mid = 0;
+	treb = 0;
 
 	//Copy out the bins from the DFT to our fuzzed bins.
 	for( i = 0; i < FIXBINS; i++ )
 	{
 		fuzzed_bins[i] = (fuzzed_bins[i] + (strens[i]>>FUZZ_IIR_BITS) -
 			(fuzzed_bins[i]>>FUZZ_IIR_BITS));
+		if (i < FIXBINS/3) bass += fuzzed_bins[i];
+		else if (i < 2*FIXBINS/3) mid += fuzzed_bins[i];
+		else treb += fuzzed_bins[i];
 	}
 
 	//Taper first octave

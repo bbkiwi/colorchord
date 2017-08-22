@@ -64,7 +64,9 @@ void NewFrame()
 int main( int argc, char ** argv )
 {
 	int wf = 0;
+	int wh = 0;
 	int samplesPerFrame = 128;
+	int samplesPerHandleInfo = 1;
 	int ci;
 	// remember 1st argument is name of program
 	if( argc < 2 )
@@ -97,10 +99,12 @@ int main( int argc, char ** argv )
 	case 0:
 	case 1:
 	case 2:
-		samplesPerFrame = 128;
+		samplesPerFrame = 1; // <= but is < doesn't respond to peaks
+		samplesPerHandleInfo = 128;
 		break;
 	case 3:
 		samplesPerFrame = 1;
+		samplesPerHandleInfo = 1;
 		break;
 	};
 
@@ -114,14 +118,18 @@ int main( int argc, char ** argv )
 #else
 		Push8BitIntegerSkippy( (int8_t)cs );
 #endif
+		wh++;
+		if( wh >= samplesPerHandleInfo )
+		{
+			HandleFrameInfo();
+			wh = 0;
+		}
 		wf++;
 		if( wf >= samplesPerFrame )
 		{
-			HandleFrameInfo();
-//			NewFrame();
-			wf = 0; 
+			NewFrame();
+			wf = 0;
 		}
-		NewFrame();
 	}
 	return 0;
 }

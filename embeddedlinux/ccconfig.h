@@ -7,14 +7,14 @@
 #define RING
 #define LEDS_PER_ROW 16
 #define NUM_LIN_LEDS 16
-#define USE_NUM_LIN_LEDS 1
+#define USE_NUM_LIN_LEDS 16 
 #define DFREQ 16000
 #define NOTE_FINAL_AMP  255		//Final brightness Number from 0...255
 
 //Controls, basically, the minimum size of the splotches.
 #define NERF_NOTE_PORP 15 //value from 0 to 255
 
-#define COLORCHORD_OUTPUT_DRIVER 3    // 0 UpdateLinearLEDs, 1 UpdateAllSameLEDs, 2 UpdateRotatingLEDs; 3 PureRotatingLEDs (not depend on sound);
+#define COLORCHORD_OUTPUT_DRIVER 2    // 0 UpdateLinearLEDs, 1 UpdateAllSameLEDs, 2 UpdateRotatingLEDs; 3 PureRotatingLEDs (not depend on sound);
 #define COLORCHORD_SHIFT_INTERVAL 1000  // shift after this many frames, 0 no shifts
 #define COLORCHORD_FLIP_ON_PEAK 1      // non-zero will flip on peak total amp2
 #define COLORCHORD_SHIFT_DISTANCE 1    // distance of shift + anticlockwise, - clockwise, 0 no shift (if divisor of NUM_LIN_LEDS strobe effects)
