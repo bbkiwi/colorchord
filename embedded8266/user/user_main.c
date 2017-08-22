@@ -59,7 +59,6 @@ static void ICACHE_FLASH_ATTR NewFrame()
 	if ( gFRAMECOUNT_MOD_SHIFT_INTERVAL >= COLORCHORD_SHIFT_INTERVAL ) gFRAMECOUNT_MOD_SHIFT_INTERVAL = 0;
 	//printf("MOD FRAME %d ******\n", gFRAMECOUNT_MOD_SHIFT_INTERVAL);	//uint8_t led_outs[NUM_LIN_LEDS*3];
 	int i;
-	HandleFrameInfo();
 
 	switch( COLORCHORD_OUTPUT_DRIVER )
 	{
@@ -71,6 +70,9 @@ static void ICACHE_FLASH_ATTR NewFrame()
 		break;
 	case 2:
 		UpdateRotatingLEDs();
+		break;
+	case 3:
+		PureRotatingLEDs();
 		break;
 	};
 
@@ -85,6 +87,7 @@ static void ICACHE_FLASH_ATTR NewFrame()
 os_event_t    procTaskQueue[procTaskQueueLen];
 uint32_t samp_iir = 0;
 int wf = 0;
+int samplesPerFrame = 128;
 
 //Tasks that happen all the time.
 
@@ -113,6 +116,18 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 	//Need to sample sound only when active, probable want to turn off leds when inactive
 	if( COLORCHORD_ACTIVE && hpa_running )
 	{
+		switch( COLORCHORD_OUTPUT_DRIVER )
+		{
+		case 0:
+		case 1:
+		case 2:
+			samplesPerFrame = 128;
+			break;
+		case 3:
+			samplesPerFrame = 1;
+			break;
+		};
+
 		while( soundtail != soundhead )
 //		while( 1 ) // tried breaking and protecting accessing soundhead, made very slow
 		{
@@ -151,11 +166,12 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 			soundtail = (soundtail+1)&(HPABUFFSIZE-1);
 
 			wf++;
-			if( wf == 128 )
+			if( wf >= samplesPerFrame )
 			{
-				NewFrame();
+				HandleFrameInfo();
 				wf = 0; 
 			}
+			NewFrame();
 		}
 	}
 #ifdef PROFILE

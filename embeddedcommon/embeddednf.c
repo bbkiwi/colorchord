@@ -175,8 +175,8 @@ void HandleFrameInfo()
 
 			//We do this funny dance to avoid a modulus operation.  On some
 			//processors, a modulus operation is slow.  This is cheap.
-			adjLeft++; if( adjLeft == FIXBPERO ) adjLeft = 0;
-			adjRight++; if( adjRight == FIXBPERO ) adjRight = 0;
+			adjLeft++; if( adjLeft >= FIXBPERO ) adjLeft = 0;
+			adjRight++; if( adjRight >= FIXBPERO ) adjRight = 0;
 		}
 
 		for( i = 0; i < FIXBPERO; i++ )
@@ -198,8 +198,8 @@ void HandleFrameInfo()
 			int16_t this = folded_bins[i];
 			uint8_t thisfreq = i<<SEMIBITSPERBIN;
 			int16_t offset;
-			adjLeft++; if( adjLeft == FIXBPERO ) adjLeft = 0;
-			adjRight++; if( adjRight == FIXBPERO ) adjRight = 0;
+			adjLeft++; if( adjLeft >= FIXBPERO ) adjLeft = 0;
+			adjRight++; if( adjRight >= FIXBPERO ) adjRight = 0;
 			if( this < MIN_AMP_FOR_NOTE ) continue;
 			if( prev > this || next > this ) continue;
 			if( prev == this && next == this ) continue;

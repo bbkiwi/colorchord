@@ -250,7 +250,7 @@ void UpdateLinearLEDs()
 				if( d > (NOTERANGE>>1) ) { d = NOTERANGE - d + 1; }
 				dqty += ( d * d );
 				localj++;
-				if( localj == USE_NUM_LIN_LEDS ) localj = 0;
+				if( localj >= USE_NUM_LIN_LEDS ) localj = 0;
 			}
 			if( dqty < mqty )
 			{
@@ -404,7 +404,7 @@ void UpdateRotatingLEDs()
 
 	// can have led_arc_len a fixed size or proportional to amp2
 	//led_arc_len = 5;
-	led_arc_len = (amp * (NUM_LIN_LEDS + 1) ) >> 8;
+	led_arc_len = (amp * (USE_NUM_LIN_LEDS + 1) ) >> 8;
 	//printf("amp2 = %d, amp = %d, led_arc_len = %d, NOTE_FINAL_AMP = %d\n", amp2,  amp, led_arc_len, NOTE_FINAL_AMP );
 	//stt += ets_sprintf( stt, "amp2 = %d, amp = %d, led_arc_len = %d, NOTE_FINAL_AMP = %d\n", amp2,  amp, led_arc_len, NOTE_FINAL_AMP );
 	//uart0_sendStr(stret);
@@ -450,6 +450,48 @@ void UpdateRotatingLEDs()
 
 }
 
+
+void PureRotatingLEDs()
+{
+	int16_t i;
+	int16_t jshift; // int8_t jshift; caused instability especially for large no of LEDs
+	int32_t led_arc_len;
+	uint8_t freq = 100;
+	uint32_t color = ECCtoHEX( (freq+RootNoteOffset)%NOTERANGE, 255, 255 );
+
+	// can have led_arc_len a fixed size or proportional to amp2
+	led_arc_len = USE_NUM_LIN_LEDS;
+
+	// now every COLORCHORD_SHIFT_INTERVAL th frame
+	if (COLORCHORD_SHIFT_INTERVAL != 0 ) {
+		if ( gFRAMECOUNT_MOD_SHIFT_INTERVAL == 0 ) {
+			gROTATIONSHIFT += rot_dir * COLORCHORD_SHIFT_DISTANCE;
+		        //printf("tnap tna %d %d dap da %d %d rot_dir %d, j shift %d\n",total_note_a_prev, total_note_a, diff_a_prev,  diff_a, rot_dir, j);
+		}
+	} else {
+		gROTATIONSHIFT = 0; // reset
+	}
+
+	jshift = ( gROTATIONSHIFT - led_arc_len/2 ) % NUM_LIN_LEDS; // neg % pos is neg so fix
+	if ( jshift < 0 ) jshift += NUM_LIN_LEDS;
+
+	for( i = 0; i < led_arc_len; i++, jshift++ )
+	{
+		// even if led_arc_len exceeds NUM_LIN_LEDS using jshift will prevent over running ledOut
+		if( jshift >= NUM_LIN_LEDS ) jshift = 0;
+		ledOut[jshift*3+0] = ( color >> 0 ) & 0xff;
+		ledOut[jshift*3+1] = ( color >> 8 ) & 0xff;
+		ledOut[jshift*3+2] = ( color >>16 ) & 0xff;
+	}
+
+	for( i = led_arc_len; i < NUM_LIN_LEDS; i++, jshift++ )
+	{
+		if( jshift >= NUM_LIN_LEDS ) jshift = 0;
+		ledOut[jshift*3+0] = 0x0;
+		ledOut[jshift*3+1] = 0x0;
+		ledOut[jshift*3+2] = 0x0;
+	}
+}
 
 
 

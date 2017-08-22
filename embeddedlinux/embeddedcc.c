@@ -20,7 +20,6 @@ int sock;
 int toskip = 1;
 int gFRAMECOUNT_MOD_SHIFT_INTERVAL = 0;
 int gROTATIONSHIFT = 0; //Amount of spinning of pattern around a LED ring
-
 //TODO explore relation of NUM_LIN_LEDS and following two params
 // ratio of COLORCHORD_SHIFT_INTERVAL / COLORCHORD_SHIFT_DISTANCE when less than 1 has interesting effect
 
@@ -31,7 +30,6 @@ void NewFrame()
         gFRAMECOUNT_MOD_SHIFT_INTERVAL++;
 	if ( gFRAMECOUNT_MOD_SHIFT_INTERVAL >= COLORCHORD_SHIFT_INTERVAL ) gFRAMECOUNT_MOD_SHIFT_INTERVAL = 0;
 	//printf("MOD FRAME %d ******\n", gFRAMECOUNT_MOD_SHIFT_INTERVAL);
-	HandleFrameInfo();
 	switch( COLORCHORD_OUTPUT_DRIVER )
 	{
 	case 0:
@@ -42,6 +40,9 @@ void NewFrame()
 		break;
 	case 2:
 		UpdateRotatingLEDs();
+		break;
+	case 3:
+		PureRotatingLEDs();
 		break;
 	};
 
@@ -63,12 +64,12 @@ void NewFrame()
 int main( int argc, char ** argv )
 {
 	int wf = 0;
+	int samplesPerFrame = 128;
 	int ci;
-	// bb no [tool] argument expected or used?
-
+	// remember 1st argument is name of program
 	if( argc < 2 )
 	{
-		fprintf( stderr, "Error: usage: [tool] [ip address] [num to skip, default 0]\n" );
+		fprintf( stderr, "Error: usage: ./embeddedcc [ip address] [num to skip, default 0]\n" );
 		return -1;
 	}
 
@@ -90,6 +91,19 @@ int main( int argc, char ** argv )
 
 	InitColorChord(); // bb changed from Init() which does not seem to exist;
 
+
+	switch( COLORCHORD_OUTPUT_DRIVER )
+	{
+	case 0:
+	case 1:
+	case 2:
+		samplesPerFrame = 128;
+		break;
+	case 3:
+		samplesPerFrame = 1;
+		break;
+	};
+
 	while( ( ci = getchar() ) != EOF )
 	{
 		int cs = ci - 0x80;
@@ -101,11 +115,13 @@ int main( int argc, char ** argv )
 		Push8BitIntegerSkippy( (int8_t)cs );
 #endif
 		wf++;
-		if( wf == 128 )
+		if( wf >= samplesPerFrame )
 		{
-			NewFrame();
+			HandleFrameInfo();
+//			NewFrame();
 			wf = 0; 
 		}
+		NewFrame();
 	}
 	return 0;
 }
