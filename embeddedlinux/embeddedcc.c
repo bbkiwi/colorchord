@@ -99,7 +99,7 @@ int main( int argc, char ** argv )
 	case 0:
 	case 1:
 	case 2:
-		samplesPerFrame = 1; // <= but is < doesn't respond to peaks
+		samplesPerFrame = 1; // <= but if < required new def of max to respond to peaks
 		samplesPerHandleInfo = 128;
 		break;
 	case 3:

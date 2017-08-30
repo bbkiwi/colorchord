@@ -87,7 +87,9 @@ static void ICACHE_FLASH_ATTR NewFrame()
 os_event_t    procTaskQueue[procTaskQueueLen];
 uint32_t samp_iir = 0;
 int wf = 0;
+int wh = 0;
 int samplesPerFrame = 128;
+int samplesPerHandleInfo = 1;
 
 //Tasks that happen all the time.
 
@@ -121,10 +123,12 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 		case 0:
 		case 1:
 		case 2:
-			samplesPerFrame = 128;
+			samplesPerFrame = 128; // <= but if < required new def of max to respond to peaks
+			samplesPerHandleInfo = 128;
 			break;
 		case 3:
 			samplesPerFrame = 1;
+			samplesPerHandleInfo = 1000;
 			break;
 		};
 
@@ -165,13 +169,18 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 			///ExitCritical();
 			soundtail = (soundtail+1)&(HPABUFFSIZE-1);
 
+			wh++;
+			if( wh >= samplesPerHandleInfo )
+			{
+				HandleFrameInfo();
+				wh = 0;
+			}
 			wf++;
 			if( wf >= samplesPerFrame )
 			{
-				HandleFrameInfo();
-				wf = 0; 
+				NewFrame();
+				wf = 0;
 			}
-			NewFrame();
 		}
 	}
 #ifdef PROFILE

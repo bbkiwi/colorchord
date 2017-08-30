@@ -14,6 +14,7 @@ uint8_t RootNoteOffset;
 uint32_t total_note_a_prev = 0;
 int diff_a_prev = 0;
 int rot_dir = 1; // initial rotation direction 1
+uint8_t ColorCycle =0; 
 
 void UpdateLinearLEDs()
 {
@@ -453,13 +454,15 @@ void UpdateRotatingLEDs()
 }
 
 
-void PureRotatingLEDs()
+void PureRotatingLEDs() // pure pattern not reacting to sound
 {
 	int16_t i;
 	int16_t jshift; // int8_t jshift; caused instability especially for large no of LEDs
 	int32_t led_arc_len;
 	uint8_t freq = 100;
-	uint32_t color = ECCtoHEX( (freq+RootNoteOffset)%NOTERANGE, 255, 255 );
+	freq = ColorCycle;
+//	uint32_t color = ECCtoHEX( (freq+RootNoteOffset)%NOTERANGE, 255, 100 );
+	uint32_t color = ECCtoHEX( freq, 255, 100 );
 
 	// can have led_arc_len a fixed size or proportional to amp2
 	led_arc_len = USE_NUM_LIN_LEDS;
@@ -469,6 +472,8 @@ void PureRotatingLEDs()
 		if ( gFRAMECOUNT_MOD_SHIFT_INTERVAL == 0 ) {
 			gROTATIONSHIFT += rot_dir * COLORCHORD_SHIFT_DISTANCE;
 		        //printf("tnap tna %d %d dap da %d %d rot_dir %d, j shift %d\n",total_note_a_prev, total_note_a, diff_a_prev,  diff_a, rot_dir, j);
+			ColorCycle++;
+			if (ColorCycle == 0) rot_dir *= -1;
 		}
 	} else {
 		gROTATIONSHIFT = 0; // reset
