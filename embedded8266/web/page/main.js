@@ -430,31 +430,13 @@ function CCColorDetail( note )
 function ECCtoHEX( note, sat, val )
 {
 	var hue = 0;
-	var third = 65535/3;
-	var scalednote = note;
 	var renote = note * 65536 / globalParams["rNOTERANGE"];
 
 	//Note is expected to be a vale from 0..(NOTERANGE-1)
 	//renote goes from 0 to the next one under 65536.
-
-
-	if( renote < third )
-	{
-		//Yellow to Red.
-		hue = (third - renote) >> 1;
-	}
-	else if( renote < (third<<1) )
-	{
-		//Red to Blue
-		hue = (third-renote);
-	}
-	else
-	{
-		//hue = ((((65535-renote)>>8) * (uint32_t)(third>>8)) >> 1) + (third<<1);
-		hue = (((65536-renote)<<16) / (third<<1)) + (third>>1); // ((((65535-renote)>>8) * (uint32_t)(third>>8)) >> 1) + (third<<1);
-	}
+	hue = renote;
 	hue >>= 8;
-
+	hue += 43;
 	return EHSVtoHEX( hue, sat, val );
 }
 
@@ -468,41 +450,39 @@ function EHSVtoHEX( hue, sat, val )  //0..255 for all
 
 	var or = 0, og = 0, ob = 0;
 
-	hue -= SIXTH1; //Off by 60 degrees.
-
 	hue = (hue+256)%256;
-	//TODO: There are colors that overlap here, consider 
-	//tweaking this to make the best use of the colorspace.
 
-	if( hue < SIXTH1 ) //Ok: Yellow->Red.
+	// move in rainbow order RYGCBM as hue from 0 to 255
+
+	if( hue < SIXTH1 ) //Ok: Red->Yellow
 	{
 		or = 255;
-		og = 255 - (hue * 255) / (SIXTH1);
+		og = (hue * 255) / (SIXTH1);
 	}
-	else if( hue < SIXTH2 ) //Ok: Red->Purple
+	else if( hue < SIXTH2 ) //Ok: Yellow->Green
+	{
+		og = 255;
+		or = 255 - (hue - SIXTH1) *255 / SIXTH1;
+	}
+	else if( hue < SIXTH3 )  //Ok: Green->Cyan
+	{
+		og = 255;
+		ob = (hue - SIXTH2) * 255 / (SIXTH1);
+	}
+	else if( hue < SIXTH4 ) //Ok: Cyan->Blue
+	{
+		ob = 255;
+		og = 255 - (hue - SIXTH3) * 255 / SIXTH1;
+	}
+	else if( hue < SIXTH5 ) //Ok: Blue->Magenta
+	{
+		ob = 255;
+		or = (hue - SIXTH4) * 255 / SIXTH1;
+	}
+	else //Magenta->Red
 	{
 		or = 255;
-		ob = hue*255 / SIXTH1 - 255;
-	}
-	else if( hue < SIXTH3 )  //Ok: Purple->Blue
-	{
-		ob = 255;
-		or = ((SIXTH3-hue) * 255) / (SIXTH1);
-	}
-	else if( hue < SIXTH4 ) //Ok: Blue->Cyan
-	{
-		ob = 255;
-		og = (hue - SIXTH3)*255 / SIXTH1;
-	}
-	else if( hue < SIXTH5 ) //Ok: Cyan->Green.
-	{
-		og = 255;
-		ob = ((SIXTH5-hue)*255) / SIXTH1;
-	}
-	else //Green->Yellow
-	{
-		og = 255;
-		or = (hue - SIXTH5) * 255 / SIXTH1;
+		ob = 255 - (hue - SIXTH5) * 255 / SIXTH1;
 	}
 
 	var rv = val;
@@ -511,26 +491,18 @@ function EHSVtoHEX( hue, sat, val )  //0..255 for all
 	if( rs > 128 ) rs++;
 
 	//or, og, ob range from 0...255 now.
-	//Need to apply saturation and value.
-
-	or = (or * val)>>8;
-	og = (og * val)>>8;
-	ob = (ob * val)>>8;
-
-	//OR..OB == 0..65025
+	//Apply saturation giving OR..OB == 0..65025
 	or = or * rs + 255 * (256-rs);
 	og = og * rs + 255 * (256-rs);
 	ob = ob * rs + 255 * (256-rs);
-//printf( "__%d %d %d =-> %d\n", or, og, ob, rs );
-
 	or >>= 8;
 	og >>= 8;
 	ob >>= 8;
-
-	if( or > 255 ) or = 255;
-	if( og > 255 ) og = 255;
-	if( ob > 255 ) ob = 255;
-
+	//back to or, og, ob range 0...255 now.
+	//Need to apply saturation and value.
+	or = (or * val)>>8;
+	og = (og * val)>>8;
+	ob = (ob * val)>>8;
 	return "#" + tohex8(og) + tohex8(or) + tohex8(ob);
 }
 

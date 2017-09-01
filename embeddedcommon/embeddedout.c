@@ -10,7 +10,6 @@ uint16_t ledAmpOut[NUM_LIN_LEDS];
 uint8_t ledFreqOut[NUM_LIN_LEDS];
 uint8_t ledFreqOutOld[NUM_LIN_LEDS];
 
-uint8_t RootNoteOffset;
 uint32_t total_note_a_prev = 0;
 int diff_a_prev = 0;
 int rot_dir = 1; // initial rotation direction 1
@@ -304,7 +303,7 @@ void UpdateLinearLEDs()
 	        printf("%d:%d/", ledFreqOut[minimizingShift], amp);
 #endif
 		if( amp > 255 ) amp = 255;
-		uint32_t color = ECCtoHEX( (ledFreqOut[minimizingShift]+RootNoteOffset)%NOTERANGE, 255, amp );
+		uint32_t color = ECCtoHEX( (ledFreqOut[minimizingShift]+ROOT_NOTE_OFFSET)%NOTERANGE, NOTE_FINAL_SATURATION, amp );
 		ledOut[jshift*3+0] = ( color >> 0 ) & 0xff;
 		ledOut[jshift*3+1] = ( color >> 8 ) & 0xff;
 		ledOut[jshift*3+2] = ( color >>16 ) & 0xff;
@@ -354,7 +353,7 @@ void UpdateAllSameLEDs()
 	amp = (((uint32_t)(amp))*NOTE_FINAL_AMP)>>MAX_AMP2_LOG2;
 
 	if( amp > 255 ) amp = 255;
-	uint32_t color = ECCtoHEX( (freq+RootNoteOffset)%NOTERANGE, 255, amp );
+	uint32_t color = ECCtoHEX( (freq+ROOT_NOTE_OFFSET)%NOTERANGE, NOTE_FINAL_SATURATION, amp );
 	for( i = 0; i < NUM_LIN_LEDS; i++ )
 	{
 		ledOut[i*3+0] = ( color >> 0 ) & 0xff;
@@ -402,8 +401,8 @@ void UpdateRotatingLEDs()
 	// can set color intensity using amp2
 	amp = (((uint32_t)(amp2))*NOTE_FINAL_AMP)>>MAX_AMP2_LOG2; // for PC 14;
 	if( amp > 255 ) amp = 255;
-	//uint32_t color = ECCtoHEX( (freq+RootNoteOffset)%NOTERANGE, 255, amp );
-	uint32_t color = ECCtoHEX( (freq+RootNoteOffset)%NOTERANGE, 255, 255 );
+	//uint32_t color = ECCtoHEX( (freq+ROOT_NOTE_OFFSET)%NOTERANGE, NOTE_FINAL_SATURATION, amp );
+	uint32_t color = ECCtoHEX( (freq+ROOT_NOTE_OFFSET)%NOTERANGE, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
 
 	// can have led_arc_len a fixed size or proportional to amp2
 	//led_arc_len = 5;
@@ -459,10 +458,10 @@ void PureRotatingLEDs() // pure pattern not reacting to sound
 	int16_t i;
 	int16_t jshift; // int8_t jshift; caused instability especially for large no of LEDs
 	int32_t led_arc_len;
-	uint8_t freq = 100;
+	uint8_t freq;
 	freq = ColorCycle;
-//	uint32_t color = ECCtoHEX( (freq+RootNoteOffset)%NOTERANGE, 255, 100 );
-	uint32_t color = ECCtoHEX( freq, 255, 100 );
+	uint32_t color = ECCtoHEX( (freq+ROOT_NOTE_OFFSET)%NOTERANGE, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
+//	uint32_t color = ECCtoHEX( freq, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
 
 	// can have led_arc_len a fixed size or proportional to amp2
 	led_arc_len = USE_NUM_LIN_LEDS;
@@ -473,15 +472,16 @@ void PureRotatingLEDs() // pure pattern not reacting to sound
 			gROTATIONSHIFT += rot_dir * COLORCHORD_SHIFT_DISTANCE;
 		        //printf("tnap tna %d %d dap da %d %d rot_dir %d, j shift %d\n",total_note_a_prev, total_note_a, diff_a_prev,  diff_a, rot_dir, j);
 			ColorCycle++;
+			if (ColorCycle >= NOTERANGE) ColorCycle = 0;
 			if (ColorCycle == 0) rot_dir *= -1;
 		}
 	} else {
+		ColorCycle = 0;
 		gROTATIONSHIFT = 0; // reset
 	}
 
 	jshift = ( gROTATIONSHIFT - led_arc_len/2 ) % NUM_LIN_LEDS; // neg % pos is neg so fix
 	if ( jshift < 0 ) jshift += NUM_LIN_LEDS;
-
 	for( i = 0; i < led_arc_len; i++, jshift++ )
 	{
 		// even if led_arc_len exceeds NUM_LIN_LEDS using jshift will prevent over running ledOut
@@ -507,30 +507,12 @@ void PureRotatingLEDs() // pure pattern not reacting to sound
 uint32_t ECCtoHEX( uint8_t note, uint8_t sat, uint8_t val )
 {
 	uint16_t hue = 0;
-	uint16_t third = 65535/3;
-	uint16_t scalednote = note;
 	uint32_t renote = ((uint32_t)note * 65536) / NOTERANGE;
 
-	//Note is expected to be a vale from 0..(NOTERANGE-1)
-	//renote goes from 0 to the next one under 65536.
-
-
-	if( renote < third )
-	{
-		//Yellow to Red.
-		hue = (third - renote) >> 1;
-	}
-	else if( renote < (third<<1) )
-	{
-		//Red to Blue
-		hue = (third-renote);
-	}
-	else
-	{
-		//hue = ((((65535-renote)>>8) * (uint32_t)(third>>8)) >> 1) + (third<<1);
-		hue = (uint16_t)(((uint32_t)(65536-renote)<<16) / (third<<1)) + (third>>1); // ((((65535-renote)>>8) * (uint32_t)(third>>8)) >> 1) + (third<<1);
-	}
+	hue = renote;
 	hue >>= 8;
+	hue += 43;
+//	printf("%d %d \n", renote, hue);
 
 	return EHSVtoHEX( hue, sat, val );
 }
@@ -545,40 +527,37 @@ uint32_t EHSVtoHEX( uint8_t hue, uint8_t sat, uint8_t val )
 
 	uint16_t or = 0, og = 0, ob = 0;
 
-	hue -= SIXTH1; //Off by 60 degrees.
+	// move in rainbow order RYGCBM as hue from 0 to 255
 
-	//TODO: There are colors that overlap here, consider 
-	//tweaking this to make the best use of the colorspace.
-
-	if( hue < SIXTH1 ) //Ok: Yellow->Red.
+	if( hue < SIXTH1 ) //Ok: Red->Yellow
 	{
 		or = 255;
-		og = 255 - ((uint16_t)hue * 255) / (SIXTH1);
+		og = (hue * 255) / (SIXTH1);
 	}
-	else if( hue < SIXTH2 ) //Ok: Red->Purple
+	else if( hue < SIXTH2 ) //Ok: Yellow->Green
+	{
+		og = 255;
+		or = 255 - (hue - SIXTH1) *255 / SIXTH1;
+	}
+	else if( hue < SIXTH3 )  //Ok: Green->Cyan
+	{
+		og = 255;
+		ob = (hue - SIXTH2) * 255 / (SIXTH1);
+	}
+	else if( hue < SIXTH4 ) //Ok: Cyan->Blue
+	{
+		ob = 255;
+		og = 255 - (hue - SIXTH3) * 255 / SIXTH1;
+	}
+	else if( hue < SIXTH5 ) //Ok: Blue->Magenta
+	{
+		ob = 255;
+		or = (hue - SIXTH4) * 255 / SIXTH1;
+	}
+	else //Magenta->Red
 	{
 		or = 255;
-		ob = (uint16_t)hue*255 / SIXTH1 - 255;
-	}
-	else if( hue < SIXTH3 )  //Ok: Purple->Blue
-	{
-		ob = 255;
-		or = ((SIXTH3-hue) * 255) / (SIXTH1);
-	}
-	else if( hue < SIXTH4 ) //Ok: Blue->Cyan
-	{
-		ob = 255;
-		og = (hue - SIXTH3)*255 / SIXTH1;
-	}
-	else if( hue < SIXTH5 ) //Ok: Cyan->Green.
-	{
-		og = 255;
-		ob = ((SIXTH5-hue)*255) / SIXTH1;
-	}
-	else //Green->Yellow
-	{
-		og = 255;
-		or = (hue - SIXTH5) * 255 / SIXTH1;
+		ob = 255 - (hue - SIXTH5) * 255 / SIXTH1;
 	}
 
 	uint16_t rv = val;
@@ -587,22 +566,21 @@ uint32_t EHSVtoHEX( uint8_t hue, uint8_t sat, uint8_t val )
 	if( rs > 128 ) rs++;
 
 	//or, og, ob range from 0...255 now.
-	//Need to apply saturation and value.
-
-	or = (or * val)>>8;
-	og = (og * val)>>8;
-	ob = (ob * val)>>8;
-
-	//OR..OB == 0..65025
+	//Apply saturation giving OR..OB == 0..65025
 	or = or * rs + 255 * (256-rs);
 	og = og * rs + 255 * (256-rs);
 	ob = ob * rs + 255 * (256-rs);
-//printf( "__%d %d %d =-> %d\n", or, og, ob, rs );
-
 	or >>= 8;
 	og >>= 8;
 	ob >>= 8;
+	//back to or, og, ob range 0...255 now.
+	//Need to apply saturation and value.
+	or = (or * val)>>8;
+	og = (og * val)>>8;
+	ob = (ob * val)>>8;
+//	printf( "__%d %d %d sat = %d val = %d\n", or, og, ob, rs, rv );
 
 	return or | (og<<8) | ((uint32_t)ob<<16);
+//	return ((uint32_t)or<<16) | (og<<8) | ob; //new
 }
 
