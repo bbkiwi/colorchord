@@ -21,6 +21,7 @@ comes back resetting its value.  </p>
 <p>Notes last until amp1 decays below 	gMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR</p>
 <p>Notes persist if the frequency does not change too much but are considered new if change by more than
 gMAX_JUMP_DISTANCE and 	gMAX_COMBINE_DISTANCE control this.</p>
+<p>NOTE_FINAL_AMP and NOTE_FINAL_SATURATION determine overall LED display brightness and saturation.</p>
 <dl>
   <dt>The selected notes can be displayed on a ring of gNUM_LIN_LEDS LEDs in various ways.<br>
       A linear array of gUSE_NUM_LIN_LEDS LEDs is inserted in the rings depending on gCOLORCHORD_OUTPUT_DRIVER value</dt>
@@ -28,6 +29,7 @@ gMAX_JUMP_DISTANCE and 	gMAX_COMBINE_DISTANCE control this.</p>
  Color them according to note_peak_freq with brightness related to amps2</dd>
   <dd>- 1 - The dominant note colors the complete interval</dd>
   <dd>- 2 - Check it is pretty similar to 0 now.</dd>
+  <dd>- 3 - Pattern indepenent of sound</dd>
 </dl>
 
 <dl>
@@ -41,7 +43,10 @@ gMAX_JUMP_DISTANCE and 	gMAX_COMBINE_DISTANCE control this.</p>
   <dt>Control of band order</dt>
   <dd>- gCOLORCHORD_SORT_NOTES (0 no sort, 1 inc freq, 2 dec amps, 3 dec amps2)</dd>
   <dd>- gCOLORCHORD_LIN_WRAPAROUND (0 no adjusting, else current led display has minimum deviation to prev)</dd>
-  <dd>- gROOT_NOTE_OFFSET (20 makes C red)</dd>
+  <dd>- gROOT_NOTE_OFFSET (A produces peak at left side of DFT histogram. This is colored yellow if Offset is 0)<br>
+        .... NOTERANGE/12 gives offset for one semitone making G# have yellow. There are FIXBPERO colors per octave. Using offset 
+        of Color Number * NOTERANGE/FIXBPERO will start with this color. To set a given note to a specific color for example
+        with offset 0 B is red, to make C red use 11*NOTERANGE/12</dd>
 </dl>
 
  <dl>
