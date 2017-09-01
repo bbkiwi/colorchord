@@ -460,8 +460,7 @@ void PureRotatingLEDs() // pure pattern not reacting to sound
 	int32_t led_arc_len;
 	uint8_t freq;
 	freq = ColorCycle;
-	uint32_t color = ECCtoHEX( (freq+ROOT_NOTE_OFFSET)%NOTERANGE, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
-//	uint32_t color = ECCtoHEX( freq, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
+//	uint32_t color = ECCtoHEX( (freq+ROOT_NOTE_OFFSET)%NOTERANGE, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
 
 	// can have led_arc_len a fixed size or proportional to amp2
 	led_arc_len = USE_NUM_LIN_LEDS;
@@ -473,7 +472,7 @@ void PureRotatingLEDs() // pure pattern not reacting to sound
 		        //printf("tnap tna %d %d dap da %d %d rot_dir %d, j shift %d\n",total_note_a_prev, total_note_a, diff_a_prev,  diff_a, rot_dir, j);
 			ColorCycle++;
 			if (ColorCycle >= NOTERANGE) ColorCycle = 0;
-			if (ColorCycle == 0) rot_dir *= -1;
+			if (ColorCycle == 0 && COLORCHORD_FLIP_ON_PEAK) rot_dir *= -1;
 		}
 	} else {
 		ColorCycle = 0;
@@ -484,6 +483,7 @@ void PureRotatingLEDs() // pure pattern not reacting to sound
 	if ( jshift < 0 ) jshift += NUM_LIN_LEDS;
 	for( i = 0; i < led_arc_len; i++, jshift++ )
 	{
+		uint32_t color = ECCtoHEX( (freq + i*NERF_NOTE_PORP/led_arc_len + ROOT_NOTE_OFFSET)%NOTERANGE, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
 		// even if led_arc_len exceeds NUM_LIN_LEDS using jshift will prevent over running ledOut
 		if( jshift >= NUM_LIN_LEDS ) jshift = 0;
 		ledOut[jshift*3+0] = ( color >> 0 ) & 0xff;
