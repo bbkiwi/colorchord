@@ -427,18 +427,47 @@ function CCColorDetail( note )
 	return ECCtoHEX( (note + globalParams["gROOT_NOTE_OFFSET"] + globalParams["rNOTERANGE"] )%globalParams["rNOTERANGE"], 255, 255 );
 }
 
+//function ECCtoHEX( note, sat, val )
+//{
+//	var hue = 0;
+//	var renote = note * 65536 / globalParams["rNOTERANGE"];
+//
+//	//Note is expected to be a vale from 0..(NOTERANGE-1)
+//	//renote goes from 0 to the next one under 65536.
+//	hue = renote;
+//	hue >>= 8;
+//	hue = -hue; //reverse rainbow order
+//	hue += 43; //start yellow
+//	return EHSVtoHEX( hue, sat, val );
+//}
+
 function ECCtoHEX( note, sat, val )
 {
 	var hue = 0;
 	var renote = note * 65536 / globalParams["rNOTERANGE"];
-
-	//Note is expected to be a vale from 0..(NOTERANGE-1)
-	//renote goes from 0 to the next one under 65536.
-	hue = renote;
-	hue >>= 8;
-	hue += 43;
+	var rn0 = 0;
+	var hn0 = 7*255/6;
+	var rn1 = 65536/3;
+	var hn1 = 255;
+	var rn2 = 2 * rn1;
+	var hn2 = 2*255/3;
+	var rn3 = 65536;
+	var hn3 = 255/6;
+	if( renote < rn1 )
+	{	hue = hn0 + (renote - rn0) * (hn1 - hn0) / (rn1 - rn0);
+	}
+	else if( renote < rn2 )
+	{	hue = hn1 + (renote - rn1) * (hn2 - hn1) / (rn2 - rn1);
+	}
+	else
+	{	hue = hn2 + (renote - rn2) * (hn3 - hn2) / (rn3 - rn2);
+	}
+//	hue >>= 8;
+//	hue = -hue; //reverse rainbow order
+//	hue += 43; //start yellow
 	return EHSVtoHEX( hue, sat, val );
 }
+
 
 function EHSVtoHEX( hue, sat, val )  //0..255 for all
 {
@@ -503,7 +532,7 @@ function EHSVtoHEX( hue, sat, val )  //0..255 for all
 	or = (or * val)>>8;
 	og = (og * val)>>8;
 	ob = (ob * val)>>8;
-	return "#" + tohex8(og) + tohex8(or) + tohex8(ob);
+	return "#" + tohex8(or) + tohex8(og) + tohex8(ob);
 }
 
 function tohex8( c )

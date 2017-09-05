@@ -503,7 +503,7 @@ void PureRotatingLEDs() // pure pattern not reacting to sound
 
 
 
-
+/* 
 uint32_t ECCtoHEX( uint8_t note, uint8_t sat, uint8_t val )
 {
 	uint16_t hue = 0;
@@ -511,11 +511,62 @@ uint32_t ECCtoHEX( uint8_t note, uint8_t sat, uint8_t val )
 
 	hue = renote;
 	hue >>= 8;
-	hue += 43;
+	hue = 256 - hue; //reverse rainbow order
+	hue += 43; //start yellow
 //	printf("%d %d \n", renote, hue);
 
 	return EHSVtoHEX( hue, sat, val );
 }
+*/
+/*
+uint32_t ECCtoHEX( uint8_t note, uint8_t sat, uint8_t val )
+{
+	uint16_t hue = 0;
+	uint32_t renote = ((uint32_t)note * 65536) / NOTERANGE;
+	uint32_t rn0 = 0;
+	uint16_t hn0 = 7*255/6;
+	uint32_t rn1 = 65536/3;
+	uint16_t hn1 = 255;
+	uint32_t rn2 = 2 * rn1;
+	uint16_t hn2 = 2*255/3;
+	uint32_t rn3 = 65536;
+	uint16_t hn3 = 255/6;
+	if( renote < rn1 )
+	{	hue = hn0 + (renote - rn0) * (hn1 - hn0) / (rn1 - rn0);
+	}
+	else if( renote < rn2 )
+	{	hue = hn1 + (renote - rn1) * (hn2 - hn1) / (rn2 - rn1);
+	}
+	else
+	{	hue = hn2 + (renote - rn2) * (hn3 - hn2) / (rn3 - rn2);
+	}
+	return EHSVtoHEX( hue, sat, val );
+}
+*/
+uint32_t ECCtoHEX( uint8_t note, uint8_t sat, uint8_t val )
+{
+	uint16_t hue = 0;
+	uint32_t renote = ((uint32_t)note * 65536) / NOTERANGE;
+	#define rn0  0
+	#define hn0  298
+	#define rn1  21845
+	#define hn1  255
+	#define rn2  43690
+	#define hn2  170
+	#define rn3  65536
+	#define hn3  43
+	if( renote < rn1 )
+	{	hue = hn0 - (renote - rn0) * (43) / (21845);
+	}
+	else if( renote < rn2 )
+	{	hue = hn1 - (renote - rn1) * (85) / (21845);
+	}
+	else
+	{	hue = hn2 - (renote - rn2) * (127) / (21846);
+	}
+	return EHSVtoHEX( hue, sat, val );
+}
+
 
 uint32_t EHSVtoHEX( uint8_t hue, uint8_t sat, uint8_t val )
 {
@@ -578,9 +629,9 @@ uint32_t EHSVtoHEX( uint8_t hue, uint8_t sat, uint8_t val )
 	or = (or * val)>>8;
 	og = (og * val)>>8;
 	ob = (ob * val)>>8;
-//	printf( "__%d %d %d sat = %d val = %d\n", or, og, ob, rs, rv );
+//	printf( "  hue = %d r=%d g=%d b=%d rs=%d rv=%d\n", hue, or, og, ob, rs, rv );
 
-	return or | (og<<8) | ((uint32_t)ob<<16);
-//	return ((uint32_t)or<<16) | (og<<8) | ob; //new
+//	return or | (og<<8) | ((uint32_t)ob<<16);
+	return og | (or<<8) | ((uint32_t)ob<<16); //new
 }
 
