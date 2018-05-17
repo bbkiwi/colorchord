@@ -53,7 +53,7 @@ void NewFrame()
 	for( i = 0; i < expected_lights * 3; i++ )
 	{
 		buffer[i+toskip*3] = ledOut[i];
-// printf("In NF: %d\n", ledOut[i]);
+//printf("In NF: %d\n", ledOut[i]);
 
 	}
 
@@ -99,7 +99,7 @@ int main( int argc, char ** argv )
 	case 0:
 	case 1:
 	case 2:
-		samplesPerFrame = 1; // <= but if < required new def of max to respond to peaks
+		samplesPerFrame = 128; // <= but if < required new def of max to respond to peaks
 		samplesPerHandleInfo = 128;
 		break;
 	case 3:

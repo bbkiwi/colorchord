@@ -280,10 +280,12 @@ int SetupDFTProgressive32()
 
 void UpdateBins32( const uint16_t * frequencies )
 {
-	int i;	
-	for( i = 0; i < FIXBINS; i++ )
+	int i;
+	int imod = 0;
+	for( i = 0; i < FIXBINS; i++, imod++ )
 	{
-		uint16_t freq = frequencies[i%FIXBPERO];
+		if (imod >= FIXBPERO) imod=0;
+		uint16_t freq = frequencies[imod];
 		Sdatspace32A[i*2] = freq;// / oneoveroctave;
 	}
 }

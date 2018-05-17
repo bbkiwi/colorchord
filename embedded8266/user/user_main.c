@@ -141,11 +141,11 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 //			if (checkdiff) break;
 #if PROTECT_SOUNDDATA
 			EnterCritical();
-			ets_delay_us( 1 );
+			//ets_delay_us( 2);
 #endif
 			int16_t samp = sounddata[soundtail];
 #if PROTECT_SOUNDDATA
-			ets_delay_us( 1 );
+			//ets_delay_us( 2 );
 			ExitCritical();
 #endif
 			samp_iir = samp_iir - (samp_iir>>10) + samp;

@@ -154,6 +154,12 @@ void HandleFrameInfo()
 #else
 	uint16_t * strens = embeddedbins;
 #endif
+#if DEBUGPRINT
+	printf( "fuzzed strens oct 1: " );
+	for( i = 0; i < FIXBPERO; i++ ) printf( " %5d /", strens[i]>>FUZZ_IIR_BITS  );
+	printf( "\n" );
+#endif
+
 	bass = 0;
 	mid = 0;
 	treb = 0;
@@ -223,6 +229,18 @@ void HandleFrameInfo()
 			folded_bins[i] = folded_out[i];
 		}
 	}
+#if DEBUGPRINT
+	//printf("MIN_AMP_FOR_NOTE %5d \n", MIN_AMP_FOR_NOTE);
+	printf( "Folded Bin << %2d >>4: ", FUZZ_IIR_BITS );
+	for( i = 0; i < FIXBPERO; i++ ) printf( " %5d /", (folded_bins[i]<<FUZZ_IIR_BITS)>>4  );
+	printf( "\n" );
+	printf( "Folded Bin         : ");
+	for( i = 0; i < FIXBPERO; i++ ) printf( " %5d /", folded_bins[i]  );
+	printf( "\n" );
+#endif
+
+
+
 
 	//Next, we have to find the peaks, this is what "decompose" does in our
 	//normal tool.  As a warning, it expects that the values in foolded_bins
@@ -239,11 +257,15 @@ void HandleFrameInfo()
 			int16_t offset;
 			adjLeft++; if( adjLeft >= FIXBPERO ) adjLeft = 0;
 			adjRight++; if( adjRight >= FIXBPERO ) adjRight = 0;
-			if( this < MIN_AMP_FOR_NOTE ) continue;
+			// Need to adjust this so in range 0..255 so can be compared to MIN_AMP_FOR_NOTE
+			if( (this<<FUZZ_IIR_BITS) < MIN_AMP_FOR_NOTE<<4 ) continue;
 			if( prev > this || next > this ) continue;
 			if( prev == this && next == this ) continue;
 
 			//i is at a peak... 
+#if DEBUGPRINT
+			printf("peak at i = %5d of  %5d \n", i, this);
+#endif
 			int32_t totaldiff = (( this - prev ) + ( this - next ));
 			int32_t porpdiffP = ((this-prev)<<16) / totaldiff; //close to 0 =
 					//closer to this side, 32768 = in the middle, 65535 away.
@@ -332,12 +354,12 @@ void HandleFrameInfo()
 				note_peak_amps[marked_note] =
 					note_peak_amps[marked_note] -
 					(note_peak_amps[marked_note]>>AMP_1_IIR_BITS) +
-					(this>>(AMP_1_IIR_BITS-3));
+					((this<<FUZZ_IIR_BITS)>>(AMP_1_IIR_BITS));
 
 				note_peak_amps2[marked_note] =
 					note_peak_amps2[marked_note] -
 					(note_peak_amps2[marked_note]>>AMP_2_IIR_BITS) +
-					((this<<3)>>(AMP_2_IIR_BITS));
+					((this<<FUZZ_IIR_BITS)>>(AMP_2_IIR_BITS));
 			}
 		}
 	}

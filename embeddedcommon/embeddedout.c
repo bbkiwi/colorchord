@@ -287,6 +287,7 @@ void UpdateLinearLEDs()
 
 #if DEBUGPRINT
 	printf("rot_dir %d, gROTATIONSHIFT %d, jshift %d, gFRAMECOUNT_MOD_SHIFT_INTERVAL %d\n", rot_dir, gROTATIONSHIFT, jshift, gFRAMECOUNT_MOD_SHIFT_INTERVAL);
+	printf("NOTE_FINAL_AMP = %d\n", NOTE_FINAL_AMP);
 	printf("leds: ");
 #endif
 	// put linear pattern of USE_NUM_LIN_LEDS on ring NUM_LIN_LEDs

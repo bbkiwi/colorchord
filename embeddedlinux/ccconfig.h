@@ -3,19 +3,19 @@
 
 
 #define CCEMBEDDED
-#define DEBUGPRINT 0
+#define DEBUGPRINT 1
 #define RING
 #define LEDS_PER_ROW 16
 #define NUM_LIN_LEDS 60
 #define USE_NUM_LIN_LEDS 60
 #define DFREQ 16000
-#define NOTE_FINAL_AMP  50		//Final brightness Number from 0...255
+#define NOTE_FINAL_AMP  15		//Final brightness Number from 0...255
 #define NOTE_FINAL_SATURATION  255	//Final saturation Number from 0...255
 #define ROOT_NOTE_OFFSET 0
 //Controls, basically, the minimum size of the splotches.
-#define NERF_NOTE_PORP 192 //value from 0 to 255
+#define NERF_NOTE_PORP 15 //value from 0 to 255
 
-#define COLORCHORD_OUTPUT_DRIVER 3    // 0 UpdateLinearLEDs, 1 UpdateAllSameLEDs, 2 UpdateRotatingLEDs; 3 PureRotatingLEDs (not depend on sound);
+#define COLORCHORD_OUTPUT_DRIVER 0    // 0 UpdateLinearLEDs, 1 UpdateAllSameLEDs, 2 UpdateRotatingLEDs; 3 PureRotatingLEDs (not depend on sound);
 #define COLORCHORD_SHIFT_INTERVAL 0   // shift after this many frames, 0 no shifts
 #define COLORCHORD_FLIP_ON_PEAK 1      // non-zero will flip on peak total amp2
 #define COLORCHORD_SHIFT_DISTANCE 0    // distance of shift + anticlockwise, - clockwise, 0 no shift (if divisor of NUM_LIN_LEDS strobe effects)
@@ -27,7 +27,7 @@
 //You may increase this past 5 but if you do, the amplitude of your incoming
 //signal must decrease.  Increasing this value makes responses slower.  Lower
 //values are more responsive.
-#define DFTIIR 3
+#define DFTIIR 5
 //The higher the number the slackier your FFT will be come.
 #define FUZZ_IIR_BITS  1
 //Notes are the individually identifiable notes we receive from the sound.
@@ -50,8 +50,8 @@
 //the response for the slow-response, or what we use to determine size of
 //splotches, AMP 2 is the quick response, or what we use to see the visual
 //strength of the notes.
-#define AMP_1_IIR_BITS 3 // 3 fastest below 3 blows up
-#define AMP_2_IIR_BITS 0 // 0 fastest reactions
+#define AMP_1_IIR_BITS 4 // 3 fastest below 3 blows up
+#define AMP_2_IIR_BITS 2 // 0 fastest reactions
 //This is the amplitude, coming from folded_bins.  If the value is below this
 //it is considered a non-note.
 #define MIN_AMP_FOR_NOTE 80
