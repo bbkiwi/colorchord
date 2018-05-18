@@ -28,7 +28,14 @@ runembedded : embeddedcc
 	parec  --format=u8 --rate=16000 --channels=1 $(SOUNDDEVICE) --latency=128 | ./embeddedcc $(OUTIP) 1 
 
 runembeddeddbg : embeddedcc
-	parec -v  --format=u8 --rate=16000 --channels=1 $(SOUNDDEVICE) --latency=128 | ./embeddedcc $(OUTIP) 1 > dbout.txt
+	cat dbinput.txt |pv --rate-limit 16000 | ./embeddedcc $(OUTIP) 1 > dbout.txt
+
+recordsound :
+	parec -v  --format=u8 --rate=16000 --channels=1 $(SOUNDDEVICE) --latency=128 > dbinput.txt
+
+playsound :
+	pacat --format=u8 --rate=16000 --channels=1 --latency=128 dbinput.txt
+
 
 clean :
 	rm -rf embeddedcc *~ dummy_leds
