@@ -196,9 +196,11 @@ void RunNoteFinder( struct NoteFinder * nf, const float * audio_stream, int head
 	case 3:
 		DoDFTProgressiveIntegerSkippy( dftbins, nf->frequencies, freqs, audio_stream, head, buffersize, nf->dft_q, nf->dft_speedup );
 		break;
+#ifndef CCEMBEDDED
 	case 4:
 		DoDFTProgressive32( dftbins, nf->frequencies, freqs, audio_stream, head, buffersize, nf->dft_q, nf->dft_speedup );
 		break;
+#endif
 	default:
 		fprintf( stderr, "Error: No DFT Seleced\n" );
 	}

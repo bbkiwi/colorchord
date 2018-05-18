@@ -256,7 +256,7 @@ int SetupDFTProgressive32()
 	for( i = 0; i < BINCYCLE; i++ )
 	{
 		// Sdo_this_octave = 
-		// 4 3 4 2 4 3 4 ...
+		// 4 3 4 2 4 3 4 ... 255 (which is -1 as unsigned)
 		//search for "first" zero
 
 		for( j = 0; j <= OCTAVES; j++ )
