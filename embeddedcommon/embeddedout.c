@@ -455,8 +455,8 @@ void UpdateRotatingLEDs()
 
 }
 
-
-void PureRotatingLEDs() // pure pattern not reacting to sound
+// pure pattern not reacting to sound
+void PureRotatingLEDs()
 {
 	int16_t i;
 	int16_t jshift; // int8_t jshift; caused instability especially for large no of LEDs

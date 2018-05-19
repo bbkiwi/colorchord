@@ -69,7 +69,9 @@ void UpdateAllSameLEDs();
 void UpdateRotatingLEDs();
 
 //Pattern of lights independent of input audio
-void PureRotatingLEDs();
+//TODO If the following is not commented out fails to run on ESP8266
+//generates warning when do embeddedlinux???
+//void PureRotatingLEDs();
 
 uint32_t ECCtoHEX( uint8_t note, uint8_t sat, uint8_t val );
 uint32_t EHSVtoHEX( uint8_t hue, uint8_t sat, uint8_t val ); //hue = 0..255 // TODO: TEST ME!!!
