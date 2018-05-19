@@ -2,10 +2,12 @@
 
 
 #include "embeddedout.h"
+#if DEBUGPRINT
+#include <stdio.h>
+#endif
 
 //uint8_t ledArray[NUM_LIN_LEDS]; //Points to which notes correspond to these LEDs
 uint8_t ledOut[NUM_LIN_LEDS*3];
-
 uint16_t ledAmpOut[NUM_LIN_LEDS];
 uint8_t ledFreqOut[NUM_LIN_LEDS];
 uint8_t ledFreqOutOld[NUM_LIN_LEDS];

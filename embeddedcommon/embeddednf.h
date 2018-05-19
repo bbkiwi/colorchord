@@ -89,6 +89,7 @@
 //This prevents compilation of any floating-point code, but it does come with
 //an added restriction: Both DFREQ and BASE_FREQ must be #defined to be
 //constants.
+//TODO currently only works for FIXBPERO 24
 #define PRECOMPUTE_FREQUENCY_TABLE
 
 #include "DFT32.h"

@@ -3,6 +3,9 @@
 #include "embeddednf.h"
 #include <stdio.h>
 #include <string.h>
+#ifndef PRECOMPUTE_FREQUENCY_TABLE
+#include <math.h>
+#endif
 
 uint16_t folded_bins[FIXBPERO];
 uint16_t fuzzed_bins[FIXBINS];
@@ -13,6 +16,7 @@ uint8_t  note_jumped_to[MAXNOTES];
 uint16_t bass, mid, treb;
 
 
+/*
 #ifndef PRECOMPUTE_FREQUENCY_TABLE
 static const float bf_table[24] = {
         1.000000, 1.029302, 1.059463, 1.090508, 1.122462, 1.155353, 
@@ -20,7 +24,7 @@ static const float bf_table[24] = {
         1.414214, 1.455653, 1.498307, 1.542211, 1.587401, 1.633915, 
         1.681793, 1.731073, 1.781797, 1.834008, 1.887749, 1.943064 };
 
-/* The above table was generated using the following code:
+/ * The above table was generated using the following code:
 
 #include <stdio.h>
 #include <math.h>
@@ -41,19 +45,19 @@ int main()
 }
 */
 
-#endif
+//#endif
 
 #define BUILD_BUG_ON(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
 
 
 void UpdateFreqs()
 {
-
-#ifndef PRECOMPUTE_FREQUENCY_TABLE
-	uint16_t fbins[FIXBPERO];
 	int i;
 
-	BUILD_BUG_ON( sizeof(bf_table) != FIXBPERO*4 );
+#ifndef PRECOMPUTE_FREQUENCY_TABLE
+
+	uint16_t fbins[FIXBPERO];
+
 
 	//Warning: This does floating point.  Avoid doing this frequently.  If you
 	//absolutely cannot have floating point on your system, you may precompute
@@ -62,11 +66,12 @@ void UpdateFreqs()
 
 	for( i = 0; i < FIXBPERO; i++ )
 	{
-		float frq =  ( bf_table[i] * BASE_FREQ );
+		float frq = pow( 2, (float)i / (float)FIXBPERO) * BASE_FREQ;
 		fbins[i] = ( 65536.0 ) / ( DFREQ ) * frq * 16 + 0.5;
 	}
 #else
-
+//TODO this only for FIXBPERO = 24 could add for 6,8,12,16,24,36,48
+	BUILD_BUG_ON( FIXBPERO != 24 ); //forces compile error
 	#define PCOMP( f )  (uint16_t)((65536.0)/(DFREQ) * (f * BASE_FREQ) * 16 + 0.5)
 
 	static const uint16_t fbins[FIXBPERO] = { 
@@ -80,6 +85,11 @@ void UpdateFreqs()
 	UpdateBins32( fbins );
 #else
 	UpdateBinsForProgressiveIntegerSkippyInt( fbins );
+#endif
+#if DEBUGPRINT
+	printf( "fbins: " );
+	for( i = 0; i < FIXBPERO; i++ ) printf( " %5d /", fbins[i]  );
+	printf( "\n" );
 #endif
 }
 
@@ -107,6 +117,9 @@ void InitColorChord()
 	//Step 2: Set up the frequency list.  You could do this multiple times
 	//if you want to change the loadout of the frequencies.
 	UpdateFreqs();
+
+
+
 }
 
 /*
@@ -154,6 +167,7 @@ void HandleFrameInfo()
 #else
 	uint16_t * strens = embeddedbins;
 #endif
+	//for( i = 0; i < FIXBINS; i++ ) printf( " %10d %10x\n ", strens[i], strens[i]   );
 #if DEBUGPRINT
 	printf( "fuzzed strens oct 1: " );
 	for( i = 0; i < FIXBPERO; i++ ) printf( " %5d /", strens[i]>>FUZZ_IIR_BITS  );
@@ -167,8 +181,10 @@ void HandleFrameInfo()
 	//Copy out the bins from the DFT to our fuzzed bins.
 	for( i = 0; i < FIXBINS; i++ )
 	{
-		fuzzed_bins[i] = (fuzzed_bins[i] + (strens[i]>>FUZZ_IIR_BITS) -
-			(fuzzed_bins[i]>>FUZZ_IIR_BITS));
+		fuzzed_bins[i] -= (fuzzed_bins[i]>>FUZZ_IIR_BITS);
+		fuzzed_bins[i] += (strens[i]>>FUZZ_IIR_BITS);
+//		fuzzed_bins[i] = (fuzzed_bins[i] + (strens[i]>>FUZZ_IIR_BITS) -
+//			(fuzzed_bins[i]>>FUZZ_IIR_BITS));
 		if (i < FIXBINS/3) bass += fuzzed_bins[i];
 		else if (i < 2*FIXBINS/3) mid += fuzzed_bins[i];
 		else treb += fuzzed_bins[i];

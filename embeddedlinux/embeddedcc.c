@@ -111,8 +111,6 @@ int main( int argc, char ** argv )
 	while( ( ci = getchar() ) != EOF )
 	{
 		int cs = ci - 0x80;
-//printf("byte: %d\n", cs);
-// putchar(ci);
 #ifdef USE_32DFT
 		PushSample32( ((int8_t)cs)*32 );
 #else

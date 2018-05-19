@@ -172,20 +172,17 @@ void UpdateOutputBins32()
 		//If we are running DFT32 on regular ColorChord, then we will need to
 		//also update goutbins[]... But if we're on embedded systems, we only
 		//update embeddedbins32.
-#ifndef CCEMBEDDED
 		uint32_t mux = ( (isps) * (isps)) + ((ispc) * (ispc));
+#ifndef CCEMBEDDED
 		goutbins[i] = sqrtf( (float)mux );
 		//reasonable (but arbitrary amplification)
 		goutbins[i] /= (78<<DFTIIR)*(1<<octave); 
 #endif
 
-		uint32_t rmux = ( (isps) * (isps)) + ((ispc) * (ispc));
-
 		//bump up all outputs here, so when we nerf it by bit shifting by
 		//ctave we don't lose a lot of detail.
-		rmux = SquareRootRounded( rmux ) << 1; 
-
-		embeddedbins32[i] = rmux >> octave;
+		mux = SquareRootRounded( mux ) << 1;
+		embeddedbins32[i] = mux >> octave;
 	}
 }
 
@@ -202,7 +199,7 @@ static void HandleInt( int16_t sample )
 	if( oct > 128 )
 	{
 		//Special: This is when we can update everything.
-		//This gets run one out of every 1/(1<<OCTAVES) times.
+		//This gets run once out of every (1<<OCTAVES) times.
 		//It handles updating part of the DFT.
 		int32_t * bins = &Sdatspace32B[0];
 		int32_t * binsOut = &Sdatspace32BOut[0];

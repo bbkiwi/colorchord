@@ -68,6 +68,8 @@ void UpdateAllSameLEDs();
 //For using dominant note as in UpdateAllSameLEDs but display one light and rotate with direction changing at peak total amp2 LEDs
 void UpdateRotatingLEDs();
 
+//Pattern of lights independent of input audio
+void PureRotatingLEDs();
 
 uint32_t ECCtoHEX( uint8_t note, uint8_t sat, uint8_t val );
 uint32_t EHSVtoHEX( uint8_t hue, uint8_t sat, uint8_t val ); //hue = 0..255 // TODO: TEST ME!!!
