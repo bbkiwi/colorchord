@@ -11,13 +11,12 @@ with running fast ADC and wifi. Output is slightly jittery
 and range which should be 0 to 255 is restricted.)
 </p>
 <p>A Discrete Fourier Transform (DFT) is adjusted via
- parameters gDFTIIR, gFUZZ_IIR_BITS (high attenuates high and low), gFILTER_BLUR_PASSES and
-gSEMIBITSPERBIN. It is wrapped to give a histogram of intensities over rMAXNOTES. </p>
-<p>Two amplitudes amp1 and amp2 are used which decay at different rates. Those with amp1 above gMIN_AMP_FOR_NOTE become notes. </p>
-<p>gAMP_1_IIR_BITS and gAMP_2_IIR_BITS control decay speed
-of the two amplitudes amp1 and amp2.  Lower values give slow decay.</p>
-<p>NOTE Lower gAMP_1_IIR_BITS &#60; 3 freezes and then
-comes back resetting its value.  </p>
+ parameters gDFTIIR (time of peak decay about 2^DFTIIR * 2^OCTAVES / DFREQ ).<br>
+ A fuzzed DFT is controlled by gFUZZ_IIR_BITS (forms an running  average between computed DFT bins each time HandleFrameInfo is called. High values gives slow transition) and gFILTER_BLUR_PASSES (0,1,2 best) controls averaging between adjacent bins. Small values (below 400) are clipped.<br>
+The fuzzed bin is folded to give rFIXBPERO bins representing amalgamated frequencies that are octaves apart.<br>
+</p>
+<p>2^SEMIBITSPERBIN * FIXBPERO determing the range of notes</p>
+<p>Two amplitudes amp1 and amp2 are used which decay at rates controlled by gAMP_1_IIR_BITS and gAMP_2_IIR_BITS. Higher values give slow decay. Peaks of the folded histogram with amp1 above gMIN_AMP_FOR_NOTE become notes. </p>
 <p>Notes last until amp1 decays below 	gMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR</p>
 <p>Notes persist if the frequency does not change too much but are considered new if change by more than
 gMAX_JUMP_DISTANCE and 	gMAX_COMBINE_DISTANCE control this.</p>
@@ -27,8 +26,8 @@ gMAX_JUMP_DISTANCE and 	gMAX_COMBINE_DISTANCE control this.</p>
       A linear array of gUSE_NUM_LIN_LEDS LEDs is inserted in the rings depending on gCOLORCHORD_OUTPUT_DRIVER value</dt>
   <dd>- 0 (see embeddedcommon/embeddedout.c UpdateLinearLEDs) - The note colors are displayed as bands with size proportional to amp1<br>
  Color them according to note_peak_freq with brightness related to amps2</dd>
-  <dd>- 1 - The dominant note colors the complete interval</dd>
-  <dd>- 2 - Check it is pretty similar to 0 now.</dd>
+  <dd>- 1 - The dominant note colors the complete interval with brightness related to amp2</dd>
+  <dd>- 2 - The dominant note colors an arc whose length is proportional to amp2 and brightness is NOTE_FINAL_AMP. Rotation flips on peaks of bass.</dd>
   <dd>- 3 - Pattern indepenent of sound</dd>
 </dl>
 
