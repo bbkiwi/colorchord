@@ -162,6 +162,10 @@ void UpdateOutputBins32()
 {
 	int i;
 	int32_t * ipt = &Sdatspace32BOut[0];
+	//logistic data to adjust embeddedbins32 so between 0 and 65536 max uint16
+        static const uint16_t adjstrens[17] = {
+		217, 244, 319, 522, 1064, 2777, 5922,
+		13110, 24200, 35291, 42479, 45924, 47337, 47879, 48082, 48157, 48184};
 	for( i = 0; i < FIXBINS; i++ )
 	{
 		int16_t isps = *(ipt++)>>16;
@@ -175,14 +179,19 @@ void UpdateOutputBins32()
 		uint32_t mux = ( (isps) * (isps)) + ((ispc) * (ispc));
 #ifndef CCEMBEDDED
 		goutbins[i] = sqrtf( (float)mux );
-		//reasonable (but arbitrary amplification)
+		//reasonable (but arbitrary attenuation)
 		goutbins[i] /= (78<<DFTIIR)*(1<<octave); 
 #endif
 
 		//bump up all outputs here, so when we nerf it by bit shifting by
 		//ctave we don't lose a lot of detail.
-		mux = SquareRootRounded( mux ) << 1;
-		embeddedbins32[i] = mux >> octave;
+		//mux = SquareRootRounded( mux ) << 1;
+		//embeddedbins32[i] = mux >> octave;
+		//adjust embeddedbins32 via a logistic data so between 0 and 65536 max uint16
+		//embeddedbins32[i] = embeddedbins32[i]*40000/adjstrens[DFTIIR];
+		mux = SquareRootRounded( mux );
+		embeddedbins32[i] = (mux << (17-octave))/adjstrens[DFTIIR];
+
 	}
 }
 

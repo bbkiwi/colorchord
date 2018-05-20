@@ -27,7 +27,7 @@
 //You may increase this past 5 but if you do, the amplitude of your incoming
 //signal must decrease.  Increasing this value makes responses slower.  Lower
 //values are more responsive.
-#define DFTIIR 5
+#define DFTIIR 2
 //The higher the number the slackier your FFT will be come.
 #define FUZZ_IIR_BITS  1
 //Notes are the individually identifiable notes we receive from the sound.

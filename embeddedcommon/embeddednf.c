@@ -167,10 +167,11 @@ void HandleFrameInfo()
 #else
 	uint16_t * strens = embeddedbins;
 #endif
-	//for( i = 0; i < FIXBINS; i++ ) printf( " %10d %10x\n ", strens[i], strens[i]   );
+	//for( i = 0; i < FIXBINS; i++ ) printf( " %10d\n ", strens[i]  );
+
 #if DEBUGPRINT
-	printf( "fuzzed strens oct 1: " );
-	for( i = 0; i < FIXBPERO; i++ ) printf( " %5d /", strens[i]>>FUZZ_IIR_BITS  );
+	printf( "strens oct 1: " );
+	for( i = 0; i < FIXBPERO; i++ ) printf( " %5d /", strens[i]  );
 	printf( "\n" );
 #endif
 
@@ -182,9 +183,8 @@ void HandleFrameInfo()
 	for( i = 0; i < FIXBINS; i++ )
 	{
 		fuzzed_bins[i] -= (fuzzed_bins[i]>>FUZZ_IIR_BITS);
-		fuzzed_bins[i] += (strens[i]>>FUZZ_IIR_BITS);
-//		fuzzed_bins[i] = (fuzzed_bins[i] + (strens[i]>>FUZZ_IIR_BITS) -
-//			(fuzzed_bins[i]>>FUZZ_IIR_BITS));
+		// Try clip out small bins
+		if (strens[i] > 400) fuzzed_bins[i] += (strens[i]>>FUZZ_IIR_BITS);
 		if (i < FIXBINS/3) bass += fuzzed_bins[i];
 		else if (i < 2*FIXBINS/3) mid += fuzzed_bins[i];
 		else treb += fuzzed_bins[i];
@@ -215,6 +215,10 @@ void HandleFrameInfo()
 		{
 			folded_bins[i] += fuzzed_bins[k++];
 		}
+		//scale so in range 0..255
+		//for( i = 0; i < FIXBPERO; i++ ) folded_bins[i] /= 256*OCTAVES;
+		//for( i = 0; i < FIXBPERO; i++ ) folded_bins[i] /= 256;
+		//for( i = 0; i < FIXBPERO; i++ ) folded_bins[i] /= 20;
 	}
 
 	//Now, we must blur the folded bins to get a good result.
@@ -247,9 +251,9 @@ void HandleFrameInfo()
 	}
 #if DEBUGPRINT
 	//printf("MIN_AMP_FOR_NOTE %5d \n", MIN_AMP_FOR_NOTE);
-	printf( "Folded Bin << %2d >>4: ", FUZZ_IIR_BITS );
-	for( i = 0; i < FIXBPERO; i++ ) printf( " %5d /", (folded_bins[i]<<FUZZ_IIR_BITS)>>4  );
-	printf( "\n" );
+	//printf( "Folded Bin << %2d >>4: ", FUZZ_IIR_BITS );
+	//for( i = 0; i < FIXBPERO; i++ ) printf( " %5d /", (folded_bins[i]<<FUZZ_IIR_BITS)>>4  );
+	//printf( "\n" );
 	printf( "Folded Bin         : ");
 	for( i = 0; i < FIXBPERO; i++ ) printf( " %5d /", folded_bins[i]  );
 	printf( "\n" );
