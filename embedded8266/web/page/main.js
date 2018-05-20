@@ -386,8 +386,8 @@ function GotNotes(req,data)
 		ctx.fillStyle = CCColorDetail( peak );
 		ctx.lineWidth = 0;
 		ctx.fillRect( 100, i*25, 50,25);
-		ctx.fillRect( 201, i*25, amped/20,25);
-		ctx.fillRect( 329, i*25, amped2/20,25);
+		ctx.fillRect( 201, i*25, amped,25);
+		ctx.fillRect( 329, i*25, amped2,25);
 
 		ctx.fillStyle = "#ffffff";
 		ctx.fillText( peak, 110, i*25 + 20 );

@@ -277,8 +277,9 @@ void HandleFrameInfo()
 			int16_t offset;
 			adjLeft++; if( adjLeft >= FIXBPERO ) adjLeft = 0;
 			adjRight++; if( adjRight >= FIXBPERO ) adjRight = 0;
+			//folded_bins seem to range from 0 to 2^12 to get amp1 in 0..256 scale
 			// Need to adjust this so in range 0..255 so can be compared to MIN_AMP_FOR_NOTE
-			if( (this<<FUZZ_IIR_BITS) < MIN_AMP_FOR_NOTE<<4 ) continue;
+			if( this < MIN_AMP_FOR_NOTE<<4) continue;
 			if( prev > this || next > this ) continue;
 			if( prev == this && next == this ) continue;
 
@@ -374,12 +375,12 @@ void HandleFrameInfo()
 				note_peak_amps[marked_note] =
 					note_peak_amps[marked_note] -
 					(note_peak_amps[marked_note]>>AMP_1_IIR_BITS) +
-					((this<<FUZZ_IIR_BITS)>>(AMP_1_IIR_BITS));
+					((this>>4)>>(AMP_1_IIR_BITS));
 
 				note_peak_amps2[marked_note] =
 					note_peak_amps2[marked_note] -
 					(note_peak_amps2[marked_note]>>AMP_2_IIR_BITS) +
-					((this<<FUZZ_IIR_BITS)>>(AMP_2_IIR_BITS));
+					((this>>4)>>(AMP_2_IIR_BITS));
 			}
 		}
 	}
