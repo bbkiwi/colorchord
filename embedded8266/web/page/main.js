@@ -215,7 +215,7 @@ function GotDFT(req,data)
 	{
 		var x2 = i * canvas.clientWidth / samps;
 		var samp = parseInt( data.substr(i*4,4),16 );
-		var y2 = ( 1.-mult*samp / 2047 ) * canvas.clientHeight;
+		var y2 = ( 1.-mult*samp / 32752 ) * canvas.clientHeight;
 
 		ctx.fillStyle = CCColor( i % globalParams["rFIXBPERO"] );
 		ctx.fillRect( x2, y2, canvas.clientWidth / samps, canvas.clientHeight-y2 );
@@ -386,13 +386,13 @@ function GotNotes(req,data)
 		ctx.fillStyle = CCColorDetail( peak );
 		ctx.lineWidth = 0;
 		ctx.fillRect( 100, i*25, 50,25);
-		ctx.fillRect( 201, i*25, amped,25);
-		ctx.fillRect( 329, i*25, amped2,25);
+		ctx.fillRect( 201, i*25, amped>>8,25);
+		ctx.fillRect( 329, i*25, amped2>>8,25);
 
 		ctx.fillStyle = "#ffffff";
 		ctx.fillText( peak, 110, i*25 + 20 );
-		ctx.fillText( amped, 221, i*25 + 20 );
-		ctx.fillText( amped2, 340, i*25 + 20 );
+		ctx.fillText( amped>>8, 221, i*25 + 20 );
+		ctx.fillText( amped2>>8, 340, i*25 + 20 );
 	}
 
 	var samp = parseInt( data.substr(i*2,2),16 );

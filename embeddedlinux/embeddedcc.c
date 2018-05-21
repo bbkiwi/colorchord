@@ -104,7 +104,7 @@ int main( int argc, char ** argv )
 		break;
 	case 3:
 		samplesPerFrame = 1;
-		samplesPerHandleInfo = 1;
+		samplesPerHandleInfo = 1000;
 		break;
 	};
 

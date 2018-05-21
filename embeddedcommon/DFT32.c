@@ -190,7 +190,8 @@ void UpdateOutputBins32()
 		//adjust embeddedbins32 via a logistic data so between 0 and 65536 max uint16
 		//embeddedbins32[i] = embeddedbins32[i]*40000/adjstrens[DFTIIR];
 		mux = SquareRootRounded( mux );
-		embeddedbins32[i] = (mux << (17-octave))/adjstrens[DFTIIR];
+		//embeddedbins32[i] = (mux << (17-octave))/adjstrens[DFTIIR]; //when use adjust 4 in nf
+		embeddedbins32[i] = (mux << (21-octave))/adjstrens[DFTIIR]; // use adjust 8
 
 	}
 }

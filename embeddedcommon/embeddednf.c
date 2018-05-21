@@ -184,7 +184,7 @@ void HandleFrameInfo()
 	{
 		fuzzed_bins[i] -= (fuzzed_bins[i]>>FUZZ_IIR_BITS);
 		// Try clip out small bins
-		if (strens[i] > 400) fuzzed_bins[i] += (strens[i]>>FUZZ_IIR_BITS);
+		if (strens[i] > 6400) fuzzed_bins[i] += (strens[i]>>FUZZ_IIR_BITS);
 		if (i < FIXBINS/3) bass += fuzzed_bins[i];
 		else if (i < 2*FIXBINS/3) mid += fuzzed_bins[i];
 		else treb += fuzzed_bins[i];
@@ -279,7 +279,7 @@ void HandleFrameInfo()
 			adjRight++; if( adjRight >= FIXBPERO ) adjRight = 0;
 			//folded_bins seem to range from 0 to 2^12 to get amp1 in 0..256 scale
 			// Need to adjust this so in range 0..255 so can be compared to MIN_AMP_FOR_NOTE
-			if( this < MIN_AMP_FOR_NOTE<<4) continue;
+			if( this < MIN_AMP_FOR_NOTE<<8) continue;
 			if( prev > this || next > this ) continue;
 			if( prev == this && next == this ) continue;
 
@@ -375,12 +375,12 @@ void HandleFrameInfo()
 				note_peak_amps[marked_note] =
 					note_peak_amps[marked_note] -
 					(note_peak_amps[marked_note]>>AMP_1_IIR_BITS) +
-					((this>>4)>>(AMP_1_IIR_BITS));
+					(this>>(AMP_1_IIR_BITS));
 
 				note_peak_amps2[marked_note] =
 					note_peak_amps2[marked_note] -
 					(note_peak_amps2[marked_note]>>AMP_2_IIR_BITS) +
-					((this>>4)>>(AMP_2_IIR_BITS));
+					(this>>(AMP_2_IIR_BITS));
 			}
 		}
 	}
@@ -466,7 +466,7 @@ void HandleFrameInfo()
 
 		//In the event a note is not strong enough anymore, it is to be
 		//returned back into the great pool of unused notes.
-		if( note_peak_amps[i] < MINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR )
+		if( note_peak_amps[i] < MINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR<<8 )
 		{
 			note_peak_freqs[i] = 255;
 			note_peak_amps[i] = 0;
