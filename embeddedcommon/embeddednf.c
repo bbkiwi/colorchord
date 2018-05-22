@@ -350,8 +350,10 @@ void HandleFrameInfo()
 			}
 
 			int8_t marked_note = -1;
-
-			if( closest_note_distance <= MAX_JUMP_DISTANCE )
+			//MAX_JUMP_DISTANCE is in range 0..255 while distance is in range 0..NOTERANGE
+			// so compare distance/NOTERANGE to MAX_JUMP_DISTANCE/256
+			//need to scale
+			if( closest_note_distance<<8 <= NOTERANGE * MAX_JUMP_DISTANCE )
 			{
 				//We found the note we need to augment.
 				note_peak_freqs[closest_note_id] = thisfreq;
@@ -413,8 +415,8 @@ void HandleFrameInfo()
 		{
 			distance = ((1<<(SEMIBITSPERBIN))*FIXBPERO) - distance;
 		}
-
-		if( distance > MAX_COMBINE_DISTANCE )
+		// need to compare distance/NOTERANGE with MAX_COMBINE/256
+		if( distance<<8 > NOTERANGE * MAX_COMBINE_DISTANCE )
 		{
 			continue;
 		}

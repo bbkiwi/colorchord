@@ -34,6 +34,7 @@ static void timerhandle( void * v )
     RTC_CLR_REG_MASK(FRC1_INT_ADDRESS, FRC1_INT_CLR_MASK);
 	uint16_t r = hs_adc_read();
 	sounddata[soundhead] = r>>6; //14 bits shifted gives 8 bits
+	//sounddata[soundhead] = (r>>7)<<1; //14 bits shifted gives 8 bits with low order bit 0 to cut out noise
 	soundhead = (soundhead+1)&(HPABUFFSIZE-1);
 }
 

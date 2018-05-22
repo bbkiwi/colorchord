@@ -55,8 +55,9 @@ uint16 hs_adc_read(void)
     while (GET_PERI_REG_BITS(0x60000D50, 26, 24) > 0); //wait r_state == 0
 
     read_sar_dout(sardata);
-
-    for (i = 0; i < 8; i++) {
+    // sardata[7] lowest order bit might be the noisy one so ignore it
+    for (i = 0; i < 7; i++) {
+    //for (i = 0; i < 8; i++) {
         sar_dout += sardata[i];
     }
 
