@@ -299,6 +299,25 @@ void UpdateBins32( const uint16_t * frequencies )
 
 void PushSample32( int16_t dat )
 {
+#if DFTSAMPLE
+#include <math.h>;
+	//Sends out blocks of incoming data starting at an
+	//zerocrossing that is non-decreasing - so plotting will look nice
+	// to be used with embeddedlinux when testing
+	static int cnt=0;
+	static olddat;
+	static zerocrossing;
+	zerocrossing = (abs(dat) <100) ? 1 :0 ;
+	if ((cnt==0 && zerocrossing && (dat >= olddat)) || cnt>0) {
+		printf("%d ", dat);
+		cnt++;
+		if (cnt>128) {
+			printf("\n");
+			cnt=0;
+		}
+	}
+	olddat = dat;
+#endif
 	HandleInt( dat );
 	HandleInt( dat );
 }

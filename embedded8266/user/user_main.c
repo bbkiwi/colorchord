@@ -86,7 +86,7 @@ static void ICACHE_FLASH_ATTR NewFrame()
 
 os_event_t    procTaskQueue[procTaskQueueLen];
 uint32_t samp_iir = 0;
-int wf = 0;
+int wf = 64; //this will stagger calls to NewFrame and HandleFrameInfo
 int wh = 0;
 int samplesPerFrame = 128;
 int samplesPerHandleInfo = 1;

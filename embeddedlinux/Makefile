@@ -22,13 +22,16 @@ SOUNDDEVICE:= --device=alsa_input.pci-0000_00_05.0.analog-stereo # to use mic
 #SOUNDDEVICE:= 
 
 #OUTIP:=127.0.0.1 # works for ubuntu guest in Virtual Machine using ./dummy_leds (very slow compiz 90%)
-OUTIP:=192.168.1.57 # works for ubuntu guest in Virtual Machine
+OUTIP:=192.168.1.56 # works for ubuntu guest in Virtual Machine
 
 runembedded : embeddedcc
 	parec  --format=u8 --rate=16000 --channels=1 $(SOUNDDEVICE) --latency=128 | ./embeddedcc $(OUTIP) 1 
 
-runembeddeddbg : embeddedcc
+runembeddedrecordeddbg : embeddedcc
 	cat dbinput.txt |pv --rate-limit 16000 | ./embeddedcc $(OUTIP) 1 > dbout.txt
+
+runembeddeddbg : embeddedcc
+	parec  --format=u8 --rate=16000 --channels=1 $(SOUNDDEVICE) --latency=128 | ./embeddedcc $(OUTIP) 1 > dbout.txt
 
 recordsound :
 	parec -v  --format=u8 --rate=16000 --channels=1 $(SOUNDDEVICE) --latency=128 > dbinput.txt

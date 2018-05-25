@@ -127,6 +127,8 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 		int i, it = soundhead;
 		for( i = 0; i < 512; i++ )
 		{
+//TODO  if replace below with uint8_t samp = 127; to test why oscope causes interferance
+//      get wdt resets coninually. Why??
 			uint8_t samp = sounddata[it++];
 			it = it & (HPABUFFSIZE-1);
 			*(buffend++) = tohex1( samp>>4 );

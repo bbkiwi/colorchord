@@ -167,9 +167,19 @@ void HandleFrameInfo()
 #else
 	uint16_t * strens = embeddedbins;
 #endif
-	//for( i = 0; i < FIXBINS; i++ ) printf( " %10d\n ", strens[i]  );
-
+#if DFTHIST
+	for( i = 0; i < FIXBINS; i++ ) printf( "%5d ", strens[i]  );
+	printf( "\n" );
+#endif
 #if DEBUGPRINT
+	uint16_t stmin, stmax;
+	stmin = 65535;
+	stmax = 0;
+	for( i = 0; i < FIXBINS; i++ ) {
+		if(strens[i] > stmax) stmax=strens[i];
+		if(strens[i] < stmin) stmin=strens[i];
+	}
+	printf( "strens min: %d, max: %d\n ", stmin, stmax );
 	printf( "strens oct 1: " );
 	for( i = 0; i < FIXBPERO; i++ ) printf( " %5d /", strens[i]  );
 	printf( "\n" );
