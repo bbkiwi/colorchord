@@ -118,7 +118,6 @@ function GotOScope(req,data)
 
 	var samps = Number( secs[1] );
 	var data = secs[2];
-	var lastsamp = parseInt( data.substr(0,2),16 );
 	ctx.clearRect( 0, 0, canvas.width, canvas.height );
 	ctx.beginPath();
 	for( var i = 0; i < samps; i++ )
@@ -137,16 +136,15 @@ function GotOScope(req,data)
 		
 		if( i == 0 )
 		{
-			var x1 = i * canvas.clientWidth / samps;
-			var y1 =  ( 0.5 - mult* (lastsamp / 255 - OSCOPE_ZERO) ) * canvas.clientHeight;
+			samp = parseInt( data.substr(0,2),16 );
+			var y1 =  ( 0.5 - mult* (samp / 255 - OSCOPE_ZERO) ) * canvas.clientHeight;
 			// if want samp 0 to be at bottom and samp 255 at top use
-			//var y1 =  (1.0 - mult * lastsamp / 255 ) * canvas.clientHeight;
-			ctx.moveTo( x1, y1 );
+			//var y1 =  (1.0 - mult * samp / 255 ) * canvas.clientHeight;
+			ctx.moveTo(0, y1 );
 		}
 
 		ctx.lineTo( x2, y2 );
 
-		lastsamp = samp;
 	}
 	ctx.stroke();
 
@@ -212,7 +210,6 @@ function GotDFT(req,data)
 
 	var samps = Number( secs[1] );
 	var data = secs[2];
-	var lastsamp = parseInt( data.substr(0,4),16 );
 	ctx.clearRect( 0, 0, canvas.width, canvas.height );
 	ctx.beginPath();
 
@@ -289,15 +286,12 @@ function GotLED(req,data)
 
 	var samps = Number( secs[1] );
 	var data = secs[2];
-	var lastsamp = parseInt( data.substr(0,4),16 );
 	ctx.clearRect( 0, 0, canvas.width, canvas.height );
 
 	for( var i = 0; i < samps; i++ )
 	{
 		var x2 = i * canvas.clientWidth / samps;
 		var samp = data.substr(i*6,6);
-		var y2 = ( 1.-samp / 2047 ) * canvas.clientHeight;
-
 		ctx.fillStyle = "#" + samp.substr( 2, 2 ) + samp.substr( 0, 2 ) + samp.substr( 4, 2 );
 		ctx.lineWidth = 0;
 		ctx.fillRect( x2, 0, canvas.clientWidth / samps+1, canvas.clientHeight );
@@ -383,21 +377,22 @@ function GotNotes(req,data)
 
 		if( peak == 255 )
 		{
-			ctx.fillStyle = "#ffffff";
-			ctx.fillText( jump, 60, i*25 + 20 );
+			ctx.fillStyle = "#00ff00";
+			ctx.fillText( jump, 30, i*25 + 20 );
 			continue;
 		}
 
 		ctx.fillStyle = CCColorDetail( peak );
 		ctx.lineWidth = 0;
-		ctx.fillRect( 100, i*25, 50,25);
-		ctx.fillRect( 201, i*25, amped>>8,25);
-		ctx.fillRect( 329, i*25, amped2>>8,25);
+		ctx.fillRect( 70, i*25, 50,25);
+		ctx.fillRect( 171, i*25, amped>>7,25);
+		ctx.fillRect( 419, i*25, amped2>>7,25);
 
-		ctx.fillStyle = "#ffffff";
-		ctx.fillText( peak, 110, i*25 + 20 );
-		ctx.fillText( amped>>8, 221, i*25 + 20 );
-		ctx.fillText( amped2>>8, 340, i*25 + 20 );
+		// use complementary color for text
+		ctx.fillStyle = CCColorDetail( peak + globalParams["rNOTERANGE"]/2 );
+		ctx.fillText( peak, 80, i*25 + 20 );
+		ctx.fillText( amped, 191, i*25 + 20 );
+		ctx.fillText( amped2, 430, i*25 + 20 );
 	}
 
 	var samp = parseInt( data.substr(i*2,2),16 );
