@@ -125,9 +125,12 @@ function GotOScope(req,data)
 	{
 		var x2 = (i+1) * canvas.clientWidth / samps;
 		var samp = parseInt( data.substr(i*2+2,2),16 );
-		// this will scale around vcc/2
-		var y2 = ( 0.5 - mult* (samp / 255 - 0.5) ) * canvas.clientHeight;
-		//var y2 = ( 0.5 - mult* (samp / 255 - 0.307) ) * canvas.clientHeight;
+		// set OSCOPE_ZERO between 0 and 1. Corresponds to samp/255 when no sound in mic
+		//    depends on circuit, then oscope in gui will be flat line half way and mult
+		//    will scale. (0.225 using MAX9812 board with 3.3v on VCC, OUT 500Kohm to 3.3 and out to A0)
+		var OSCOPE_ZERO = 0.225;
+		var y2 = ( 0.5 - mult* (samp / 255 - OSCOPE_ZERO) ) * canvas.clientHeight;
+		// if want samp 0 to be at bottom and samp 255 at top use
 		//var y2 = ( 1.0 - mult * samp / 255 ) * canvas.clientHeight;
                 // after use make init3v3 and disconnect A0 to see if noice in power
 		// 3.3v gives 255, 0v gives 0
@@ -135,8 +138,8 @@ function GotOScope(req,data)
 		if( i == 0 )
 		{
 			var x1 = i * canvas.clientWidth / samps;
-			var y1 =  ( 0.5 - mult* (lastsamp / 255 - 0.5) ) * canvas.clientHeight;
-			//var y1 =  ( 0.5 - mult* (lastsamp / 255 - 0.307) ) * canvas.clientHeight;
+			var y1 =  ( 0.5 - mult* (lastsamp / 255 - OSCOPE_ZERO) ) * canvas.clientHeight;
+			// if want samp 0 to be at bottom and samp 255 at top use
 			//var y1 =  (1.0 - mult * lastsamp / 255 ) * canvas.clientHeight;
 			ctx.moveTo( x1, y1 );
 		}
