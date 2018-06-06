@@ -6,8 +6,12 @@
 #define HPABUFFSIZE 512
 
 #define CCEMBEDDED
-#define NUM_LIN_LEDS 60
-#define DFREQ 16000
+#ifndef NUM_LIN_LEDS
+#define NUM_LIN_LEDS 16
+#endif
+#ifndef DFREQ
+#define DFREQ 8000
+#endif
 
 #define memcpy ets_memcpy
 #define memset ets_memset
