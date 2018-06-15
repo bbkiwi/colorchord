@@ -70,15 +70,32 @@ void UpdateFreqs()
 		fbins[i] = ( 65536.0 ) / ( DFREQ ) * frq * 16 + 0.5;
 	}
 #else
-//TODO this only for FIXBPERO = 24 could add for 6,8,12,16,24,36,48
-	BUILD_BUG_ON( FIXBPERO != 24 ); //forces compile error
+//TODO this only for FIXBPERO = 24 or 12 could add for 6, 8, 16, 36,48
 	#define PCOMP( f )  (uint16_t)((65536.0)/(DFREQ) * (f * BASE_FREQ) * 16 + 0.5)
-
+#if FIXBPERO == 24
 	static const uint16_t fbins[FIXBPERO] = { 
 		PCOMP( 1.000000 ), PCOMP( 1.029302 ), PCOMP( 1.059463 ), PCOMP( 1.090508 ), PCOMP( 1.122462 ), PCOMP( 1.155353 ), 
 		PCOMP( 1.189207 ), PCOMP( 1.224054 ), PCOMP( 1.259921 ), PCOMP( 1.296840 ), PCOMP( 1.334840 ), PCOMP( 1.373954 ),
 		PCOMP( 1.414214 ), PCOMP( 1.455653 ), PCOMP( 1.498307 ), PCOMP( 1.542211 ), PCOMP( 1.587401 ), PCOMP( 1.633915 ),
 		PCOMP( 1.681793 ), PCOMP( 1.731073 ), PCOMP( 1.781797 ), PCOMP( 1.834008 ), PCOMP( 1.887749 ), PCOMP( 1.943064 ) };
+#elif FIXBPERO == 12
+	static const uint16_t fbins[FIXBPERO] = { 
+		PCOMP( 1.000000 ), PCOMP( 1.059463 ), PCOMP( 1.122462 ),
+		PCOMP( 1.189207 ), PCOMP( 1.259921 ), PCOMP( 1.334840 ),
+		PCOMP( 1.414214 ), PCOMP( 1.498307 ), PCOMP( 1.587401 ),
+		PCOMP( 1.681793 ), PCOMP( 1.781797 ), PCOMP( 1.887749 ) };
+#elif FIXBPERO == 36
+	static const uint16_t fbins[FIXBPERO] = { 
+		PCOMP(  1.000000 ), PCOMP(  1.019441 ), PCOMP(  1.039259 ), PCOMP(  1.059463 ), PCOMP(  1.080060 ), PCOMP(  1.101057 ),
+		PCOMP(  1.122462 ), PCOMP(  1.144283 ), PCOMP(  1.166529 ), PCOMP(  1.189207 ), PCOMP(  1.212326 ), PCOMP(  1.235894 ),
+		PCOMP(  1.259921 ), PCOMP(  1.284415 ), PCOMP(  1.309385 ), PCOMP(  1.334840 ), PCOMP(  1.360790 ), PCOMP(  1.387245 ),
+		PCOMP(  1.414214 ), PCOMP(  1.441707 ), PCOMP(  1.469734 ), PCOMP(  1.498307 ), PCOMP(  1.527435 ), PCOMP(  1.557129 ),
+		PCOMP(  1.587401 ), PCOMP(  1.618261 ), PCOMP(  1.649721 ), PCOMP(  1.681793 ), PCOMP(  1.714488 ), PCOMP(  1.747819 ),
+		PCOMP(  1.781797 ), PCOMP(  1.816437 ), PCOMP(  1.851749 ), PCOMP(  1.887749 ), PCOMP(  1.924448 ), PCOMP(  1.961860 ) };
+#else
+	BUILD_BUG_ON( 1 ); //forces compile error
+
+#endif
 #endif
 
 #ifdef USE_32DFT
@@ -454,17 +471,12 @@ void HandleFrameInfo()
 		uint32_t porp = (amp1<<15) / (amp1+amp2);  
 		uint16_t newnote = (nf1 * porp + nf2 * (32768-porp))>>15;
 
-		//When combining notes, we have to use the stronger amplitude note.
+		//When combining notes, we have to use the amplitudes of into which has strongest amps
 		//trying to average or combine the power of the notes looks awful.
 		note_peak_freqs[into] = newnote;
-		note_peak_amps[into] = (note_peak_amps[into]>note_peak_amps[from])?
-				note_peak_amps[into]:note_peak_amps[j];
-		note_peak_amps2[into] = (note_peak_amps2[into]>note_peak_amps2[from])?
-				note_peak_amps2[into]:note_peak_amps2[j];
-
 		note_peak_freqs[from] = 255;
 		note_peak_amps[from] = 0;
-		note_jumped_to[from] = i;
+		note_jumped_to[from] = into + 1;
 	}
 
 	//For al lof the notes that have not been hit, we have to allow them to
@@ -483,6 +495,7 @@ void HandleFrameInfo()
 			note_peak_freqs[i] = 255;
 			note_peak_amps[i] = 0;
 			note_peak_amps2[i] = 0;
+			note_jumped_to[i] = 0;
 		}
 	}
 

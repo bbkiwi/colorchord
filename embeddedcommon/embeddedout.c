@@ -305,7 +305,7 @@ void UpdateLinearLEDs()
 #if DEBUGPRINT
 	        printf("%d:%d/", ledFreqOut[minimizingShift], amp);
 #endif
-		if( amp > 255 ) amp = 255;
+		if( amp > NOTE_FINAL_AMP ) amp = NOTE_FINAL_AMP;
 		uint32_t color = ECCtoHEX( (ledFreqOut[minimizingShift]+ROOT_NOTE_OFFSET)%NOTERANGE, NOTE_FINAL_SATURATION, amp );
 		ledOut[jshift*3+0] = ( color >> 0 ) & 0xff;
 		ledOut[jshift*3+1] = ( color >> 8 ) & 0xff;
@@ -355,7 +355,7 @@ void UpdateAllSameLEDs()
 	}
 	amp = (((uint32_t)(amp))*NOTE_FINAL_AMP)>>MAX_AMP2_LOG2;
 
-	if( amp > 255 ) amp = 255;
+	if( amp > NOTE_FINAL_AMP ) amp = NOTE_FINAL_AMP;
 	uint32_t color = ECCtoHEX( (freq+ROOT_NOTE_OFFSET)%NOTERANGE, NOTE_FINAL_SATURATION, amp );
 	for( i = 0; i < NUM_LIN_LEDS; i++ )
 	{
@@ -403,7 +403,7 @@ void UpdateRotatingLEDs()
 
 	// can set color intensity using amp2
 	amp = (((uint32_t)(amp2))*NOTE_FINAL_AMP)>>MAX_AMP2_LOG2; // for PC 14;
-	if( amp > 255 ) amp = 255;
+	if( amp > NOTE_FINAL_AMP ) amp = NOTE_FINAL_AMP;
 	//uint32_t color = ECCtoHEX( (freq+ROOT_NOTE_OFFSET)%NOTERANGE, NOTE_FINAL_SATURATION, amp );
 	uint32_t color = ECCtoHEX( (freq+ROOT_NOTE_OFFSET)%NOTERANGE, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
 
