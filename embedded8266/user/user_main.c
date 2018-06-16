@@ -20,7 +20,6 @@
 #include "gpio.h"
 //#define PROFILE
 
-#define PORT 7777
 #define SERVER_TIMEOUT 1500
 #define MAX_CONNS 5
 #define MAX_FRAME 2000
@@ -261,8 +260,7 @@ void ICACHE_FLASH_ATTR user_init(void)
 	espconn_create( pUdpServer );
 	pUdpServer->type = ESPCONN_UDP;
 	pUdpServer->proto.udp = (esp_udp *)os_zalloc(sizeof(esp_udp));
-//TODO should this be COM_PORT instead of 7777?
-	pUdpServer->proto.udp->local_port = 7777;
+	pUdpServer->proto.udp->local_port = COM_PORT;
 	espconn_regist_recvcb(pUdpServer, udpserver_recv);
 
 	if( espconn_create( pUdpServer ) )

@@ -6,7 +6,7 @@ var output;
 var websocket;
 var commsup = 0;
 
-var mpfs_start_at = 65536; //1048576; NOTE: If you select 1048576, it will override the 65536 sector, but has much more room.
+var mpfs_start_at = {{PAGE_OFFSET}}; //65536; //1048576; NOTE: If you select 1048576, it will override the 65536 sector, but has much more room.
 var flash_scratchpad_at = 524288;
 var flash_blocksize = 65536;
 var flash_sendsize = 256;
