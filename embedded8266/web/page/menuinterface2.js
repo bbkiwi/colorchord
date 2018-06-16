@@ -121,7 +121,7 @@ function Ticker()
 		{
 			$('#SystemStatusClicker').css("color", "red" );
 			$('#SystemStatusClicker').prop( "value", "System Offline" );
-			if( commsup != 0 && !is_waiting_on_stations ) IssueSystemMessage( "Comms Lost." );
+			if( commsup != 0 ) IssueSystemMessage( "Comms Lost." );
 			commsup = 0;
 			StartWebSocket();
 		}

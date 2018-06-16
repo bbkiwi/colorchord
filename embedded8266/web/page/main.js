@@ -111,9 +111,12 @@ function ToggleOScopePause()
 
 function GotOScope(req,data)
 {
-	var OSCOPE_ZERO = 0.225;
+	//var OSCOPE_ZERO = 57/255;
+	var OSCOPE_ZERO = 90/255;
 	var mult = Number(document.getElementById('OSCMultIn').value);
-	document.getElementById('OSCMultOut').innerHTML = "mult: " + mult + " from " + Math.floor(255 * (-0.5/mult + OSCOPE_ZERO)) + " to " + Math.floor(255 * (0.5/mult + OSCOPE_ZERO)) + " with center at " + Math.floor(255 *  OSCOPE_ZERO);
+	document.getElementById('OSCMultOut').innerHTML = "mult: " + mult + " from " +
+                      Math.floor(255 * (-0.5/mult + OSCOPE_ZERO)) + " to " + Math.floor(255 * (0.5/mult + OSCOPE_ZERO)) +
+                      " with center at " + Math.floor(255 *  OSCOPE_ZERO);
 	var canvas = document.getElementById('OScopeCanvas');
 	var ctx = canvas.getContext('2d');
 	var h = canvas.height;
@@ -212,7 +215,7 @@ function GotDFT(req,data)
 	var parmsgFILTER_BLUR_PASSES = Number(document.getElementById('parmsgFILTER_BLUR_PASSES').value);
 	document.getElementById('parmsgFILTER_BLUR_PASSESOut').innerHTML = parmsgFILTER_BLUR_PASSES;
 	var parmsgLOWER_CUTOFF = Number(document.getElementById('parmsgLOWER_CUTOFF').value);
-	document.getElementById('parmsgLOWER_CUTOFFOut').innerHTML = parmsgLOWER_CUTOFF;
+	document.getElementById('parmsgLOWER_CUTOFFOut').innerHTML = parmsgLOWER_CUTOFF + "* 256 = " + parmsgLOWER_CUTOFF*256;
 	var canvas = document.getElementById('DFTCanvas');
 	var ctx = canvas.getContext('2d');
 	var h = canvas.height;
@@ -285,6 +288,17 @@ function ToggleLEDPause()
 	KickLEDs();
 }
 
+function brighten(color) {
+	var r=parseInt(color.substr(1,2),16);
+	var g=parseInt(color.substr(3,2),16);
+	var b=parseInt(color.substr(5,2),16);
+	var magfac=255/Math.max(1,r,g,b);
+
+	return '#'+
+		("0" + Math.floor(r*magfac).toString(16)).slice(-2)+
+		("0" + Math.floor(g*magfac).toString(16)).slice(-2)+
+		("0" + Math.floor(b*magfac).toString(16)).slice(-2);
+}
 
 function GotLED(req,data)
 {
@@ -308,7 +322,7 @@ function GotLED(req,data)
 	{
 		var x2 = i * canvas.clientWidth / samps;
 		var samp = data.substr(i*6,6);
-		ctx.fillStyle = "#" + samp.substr( 2, 2 ) + samp.substr( 0, 2 ) + samp.substr( 4, 2 );
+		ctx.fillStyle = brighten("#" + samp.substr( 2, 2 ) + samp.substr( 0, 2 ) + samp.substr( 4, 2 ));
 		ctx.lineWidth = 0;
 		ctx.fillRect( x2, 0, canvas.clientWidth / samps+1, canvas.clientHeight );
 	}

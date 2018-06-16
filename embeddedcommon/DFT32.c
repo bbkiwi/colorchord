@@ -192,6 +192,7 @@ void UpdateOutputBins32()
 		mux = SquareRootRounded( mux );
 		//embeddedbins32[i] = (mux << (17-octave))/adjstrens[DFTIIR]; //when use adjust 4 in nf
 		embeddedbins32[i] = (mux << (21-octave))/adjstrens[DFTIIR]; // use adjust 8
+		//embeddedbins32[i] = (mux << 21)/adjstrens[DFTIIR]; // use adjust 8
 
 	}
 }
