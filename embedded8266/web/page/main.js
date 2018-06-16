@@ -80,6 +80,14 @@ function ReceiveParameters(req,data) {
 			p.val(vp);
 	}
 
+	for( var v in globalParams )
+	{
+		var vp = globalParams[v];
+		var p = $("#parms"+v);
+		if( !p.is(":focus" ) )
+			p.val(vp);
+	}
+
 }
 
 
@@ -103,8 +111,9 @@ function ToggleOScopePause()
 
 function GotOScope(req,data)
 {
+	var OSCOPE_ZERO = 0.225;
 	var mult = Number(document.getElementById('OSCMultIn').value);
-	document.getElementById('OSCMultOut').innerHTML = mult;
+	document.getElementById('OSCMultOut').innerHTML = "mult: " + mult + " from " + Math.floor(255 * (-0.5/mult + OSCOPE_ZERO)) + " to " + Math.floor(255 * (0.5/mult + OSCOPE_ZERO)) + " with center at " + Math.floor(255 *  OSCOPE_ZERO);
 	var canvas = document.getElementById('OScopeCanvas');
 	var ctx = canvas.getContext('2d');
 	var h = canvas.height;
@@ -127,7 +136,6 @@ function GotOScope(req,data)
 		// set OSCOPE_ZERO between 0 and 1. Corresponds to samp/255 when no sound in mic
 		//    depends on circuit, then oscope in gui will be flat line half way and mult
 		//    will scale. (0.225 using MAX9812 board with 3.3v on VCC, OUT 500Kohm to 3.3 and out to A0)
-		var OSCOPE_ZERO = 0.225;
 		var y2 = ( 0.5 - mult* (samp / 255 - OSCOPE_ZERO) ) * canvas.clientHeight;
 		// if want samp 0 to be at bottom and samp 255 at top use
 		//var y2 = ( 1.0 - mult * samp / 255 ) * canvas.clientHeight;
@@ -196,7 +204,15 @@ function ToggleDFTPause()
 function GotDFT(req,data)
 {
 	var mult = Number(document.getElementById('DFTMultIn').value);
-	document.getElementById('DFTMultOut').innerHTML = mult;
+	document.getElementById('DFTMultOut').innerHTML = Math.floor(65535/ mult);
+	var parmsgDFTIIR = Number(document.getElementById('parmsgDFTIIR').value);
+	document.getElementById('parmsgDFTIIROut').innerHTML = parmsgDFTIIR;
+	var parmsgFUZZ_IIR_BITS = Number(document.getElementById('parmsgFUZZ_IIR_BITS').value);
+	document.getElementById('parmsgFUZZ_IIR_BITSOut').innerHTML = parmsgFUZZ_IIR_BITS;
+	var parmsgFILTER_BLUR_PASSES = Number(document.getElementById('parmsgFILTER_BLUR_PASSES').value);
+	document.getElementById('parmsgFILTER_BLUR_PASSESOut').innerHTML = parmsgFILTER_BLUR_PASSES;
+	var parmsgLOWER_CUTOFF = Number(document.getElementById('parmsgLOWER_CUTOFF').value);
+	document.getElementById('parmsgLOWER_CUTOFFOut').innerHTML = parmsgLOWER_CUTOFF;
 	var canvas = document.getElementById('DFTCanvas');
 	var ctx = canvas.getContext('2d');
 	var h = canvas.height;
@@ -217,7 +233,7 @@ function GotDFT(req,data)
 	{
 		var x2 = i * canvas.clientWidth / samps;
 		var samp = parseInt( data.substr(i*4,4),16 );
-		var y2 = ( 1.-mult*samp / 32752 ) * canvas.clientHeight;
+		var y2 = ( 1.-mult*samp / 65535 ) * canvas.clientHeight;
 
 		ctx.fillStyle = CCColor( i % globalParams["rFIXBPERO"] );
 		ctx.fillRect( x2, y2, canvas.clientWidth / samps, canvas.clientHeight-y2 );

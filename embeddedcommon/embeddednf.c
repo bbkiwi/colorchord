@@ -211,7 +211,7 @@ void HandleFrameInfo()
 	{
 		fuzzed_bins[i] -= (fuzzed_bins[i]>>FUZZ_IIR_BITS);
 		// Try clip out small bins
-		if (strens[i] > 6400) fuzzed_bins[i] += (strens[i]>>FUZZ_IIR_BITS);
+		if (strens[i] > LOWER_CUTOFF * 256) fuzzed_bins[i] += (strens[i]>>FUZZ_IIR_BITS);
 		if (i < FIXBINS/3) bass += fuzzed_bins[i];
 		else if (i < 2*FIXBINS/3) mid += fuzzed_bins[i];
 		else treb += fuzzed_bins[i];

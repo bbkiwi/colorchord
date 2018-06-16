@@ -21,6 +21,7 @@
 #define FUZZ_IIR_BITS  		CCS.gFUZZ_IIR_BITS
 #define MAXNOTES  12 //MAXNOTES cannot be changed dynamically.
 #define FILTER_BLUR_PASSES	CCS.gFILTER_BLUR_PASSES
+#define LOWER_CUTOFF		CCS.gLOWER_CUTOFF
 #define SEMIBITSPERBIN		CCS.gSEMIBITSPERBIN
 #define MAX_JUMP_DISTANCE	CCS.gMAX_JUMP_DISTANCE
 #define MAX_COMBINE_DISTANCE CCS.gMAX_COMBINE_DISTANCE
@@ -47,6 +48,7 @@ struct CCSettings
 	uint8_t gDFTIIR;                            //=6
 	uint8_t gFUZZ_IIR_BITS;                     //=1
 	uint8_t gFILTER_BLUR_PASSES;                //=2
+	uint8_t gLOWER_CUTOFF;                      //=25 cut off at 256 times this
 	uint8_t gSEMIBITSPERBIN;                    //=3
 	uint8_t gMAX_JUMP_DISTANCE;                 //=4
 	uint8_t gMAX_COMBINE_DISTANCE;              //=7
