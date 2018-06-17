@@ -345,7 +345,7 @@ void UpdateAllSameLEDs()
 
 	for( i = 0; i < MAXNOTES; i++ )
 	{
-		uint16_t ist = note_peak_amps2[i];
+		uint16_t ist = note_peak_amps[i];
 		uint8_t ifrq = note_peak_freqs[i];
 		if( ifrq != 255 && ist > amp  )
 		{
@@ -392,6 +392,7 @@ void UpdateRotatingLEDs()
 			if( ist > amp2 ) {
 				freq = ifrq;
 				amp2 = ist;
+				amp = note_peak_amps[i];
 			}
 			//total_note_a += note_peak_amps[i]; // or see outside loop to use bass
 			//total_note_a2 += ist;
@@ -401,15 +402,16 @@ void UpdateRotatingLEDs()
 
 	diff_a = total_note_a_prev - total_note_a;
 
-	// can set color intensity using amp2
-	amp = (((uint32_t)(amp2))*NOTE_FINAL_AMP)>>MAX_AMP2_LOG2; // for PC 14;
-	if( amp > NOTE_FINAL_AMP ) amp = NOTE_FINAL_AMP;
-	//uint32_t color = ECCtoHEX( (freq+ROOT_NOTE_OFFSET)%NOTERANGE, NOTE_FINAL_SATURATION, amp );
+	// can set color intensity using amp2 or fixed value
+	amp2 = (((uint32_t)(amp2))*NOTE_FINAL_AMP)>>MAX_AMP2_LOG2; // for PC 14;
+	if( amp2 > NOTE_FINAL_AMP ) amp2 = NOTE_FINAL_AMP;
+	//uint32_t color = ECCtoHEX( (freq+ROOT_NOTE_OFFSET)%NOTERANGE, NOTE_FINAL_SATURATION, amp2 );
 	uint32_t color = ECCtoHEX( (freq+ROOT_NOTE_OFFSET)%NOTERANGE, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
 
-	// can have led_arc_len a fixed size or proportional to amp2
+	// can have led_arc_len a fixed size or proportional to amp
 	//led_arc_len = 5;
-	led_arc_len = (amp * (USE_NUM_LIN_LEDS + 1) ) >> 8;
+//TODO look below
+	led_arc_len = (amp * (USE_NUM_LIN_LEDS + 1) ) >> 14; // empirical
 	//printf("amp2 = %d, amp = %d, led_arc_len = %d, NOTE_FINAL_AMP = %d\n", amp2,  amp, led_arc_len, NOTE_FINAL_AMP );
 	//stt += ets_sprintf( stt, "amp2 = %d, amp = %d, led_arc_len = %d, NOTE_FINAL_AMP = %d\n", amp2,  amp, led_arc_len, NOTE_FINAL_AMP );
 	//uart0_sendStr(stret);

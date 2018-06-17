@@ -67,7 +67,23 @@ BLUR PASSES <input id="parmsgFILTER_BLUR_PASSES" type="range" value="1" max="16"
 <input type=submit onclick="ShowHideEvent( 'Notes' ); KickNotes();" value="Notes"></td><td>
 <div id=Notes class="collapsible">
 <table width=1 border=1><tr><td><CANVAS id=NotesCanvas width=512 height=100></CANVAS></td>
-<td width=100%><input type=button onclick="ToggleNotesPause();" id=NotesPauseButton value="|| / >"></td></tr></table>
+<td width=100%><input type=button onclick="ToggleNotesPause();" id=NotesPauseButton value="|| / >"><br>
+SEMIBITSPERBIN  <input id="parmsgSEMIBITSPERBIN" type="range" value="0" max="4" min="0" step="1" onchange="ChangeParam(this)">
+<output id="parmsgSEMIBITSPERBINOut"></output><br>
+MAX Jump  <input id="parmsgMAX_JUMP_DISTANCE" type="range" value="10" max="255" min="0" step="2.125" onchange="ChangeParam(this)">
+<output id="parmsgMAX_JUMP_DISTANCEOut"></output><br>
+MAX Combine  <input id="parmsgMAX_COMBINE_DISTANCE" type="range" value="0" max="255" min="0" step="2.125" onchange="ChangeParam(this)">
+<output id="parmsgMAX_COMBINE_DISTANCEOut"></output><br>
+AMP_1_IIR_BITS  <input id="parmsgAMP_1_IIR_BITS" type="range" value="4" max="16" min="0" step="1" onchange="ChangeParam(this)">
+<output id="parmsgAMP_1_IIR_BITSOut"></output><br>
+AMP_2_IIR_BITS  <input id="parmsgAMP_2_IIR_BITS" type="range" value="7" max="16" min="0" step="1" onchange="ChangeParam(this)">
+<output id="parmsgAMP_2_IIR_BITSOut"></output><br>
+AMP Create  <input id="parmsgMIN_AMP_FOR_NOTE" type="range" value="0" max="255" min="0" step="1" onchange="ChangeParam(this)">
+<output id="parmsgMIN_AMP_FOR_NOTEOut"></output><br>
+AMP Disappear  <input id="parmsgMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR" type="range" value="0" max="255" min="0" step="1" onchange="ChangeParam(this)">
+<output id="parmsgMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAROut"></output><br>
+
+</td></tr></table>
 </div></td></tr>
 
 

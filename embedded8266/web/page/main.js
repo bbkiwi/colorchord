@@ -377,6 +377,21 @@ function ToggleNotesPause()
 
 function GotNotes(req,data)
 {
+	var parmsgSEMIBITSPERBIN = Number(document.getElementById('parmsgSEMIBITSPERBIN').value);
+	document.getElementById('parmsgSEMIBITSPERBINOut').innerHTML = parmsgSEMIBITSPERBIN;
+	var parmsgMAX_JUMP_DISTANCE = Number(document.getElementById('parmsgMAX_JUMP_DISTANCE').value);
+	document.getElementById('parmsgMAX_JUMP_DISTANCEOut').innerHTML = Math.floor(parmsgMAX_JUMP_DISTANCE/255*120) + " tenths of semitone";
+	var parmsgMAX_COMBINE_DISTANCE = Number(document.getElementById('parmsgMAX_COMBINE_DISTANCE').value);
+	document.getElementById('parmsgMAX_COMBINE_DISTANCEOut').innerHTML = Math.floor(parmsgMAX_COMBINE_DISTANCE/255*120) + " tenths of semitone";
+	var parmsgAMP_1_IIR_BITS = Number(document.getElementById('parmsgAMP_1_IIR_BITS').value);
+	document.getElementById('parmsgAMP_1_IIR_BITSOut').innerHTML = parmsgAMP_1_IIR_BITS;
+	var parmsgAMP_2_IIR_BITS = Number(document.getElementById('parmsgAMP_2_IIR_BITS').value);
+	document.getElementById('parmsgAMP_2_IIR_BITSOut').innerHTML = parmsgAMP_2_IIR_BITS;
+	var parmsgMIN_AMP_FOR_NOTE = Number(document.getElementById('parmsgMIN_AMP_FOR_NOTE').value);
+	document.getElementById('parmsgMIN_AMP_FOR_NOTEOut').innerHTML = 256*parmsgMIN_AMP_FOR_NOTE;
+	var parmsgMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR = Number(document.getElementById('parmsgMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR').value);
+	document.getElementById('parmsgMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAROut').innerHTML = 256*parmsgMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR;
+
 	var canvas = document.getElementById('NotesCanvas');
 	var ctx = canvas.getContext('2d');
 
