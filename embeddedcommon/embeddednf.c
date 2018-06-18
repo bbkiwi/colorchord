@@ -292,6 +292,8 @@ void HandleFrameInfo()
 	//Next, we have to find the peaks, this is what "decompose" does in our
 	//normal tool.  As a warning, it expects that the values in foolded_bins
 	//do NOT exceed 32767.
+	// freq of note from 0..NOTERANGE-1 after interpolation
+	//     initially 0, 1<<SEMIBITSPERBIN, 2<<SEMIBITSPERBIN, (FIXBPERO-1)<<SEMIBITSPERBIN
 	{
 		uint8_t adjLeft = FIXBPERO-1;
 		uint8_t adjRight = 1;

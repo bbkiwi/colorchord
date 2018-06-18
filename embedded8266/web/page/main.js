@@ -391,7 +391,8 @@ function GotNotes(req,data)
 	document.getElementById('parmsgMIN_AMP_FOR_NOTEOut').innerHTML = 256*parmsgMIN_AMP_FOR_NOTE;
 	var parmsgMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR = Number(document.getElementById('parmsgMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR').value);
 	document.getElementById('parmsgMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAROut').innerHTML = 256*parmsgMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR;
-
+	var NOTERANGE = 0;
+	if (hasCreateParams) NOTERANGE = Number(document.getElementById('paramrNOTERANGE').value);
 	var canvas = document.getElementById('NotesCanvas');
 	var ctx = canvas.getContext('2d');
 
@@ -435,7 +436,8 @@ function GotNotes(req,data)
 
 		// use complementary color for text
 		ctx.fillStyle = CCColorDetail( peak + globalParams["rNOTERANGE"]/2 );
-		ctx.fillText( peak, 80, i*25 + 20 );
+		// in gui display note as tenths of semitone, so octave is 0 to 119
+		ctx.fillText( Math.floor(peak/NOTERANGE*119), 80, i*25 + 20 );
 		ctx.fillText( amped, 191, i*25 + 20 );
 		ctx.fillText( amped2, 430, i*25 + 20 );
 	}
