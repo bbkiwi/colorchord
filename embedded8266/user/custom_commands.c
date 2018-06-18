@@ -148,6 +148,8 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 		{
 			uint16_t dat;
 			dat = note_peak_freqs[i];
+			*(buffend++) = tohex1( dat>>12 );
+			*(buffend++) = tohex1( dat>>8 );
 			*(buffend++) = tohex1( dat>>4 );
 			*(buffend++) = tohex1( dat>>0 );
 			dat = note_peak_amps[i];

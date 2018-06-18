@@ -9,19 +9,19 @@
 //uint8_t ledArray[NUM_LIN_LEDS]; //Points to which notes correspond to these LEDs
 uint8_t ledOut[NUM_LIN_LEDS*3];
 uint16_t ledAmpOut[NUM_LIN_LEDS];
-uint8_t ledFreqOut[NUM_LIN_LEDS];
-uint8_t ledFreqOutOld[NUM_LIN_LEDS];
+int16_t ledFreqOut[NUM_LIN_LEDS];
+int16_t ledFreqOutOld[NUM_LIN_LEDS];
 
 uint32_t total_note_a_prev = 0;
 int diff_a_prev = 0;
 int rot_dir = 1; // initial rotation direction 1
-uint8_t ColorCycle =0; 
+int16_t ColorCycle =0;
 
 void UpdateLinearLEDs()
 {
 	//Source material:
 	/*
-		extern uint8_t  note_peak_freqs[];
+		extern int16_t  note_peak_freqs[];
 		extern uint16_t note_peak_amps[];  //[MAXNOTES] 
 		extern uint16_t note_peak_amps2[];  //[MAXNOTES]  (Responds quicker)
 		extern uint8_t  note_jumped_to[]; //[MAXNOTES] When a note combines into another one,
@@ -69,7 +69,7 @@ void UpdateLinearLEDs()
 
 	for( i = 0; i < MAXNOTES; i++ )
 	{
-		if( note_peak_freqs[i] == 255 ) continue;
+		if( note_peak_freqs[i] < 0) continue;
 		total_note_a += note_peak_amps[i];
 	}
 
@@ -77,12 +77,12 @@ void UpdateLinearLEDs()
 
 	note_nerf_a = ((total_note_a * NERF_NOTE_PORP)>>8);
 
-	// ignore notes with amp too small or freq 255
+	// ignore notes with amp too small or neg (which means not a note)
 	for( i = 0; i < MAXNOTES; i++ )
 	{
 		uint16_t ist = note_peak_amps[i];
-		uint8_t nff = note_peak_freqs[i];
-		if( nff == 255 )
+		int16_t nff = note_peak_freqs[i];
+		if( nff < 0 )
 		{
 			continue;
 		}
@@ -130,7 +130,7 @@ void UpdateLinearLEDs()
 	//Make a copy of all of the variables into local ones so we don't have to keep double-dereferencing.
 	uint16_t local_peak_amps[MAXNOTES];
 	uint16_t local_peak_amps2[MAXNOTES];
-	uint8_t  local_peak_freq[MAXNOTES];
+	int16_t  local_peak_freq[MAXNOTES];
 	uint8_t  local_note_jumped_to[MAXNOTES];
 
 	for( i = 0; i < sorted_map_count; i++ )
@@ -339,15 +339,15 @@ void UpdateAllSameLEDs()
 {
 	int16_t i;
 	int8_t j;
-	uint8_t freq = 0;
+	int16_t freq = 0;
 	uint16_t amp = 0;
 
 
 	for( i = 0; i < MAXNOTES; i++ )
 	{
 		uint16_t ist = note_peak_amps[i];
-		uint8_t ifrq = note_peak_freqs[i];
-		if( ifrq != 255 && ist > amp  )
+		int16_t ifrq = note_peak_freqs[i];
+		if( ifrq >= 0 && ist > amp  )
 		{
 			freq = ifrq;
 			amp = ist;
@@ -370,7 +370,7 @@ void UpdateRotatingLEDs()
 	int16_t i;
 	int16_t jshift; // int8_t jshift; caused instability especially for large no of LEDs
 	int8_t shift_dist;
-	uint8_t freq = 0;
+	int16_t freq = 0;
 	uint16_t amp = 0;
 	uint16_t amp2 = 0;
 	uint32_t note_nerf_a = 0;
@@ -386,8 +386,8 @@ void UpdateRotatingLEDs()
 	for( i = 0; i < MAXNOTES; i++ )
 	{
 		uint16_t ist = note_peak_amps2[i];
-		uint8_t ifrq = note_peak_freqs[i];
-		if( ifrq != 255 )
+		int16_t ifrq = note_peak_freqs[i];
+		if( ifrq >= 0 )
 		{
 			if( ist > amp2 ) {
 				freq = ifrq;
@@ -463,7 +463,7 @@ void PureRotatingLEDs()
 	int16_t i;
 	int16_t jshift; // int8_t jshift; caused instability especially for large no of LEDs
 	int32_t led_arc_len;
-	uint8_t freq;
+	int16_t freq;
 	freq = ColorCycle;
 //	uint32_t color = ECCtoHEX( (freq+ROOT_NOTE_OFFSET)%NOTERANGE, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
 
@@ -508,57 +508,18 @@ void PureRotatingLEDs()
 
 
 
-/* 
-uint32_t ECCtoHEX( uint8_t note, uint8_t sat, uint8_t val )
-{
-	uint16_t hue = 0;
-	uint32_t renote = ((uint32_t)note * 65536) / NOTERANGE;
 
-	hue = renote;
-	hue >>= 8;
-	hue = 256 - hue; //reverse rainbow order
-	hue += 43; //start yellow
-//	printf("%d %d \n", renote, hue);
-
-	return EHSVtoHEX( hue, sat, val );
-}
-*/
-/*
-uint32_t ECCtoHEX( uint8_t note, uint8_t sat, uint8_t val )
+uint32_t ECCtoHEX( int16_t note, uint8_t sat, uint8_t val )
 {
-	uint16_t hue = 0;
-	uint32_t renote = ((uint32_t)note * 65536) / NOTERANGE;
-	uint32_t rn0 = 0;
-	uint16_t hn0 = 7*255/6;
-	uint32_t rn1 = 65536/3;
-	uint16_t hn1 = 255;
-	uint32_t rn2 = 2 * rn1;
-	uint16_t hn2 = 2*255/3;
-	uint32_t rn3 = 65536;
-	uint16_t hn3 = 255/6;
-	if( renote < rn1 )
-	{	hue = hn0 + (renote - rn0) * (hn1 - hn0) / (rn1 - rn0);
-	}
-	else if( renote < rn2 )
-	{	hue = hn1 + (renote - rn1) * (hn2 - hn1) / (rn2 - rn1);
-	}
-	else
-	{	hue = hn2 + (renote - rn2) * (hn3 - hn2) / (rn3 - rn2);
-	}
-	return EHSVtoHEX( hue, sat, val );
-}
-*/
-uint32_t ECCtoHEX( uint8_t note, uint8_t sat, uint8_t val )
-{
-	uint16_t hue = 0;
-	uint32_t renote = ((uint32_t)note * 65536) / NOTERANGE;
+	uint8_t hue = 0;
+	uint32_t renote = ((uint32_t)note * 65535) / (NOTERANGE - 1);
 	#define rn0  0
 	#define hn0  298
 	#define rn1  21845
 	#define hn1  255
 	#define rn2  43690
 	#define hn2  170
-	#define rn3  65536
+	#define rn3  65535
 	#define hn3  43
 	if( renote < rn1 )
 	{	hue = hn0 - (renote - rn0) * (43) / (21845);

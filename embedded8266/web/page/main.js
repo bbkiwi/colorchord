@@ -230,6 +230,14 @@ function GotDFT(req,data)
 	var samps = Number( secs[1] );
 	var data = secs[2];
 	ctx.clearRect( 0, 0, canvas.width, canvas.height );
+	if( $("#WhichCanvas").val() == 0) {
+		ctx.beginPath();
+		var ycut = canvas.clientHeight - canvas.clientHeight * mult * parmsgLOWER_CUTOFF/255;
+		ctx.strokeStyle = "#0000ff";
+		ctx.moveTo(0, ycut);
+		ctx.lineTo(canvas.clientWidth, ycut);
+		ctx.stroke();
+	}
 	ctx.beginPath();
 
 	for( var i = 0; i < samps; i++ )
@@ -247,7 +255,6 @@ function GotDFT(req,data)
 	ctx.stroke();
 
 	var samp = parseInt( data.substr(i*2,2),16 );
-
 	DFTDataTicker();
 } 
 
@@ -380,9 +387,9 @@ function GotNotes(req,data)
 	var parmsgSEMIBITSPERBIN = Number(document.getElementById('parmsgSEMIBITSPERBIN').value);
 	document.getElementById('parmsgSEMIBITSPERBINOut').innerHTML = parmsgSEMIBITSPERBIN;
 	var parmsgMAX_JUMP_DISTANCE = Number(document.getElementById('parmsgMAX_JUMP_DISTANCE').value);
-	document.getElementById('parmsgMAX_JUMP_DISTANCEOut').innerHTML = Math.floor(parmsgMAX_JUMP_DISTANCE/255*120) + " tenths of semitone";
+	document.getElementById('parmsgMAX_JUMP_DISTANCEOut').innerHTML = Math.floor(parmsgMAX_JUMP_DISTANCE/255*60) + " tenths of semitone";
 	var parmsgMAX_COMBINE_DISTANCE = Number(document.getElementById('parmsgMAX_COMBINE_DISTANCE').value);
-	document.getElementById('parmsgMAX_COMBINE_DISTANCEOut').innerHTML = Math.floor(parmsgMAX_COMBINE_DISTANCE/255*120) + " tenths of semitone";
+	document.getElementById('parmsgMAX_COMBINE_DISTANCEOut').innerHTML = Math.floor(parmsgMAX_COMBINE_DISTANCE/255*60) + " tenths of semitone";
 	var parmsgAMP_1_IIR_BITS = Number(document.getElementById('parmsgAMP_1_IIR_BITS').value);
 	document.getElementById('parmsgAMP_1_IIR_BITSOut').innerHTML = parmsgAMP_1_IIR_BITS;
 	var parmsgAMP_2_IIR_BITS = Number(document.getElementById('parmsgAMP_2_IIR_BITS').value);
@@ -413,15 +420,18 @@ function GotNotes(req,data)
 
 	for( var i = 0; i < elems; i++ )
 	{
-		var peak   = parseInt( data.substr(i*12+0,2),16 );
-		var amped  = parseInt( data.substr(i*12+2,4),16 );
-		var amped2 = parseInt( data.substr(i*12+6,4),16 );
-		var jump   = parseInt( data.substr(i*12+10,2),16 );
+		var peak   = parseInt( data.substr(i*14+0,4),16 );
+		if ((peak & 0x8000) > 0) {
+			peak = -1;
+		}
+		var amped  = parseInt( data.substr(i*14+4,4),16 );
+		var amped2 = parseInt( data.substr(i*14+8,4),16 );
+		var jump   = parseInt( data.substr(i*14+12,2),16 );
 
 		ctx.fillStyle = "#ffffff";
 		ctx.fillText( i+1, 0, i*25 + 20 );
 
-		if( peak == 255 )
+		if( peak < 0 )
 		{
 			ctx.fillStyle = "#00ff00";
 			ctx.fillText( jump, 30, i*25 + 20 );
@@ -443,7 +453,6 @@ function GotNotes(req,data)
 	}
 
 	var samp = parseInt( data.substr(i*2,2),16 );
-
 	NotesTicker();
 } 
 

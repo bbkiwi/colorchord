@@ -73,7 +73,7 @@ void UpdateRotatingLEDs();
 //generates warning when do embeddedlinux???
 //void PureRotatingLEDs();
 
-uint32_t ECCtoHEX( uint8_t note, uint8_t sat, uint8_t val );
+uint32_t ECCtoHEX( int16_t note, uint8_t sat, uint8_t val );
 uint32_t EHSVtoHEX( uint8_t hue, uint8_t sat, uint8_t val ); //hue = 0..255 // TODO: TEST ME!!!
 
 

@@ -9,7 +9,7 @@
 
 uint16_t folded_bins[FIXBPERO];
 uint16_t fuzzed_bins[FIXBINS];
-uint8_t  note_peak_freqs[MAXNOTES];
+int16_t  note_peak_freqs[MAXNOTES];
 uint16_t note_peak_amps[MAXNOTES];
 uint16_t note_peak_amps2[MAXNOTES];
 uint8_t  note_jumped_to[MAXNOTES];
@@ -116,7 +116,7 @@ void InitColorChord()
 	//Set up and initialize arrays.
 	for( i = 0; i < MAXNOTES; i++ )
 	{
-		note_peak_freqs[i] = 255;
+		note_peak_freqs[i] = -1;
 		note_peak_amps[i] = 0;
 		note_peak_amps2[i] = 0;
 	}
@@ -291,6 +291,7 @@ void HandleFrameInfo()
 
 	//Next, we have to find the peaks, this is what "decompose" does in our
 	//normal tool.  As a warning, it expects that the values in foolded_bins
+//TODO this may be exceeded. DFT FUZZED  can range 0..65535, so maybe folded even higher
 	//do NOT exceed 32767.
 	// freq of note from 0..NOTERANGE-1 after interpolation
 	//     initially 0, 1<<SEMIBITSPERBIN, 2<<SEMIBITSPERBIN, (FIXBPERO-1)<<SEMIBITSPERBIN
@@ -302,7 +303,7 @@ void HandleFrameInfo()
 			int16_t prev = folded_bins[adjLeft];
 			int16_t next = folded_bins[adjRight];
 			int16_t this = folded_bins[i];
-			uint8_t thisfreq = i<<SEMIBITSPERBIN;
+			int16_t thisfreq = i<<SEMIBITSPERBIN;
 			int16_t offset;
 			adjLeft++; if( adjLeft >= FIXBPERO ) adjLeft = 0;
 			adjRight++; if( adjRight >= FIXBPERO ) adjRight = 0;
@@ -336,9 +337,8 @@ void HandleFrameInfo()
 			thisfreq += (offset+(1<<(15-SEMIBITSPERBIN)))>>(16-SEMIBITSPERBIN);
 
 			//In the event we went 'below zero' need to wrap to the top.
-			if( thisfreq > 255-(1<<SEMIBITSPERBIN) )
-				thisfreq = (1<<SEMIBITSPERBIN)*FIXBPERO - (256-thisfreq);
-
+			if( thisfreq < 0)
+				thisfreq += NOTERANGE;
 			//Okay, we have a peak, and a frequency. Now, we need to search
 			//through the existing notes to see if we have any matches.
 			//If we have a note that's close enough, we will try to pull it
@@ -349,9 +349,9 @@ void HandleFrameInfo()
 			
 			for( j = 0; j < MAXNOTES; j++ )
 			{
-				uint8_t nf = note_peak_freqs[j];
+				int16_t nf = note_peak_freqs[j];
 
-				if( nf == 255 )
+				if( nf < 0 )
 				{
 					if( lowest_found_free_note == -1 )
 						lowest_found_free_note = j;
@@ -364,9 +364,9 @@ void HandleFrameInfo()
 
 				//Make sure that if we've wrapped around the right side of the
 				//array, we can detect it and loop it back.
-				if( distance > ((1<<(SEMIBITSPERBIN-1))*FIXBPERO) )
+				if( distance<<1 > NOTERANGE )
 				{
-					distance = ((1<<(SEMIBITSPERBIN))*FIXBPERO) - distance;
+					distance = NOTERANGE - distance;
 				}
 
 				//If we find a note closer to where we are than any of the 
@@ -379,10 +379,10 @@ void HandleFrameInfo()
 			}
 
 			int8_t marked_note = -1;
-			//MAX_JUMP_DISTANCE is in range 0..255 while distance is in range 0..NOTERANGE
-			// so compare distance/NOTERANGE to MAX_JUMP_DISTANCE/256
+			//MAX_JUMP_DISTANCE is in range 0..255 while distance is in range 0..floor(NOTERANGE/2)
+			// so compare distance/floor(NOTERANGE/2) to MAX_JUMP_DISTANCE/255
 			//need to scale
-			if( closest_note_distance<<8 <= NOTERANGE * MAX_JUMP_DISTANCE )
+			if( closest_note_distance * 255 <= NOTERANGE / 2 * MAX_JUMP_DISTANCE )
 			{
 				//We found the note we need to augment.
 				note_peak_freqs[closest_note_id] = thisfreq;
@@ -419,7 +419,7 @@ void HandleFrameInfo()
 #if 0
 	for( i = 0; i < MAXNOTES; i++ )
 	{
-		if( note_peak_freqs[i] == 255 ) continue;
+		if( note_peak_freqs[i] < 0 ) continue;
 		printf( "%d / ", note_peak_amps[i] );
 	}
 	printf( "\n" );
@@ -430,22 +430,22 @@ void HandleFrameInfo()
 	for( j = 0; j < i; j++ )
 	{
 		//We'd be combining nf2 (j) into nf1 (i) if they're close enough.
-		uint8_t nf1 = note_peak_freqs[i];
-		uint8_t nf2 = note_peak_freqs[j];
+		int16_t nf1 = note_peak_freqs[i];
+		int16_t nf2 = note_peak_freqs[j];
 		int16_t distance = nf1 - nf2;
 
-		if( nf1 == 255 || nf2 == 255 ) continue;
+		if( nf1 < 0 || nf2 < 0 ) continue;
 
 		if( distance < 0 ) distance = -distance;
 
 		//If it wraps around above the halfway point, then we're closer to it
 		//on the other side. 
-		if( distance > ((1<<(SEMIBITSPERBIN-1))*FIXBPERO) )
+		if( distance<<1 > NOTERANGE )
 		{
-			distance = ((1<<(SEMIBITSPERBIN))*FIXBPERO) - distance;
+			distance = NOTERANGE - distance;
 		}
-		// need to compare distance/NOTERANGE with MAX_COMBINE/256
-		if( distance<<8 > NOTERANGE * MAX_COMBINE_DISTANCE )
+
+		if( distance * 255 > NOTERANGE / 2 * MAX_COMBINE_DISTANCE )
 		{
 			continue;
 		}
@@ -471,12 +471,12 @@ void HandleFrameInfo()
 
 		//0 to 32768 porportional to how much of amp1 we want.
 		uint32_t porp = (amp1<<15) / (amp1+amp2);  
-		uint16_t newnote = (nf1 * porp + nf2 * (32768-porp))>>15;
+		int16_t newnote = (nf1 * porp + nf2 * (32768-porp))>>15;
 
 		//When combining notes, we have to use the amplitudes of into which has strongest amps
 		//trying to average or combine the power of the notes looks awful.
 		note_peak_freqs[into] = newnote;
-		note_peak_freqs[from] = 255;
+		note_peak_freqs[from] = -1;
 		note_peak_amps[from] = 0;
 		note_jumped_to[from] = into + 1;
 	}
@@ -485,7 +485,7 @@ void HandleFrameInfo()
 	//to decay.  We only do this for notes that have not found a peak.
 	for( i = 0; i < MAXNOTES; i++ )
 	{
-		if( note_peak_freqs[i] == 255 || hitnotes[i] ) continue;
+		if( note_peak_freqs[i] < 0 || hitnotes[i] ) continue;
 
 		note_peak_amps[i] -= note_peak_amps[i]>>AMP_1_IIR_BITS;
 		note_peak_amps2[i] -= note_peak_amps2[i]>>AMP_2_IIR_BITS;
@@ -494,7 +494,7 @@ void HandleFrameInfo()
 		//returned back into the great pool of unused notes.
 		if( note_peak_amps[i] < MINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR<<8 )
 		{
-			note_peak_freqs[i] = 255;
+			note_peak_freqs[i] = -1;
 			note_peak_amps[i] = 0;
 			note_peak_amps2[i] = 0;
 			note_jumped_to[i] = 0;
@@ -505,7 +505,7 @@ void HandleFrameInfo()
 #if 0
 	for( i = 0; i < MAXNOTES; i++ )
 	{
-		if( note_peak_freqs[i] == 255 ) continue;
+		if( note_peak_freqs[i] < 0 ) continue;
 		printf( "(%3d %4d %4d) ", note_peak_freqs[i], note_peak_amps[i], note_peak_amps2[i] );
 	}
 	printf( "\n") ;
