@@ -324,7 +324,6 @@ function GotLED(req,data)
 	var samps = Number( secs[1] );
 	var data = secs[2];
 	ctx.clearRect( 0, 0, canvas.width, canvas.height );
-
 	for( var i = 0; i < samps; i++ )
 	{
 		var x2 = i * canvas.clientWidth / samps;

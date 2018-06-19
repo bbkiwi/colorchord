@@ -191,8 +191,9 @@ void UpdateOutputBins32()
 		//embeddedbins32[i] = embeddedbins32[i]*40000/adjstrens[DFTIIR];
 		mux = SquareRootRounded( mux );
 		//embeddedbins32[i] = (mux << (17-octave))/adjstrens[DFTIIR]; //when use adjust 4 in nf
-		embeddedbins32[i] = (mux << (21-octave))/adjstrens[DFTIIR]; // use adjust 8
-		//embeddedbins32[i] = (mux << 21)/adjstrens[DFTIIR]; // use adjust 8
+		//embeddedbins32[i] = (mux << (21-octave))/adjstrens[DFTIIR]; // use adjust 8
+//TODO this makes no octave adjustment was it done line 242?
+		embeddedbins32[i] = (mux << 21)/adjstrens[DFTIIR]; // use adjust 8
 
 	}
 }

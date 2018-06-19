@@ -7,9 +7,9 @@
 #include <embeddednf.h>
 #include <embeddedout.h>
 
-extern volatile uint8_t sounddata[];
+extern volatile uint8_t sounddata[HPABUFFSIZE];
 extern volatile uint16_t soundhead;
-
+extern uint8_t sounddatacopy[HPABUFFSIZE];
 
 #define CONFIGURABLES 24 //(plus1)
 
@@ -124,12 +124,13 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 #if PROTECT_OSOUNDDATA
 		EnterCritical();
 #endif
-		int i, it = soundhead;
+//		int i, it = soundhead;
+		int i, it = 0;
 		for( i = 0; i < 512; i++ )
 		{
 //TODO  if replace below with uint8_t samp = 127; to test why oscope causes interferance
-//      get wdt resets coninually. Why??
-			uint8_t samp = sounddata[it++];
+//      get wdt resets coninually. Why?? should have used 0x7f instead of 127
+			uint8_t samp = sounddatacopy[it++];
 			it = it & (HPABUFFSIZE-1);
 			*(buffend++) = tohex1( samp>>4 );
 			*(buffend++) = tohex1( samp&0x0f );

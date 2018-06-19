@@ -40,6 +40,7 @@ extern volatile uint8_t sounddata[HPABUFFSIZE];
 extern volatile uint16_t soundhead;
 volatile uint16_t soundtail;
 
+uint8_t sounddatacopy[HPABUFFSIZE];
 static uint8_t hpa_running = 0;
 static uint8_t hpa_started = 0;
 static uint8_t hpa_is_paused_for_wifi = 0;
@@ -147,6 +148,7 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 			//ets_delay_us( 2 );
 			ExitCritical();
 #endif
+			sounddatacopy[soundtail] = samp;
 			samp_iir = samp_iir - (samp_iir>>10) + samp;
 			// #if PROTECT_SOUNDDATA code
 			// cleans noise and shows vcc/2 when oscope open or gui not showing page
