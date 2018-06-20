@@ -187,13 +187,11 @@ void UpdateOutputBins32()
 		//ctave we don't lose a lot of detail.
 		//mux = SquareRootRounded( mux ) << 1;
 		//embeddedbins32[i] = mux >> octave;
-		//adjust embeddedbins32 via a logistic data so between 0 and 65536 max uint16
-		//embeddedbins32[i] = embeddedbins32[i]*40000/adjstrens[DFTIIR];
 		mux = SquareRootRounded( mux );
-		//embeddedbins32[i] = (mux << (17-octave))/adjstrens[DFTIIR]; //when use adjust 4 in nf
-		//embeddedbins32[i] = (mux << (21-octave))/adjstrens[DFTIIR]; // use adjust 8
-//TODO this makes no octave adjustment was it done line 242?
-		embeddedbins32[i] = (mux << 21)/adjstrens[DFTIIR]; // use adjust 8
+		//empirical adjust embeddedbins32 via a logistic data so between 0 and 65536 
+		embeddedbins32[i] = (mux << (21-octave))/adjstrens[DFTIIR]; // use adjust 8
+//TODO tried no adjustment using octave and to noisy in high octaves
+//		embeddedbins32[i] = (mux << 21)/adjstrens[DFTIIR]; // use adjust 8
 
 	}
 }

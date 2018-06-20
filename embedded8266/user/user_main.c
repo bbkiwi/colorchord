@@ -36,6 +36,7 @@ static struct espconn *pUdpServer;
 void EnterCritical();
 void ExitCritical();
 
+//extern uint16_t median_filter(uint16_t datum);
 extern volatile uint8_t sounddata[HPABUFFSIZE];
 extern volatile uint16_t soundhead;
 volatile uint16_t soundtail;
@@ -148,6 +149,7 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 			//ets_delay_us( 2 );
 			ExitCritical();
 #endif
+//			sounddatacopy[soundtail] = median_filter(samp); //can't get to work
 			sounddatacopy[soundtail] = samp;
 			samp_iir = samp_iir - (samp_iir>>10) + samp;
 			// #if PROTECT_SOUNDDATA code
