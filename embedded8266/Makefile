@@ -7,7 +7,8 @@ include user.cfg
 	$(warning This is the empty rule. Something went wrong.)
 	@true
 
-SRCS += user/ws2812_i2s.c \
+SRCS += user/medeanfilt.c \
+	user/ws2812_i2s.c \
 	user/hpatimer.c \
 	user/adc.c \
 	../embeddedcommon/DFT32.c \

@@ -38,13 +38,13 @@ if (datum >= STOPPER)
  }
 
 //printf("hjhhj %i %i\n", datpoint - buffer, MEDIAN_FILTER_SIZE);
-//return datum; // runs and does nothing
+return datum; // runs and does nothing
  if ( (++datpoint - buffer) >= MEDIAN_FILTER_SIZE)
   {
    datpoint = &buffer[0];                               /* Increment and wrap data in pointer.*/
    //printf("%i %i  %i\n", datpoint, buffer, datpoint - buffer);
 }
-//return datum; // if get this far makes wdt resets
+return datum; // if get this far makes wdt resets
  datpoint->value = datum;                           /* Copy in new datum */
 
  successor = datpoint->point;                       /* Save pointer to old value's successor */

@@ -36,7 +36,7 @@ static struct espconn *pUdpServer;
 void EnterCritical();
 void ExitCritical();
 
-//extern uint16_t median_filter(uint16_t datum);
+extern uint16_t median_filter(uint16_t datum);
 extern volatile uint8_t sounddata[HPABUFFSIZE];
 extern volatile uint16_t soundhead;
 volatile uint16_t soundtail;
@@ -149,8 +149,8 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 			//ets_delay_us( 2 );
 			ExitCritical();
 #endif
-//			sounddatacopy[soundtail] = median_filter(samp); //can't get to work
-			sounddatacopy[soundtail] = samp;
+			sounddatacopy[soundtail] = median_filter(samp); //can't get to work
+//			sounddatacopy[soundtail] = samp;
 			samp_iir = samp_iir - (samp_iir>>10) + samp;
 			// #if PROTECT_SOUNDDATA code
 			// cleans noise and shows vcc/2 when oscope open or gui not showing page
@@ -237,7 +237,18 @@ void ICACHE_FLASH_ATTR charrx( uint8_t c )
 void ICACHE_FLASH_ATTR user_init(void)
 {
 	uart_init(BIT_RATE_115200, BIT_RATE_115200);
-	int wifiMode = wifi_get_opmode();
+
+	struct rst_info *rtc_info = system_get_rst_info();
+	printf("\nreset reason: %x\n", rtc_info->reason);
+	if (rtc_info->reason==REASON_WDT_RST|| rtc_info->reason==REASON_EXCEPTION_RST||rtc_info->reason==REASON_SOFT_WDT_RST) {
+		if (rtc_info->reason== REASON_EXCEPTION_RST) {
+			printf("Fatal exception (%d):\n", rtc_info->exccause);
+		}
+	printf("epc1=0x%08x, epc2=0x%08x, epc3=0x%08x\n", rtc_info->epc1, rtc_info->epc2, rtc_info->epc3);
+	printf("excvaddr=0x%08x, depc=0x%08x\n", rtc_info->excvaddr, rtc_info->depc);
+	}
+
+	wifi_get_opmode(); // if removed get resets
 
 	uart0_sendStr("\r\nColorChord\r\n");
 
