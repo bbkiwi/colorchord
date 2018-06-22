@@ -65,10 +65,12 @@ FOLD BLURS <input id="parmsgFILTER_BLUR_PASSES" type="range" value="1" max="16" 
 <tr><td width=1>
 <input type=submit onclick="ShowHideEvent( 'LEDs' ); KickLEDs();" value="LEDs"></td><td>
 <div id=LEDs class="collapsible">
-<table width=100% border=1><tr><td id=LEDCanvasHolder><CANVAS id=LEDCanvas width=512 height=100></CANVAS></td>
-<td><input type=button onclick="ToggleLEDPause();" id=LEDPauseButton value="|| / >"></td></tr></table>
+<table width=100% border=1><tr><td  width=80% id=LEDCanvasHolder><CANVAS id=LEDCanvas width=512 height=100></CANVAS></td>
+<td width=100%><input type=button onclick="ToggleLEDPause();" id=LEDPauseButton value="|| / >"><br>
+<output >Power draw: <span id="powerest">0</span> ma</output><br>
+<output >Peak Power: <span id="maxpowerest">0</span> ma</output>
+</td></tr></table>
 </div></td></tr>
-
 
 <tr><td width=1>
 <input type=submit onclick="ShowHideEvent( 'Notes' ); KickNotes();" value="Notes"></td><td>

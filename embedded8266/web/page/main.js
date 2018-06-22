@@ -284,7 +284,6 @@ var pause_led = false;
 function KickLEDs()
 {
 	$( "#LEDPauseButton" ).css( "background-color", (is_leds_running&&!pause_led)?"green":"red" );
-
 	if( !pause_led )
 		LEDDataTicker();
 }
@@ -322,17 +321,22 @@ function GotLED(req,data)
 	$( "#LEDPauseButton" ).css( "background-color", "green" );
 
 	var samps = Number( secs[1] );
+	var powerest = 0;
 	var data = secs[2];
 	ctx.clearRect( 0, 0, canvas.width, canvas.height );
 	for( var i = 0; i < samps; i++ )
 	{
 		var x2 = i * canvas.clientWidth / samps;
 		var samp = data.substr(i*6,6);
+		powerest += parseInt(samp.substr( 0, 2 ),16) + parseInt(samp.substr( 2, 2 ),16) + parseInt(samp.substr( 4, 2 ),16);
 		ctx.fillStyle = brighten("#" + samp.substr( 2, 2 ) + samp.substr( 0, 2 ) + samp.substr( 4, 2 ));
 		ctx.lineWidth = 0;
 		ctx.fillRect( x2, 0, canvas.clientWidth / samps+1, canvas.clientHeight );
 	}
-
+	var maxpowerest = document.getElementById('maxpowerest').innerHTML;
+	powerest = Math.floor(powerest*20/255);
+	document.getElementById('powerest').innerHTML =    powerest;
+	document.getElementById('maxpowerest').innerHTML = Math.max(powerest, maxpowerest);
 	var samp = parseInt( data.substr(i*2,2),16 );
 
 	LEDDataTicker();
@@ -348,6 +352,7 @@ function LEDDataTicker()
 	else
 	{
 		is_leds_running = 0;
+		document.getElementById('maxpowerest').innerHTML = 0;
 	}
 	$( "#LEDPauseButton" ).css( "background-color", (is_leds_running&&!pause_led)?"green":"red" );
 

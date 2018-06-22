@@ -51,22 +51,25 @@ FUZZ CUT  <input id="parmsgLOWER_CUTOFF" type="range" value="10" max="255" min="
 FUZZ IIR <input id="parmsgFUZZ_IIR_BITS" type="range" value="6" max="16" min="0" step="1" onchange="ChangeParam(this)">
 <output id="parmsgFUZZ_IIR_BITSOut"></output><br>
 FOLD BLURS <input id="parmsgFILTER_BLUR_PASSES" type="range" value="1" max="16" min="0" step="1" onchange="ChangeParam(this)">
-<output id="parmsgFILTER_BLUR_PASSESOut"></output><br>
+<output id="parmsgFILTER_BLUR_PASSESOut"></output>
 </td></tr></table></div></td></tr>
 
 
 <tr><td width=1>
 <input type=submit onclick="ShowHideEvent( 'LEDs' ); KickLEDs();" value="LEDs"></td><td>
 <div id=LEDs class="collapsible">
-<table width=100% border=1><tr><td id=LEDCanvasHolder><CANVAS id=LEDCanvas width=512 height=100></CANVAS></td>
-<td><input type=button onclick="ToggleLEDPause();" id=LEDPauseButton value="|| / >"></td></tr></table>
+<table width=100% border=1><tr><td  width=80% id=LEDCanvasHolder><CANVAS id=LEDCanvas width=512 height=100></CANVAS></td>
+<td width=100%><input type=button onclick="ToggleLEDPause();" id=LEDPauseButton value="|| / >"><br>
+<output >Power draw: <span id="powerest">0</span> ma</output><br>
+<output >Peak Power: <span id="maxpowerest">0</span> ma</output>
+</td></tr></table>
 </div></td></tr>
 
 
 <tr><td width=1>
 <input type=submit onclick="ShowHideEvent( 'Notes' ); KickNotes();" value="Notes"></td><td>
 <div id=Notes class="collapsible">
-<table width=1 border=1><tr><td><CANVAS id=NotesCanvas width=512 height=100></CANVAS></td>
+<table width=100% border=1><tr><td><CANVAS id=NotesCanvas width=512 height=100></CANVAS></td>
 <td width=100%><input type=button onclick="ToggleNotesPause();" id=NotesPauseButton value="|| / >"><br>
 SEMIBITSPERBIN  <input id="parmsgSEMIBITSPERBIN" type="range" value="0" max="4" min="0" step="1" onchange="ChangeParam(this)">
 <output id="parmsgSEMIBITSPERBINOut"></output><br>

@@ -105,8 +105,8 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 	case 'l': case 'L': //LEDs
 	{
 		int i, it = 0;
-		buffend += ets_sprintf( buffend, "CL\t%d\t", USE_NUM_LIN_LEDS );
-		uint16_t toledsvals = USE_NUM_LIN_LEDS*3;
+		buffend += ets_sprintf( buffend, "CL\t%d\t", NUM_LIN_LEDS );
+		uint16_t toledsvals = NUM_LIN_LEDS*3;
 		if( toledsvals > 600 ) toledsvals = 600;
 		for( i = 0; i < toledsvals; i++ )
 		{
@@ -120,13 +120,15 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 
 	case 'm': case 'M': //Oscilloscope
 	{
-		buffend += ets_sprintf( buffend, "CM\t512\t" );
+//		buffend += ets_sprintf( buffend, "CM\t512\t" );
+		buffend += ets_sprintf( buffend, "CM\t128\t" );
 #if PROTECT_OSOUNDDATA
 		EnterCritical();
 #endif
 //		int i, it = soundhead;
 		int i, it = 0;
-		for( i = 0; i < 512; i++ )
+//		for( i = 0; i < 512; i++ )
+		for( i = 0; i < 128; i++ )
 		{
 //TODO  if replace below with uint8_t samp = 127; to test why oscope causes interferance
 //      get wdt resets coninually. Why?? should have used 0x7f instead of 127
