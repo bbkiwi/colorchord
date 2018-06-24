@@ -11,7 +11,7 @@ extern volatile uint8_t sounddata[HPABUFFSIZE];
 extern volatile uint16_t soundhead;
 extern uint8_t sounddatacopy[HPABUFFSIZE];
 
-#define CONFIGURABLES 24 //(plus1)
+#define CONFIGURABLES 25 //(plus1)
 
 
 struct SaveLoad
@@ -22,14 +22,14 @@ struct SaveLoad
 
 struct CCSettings CCS;
 
-uint8_t gConfigDefaults[CONFIGURABLES] =  { 0, 6, 1, 2, 25, 3, 4, 7, 4, 2, 80, 64, 12, 255, 15, NUM_LIN_LEDS, 1, 0, 0 , 0, 0, 0, 0, 0};
+uint8_t gConfigDefaults[CONFIGURABLES] =  { 16, 0, 6, 1, 2, 25, 3, 4, 7, 4, 2, 80, 64, 12, 255, 15, NUM_LIN_LEDS, 1, 0, 0 , 0, 0, 0, 0, 0};
 
-uint8_t * gConfigurables[CONFIGURABLES] = { &CCS.gROOT_NOTE_OFFSET, &CCS.gDFTIIR, &CCS.gFUZZ_IIR_BITS, &CCS.gFILTER_BLUR_PASSES, &CCS.gLOWER_CUTOFF,
+uint8_t * gConfigurables[CONFIGURABLES]={ &CCS.gINITIAL_AMP, &CCS.gROOT_NOTE_OFFSET, &CCS.gDFTIIR, &CCS.gFUZZ_IIR_BITS, &CCS.gFILTER_BLUR_PASSES, &CCS.gLOWER_CUTOFF,
 	&CCS.gSEMIBITSPERBIN, &CCS.gMAX_JUMP_DISTANCE, &CCS.gMAX_COMBINE_DISTANCE, &CCS.gAMP_1_IIR_BITS,
 	&CCS.gAMP_2_IIR_BITS, &CCS.gMIN_AMP_FOR_NOTE, &CCS.gMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR, &CCS.gNOTE_FINAL_AMP, &CCS.gNOTE_FINAL_SATURATION,
 	&CCS.gNERF_NOTE_PORP, &CCS.gUSE_NUM_LIN_LEDS, &CCS.gCOLORCHORD_ACTIVE, &CCS.gCOLORCHORD_OUTPUT_DRIVER, &CCS.gCOLORCHORD_SHIFT_INTERVAL, &CCS.gCOLORCHORD_FLIP_ON_PEAK, &CCS.gCOLORCHORD_SHIFT_DISTANCE, &CCS.gCOLORCHORD_SORT_NOTES, &CCS.gCOLORCHORD_LIN_WRAPAROUND, 0 };
 
-char * gConfigurableNames[CONFIGURABLES] = { "gROOT_NOTE_OFFSET", "gDFTIIR", "gFUZZ_IIR_BITS", "gFILTER_BLUR_PASSES", "gLOWER_CUTOFF",
+char * gConfigurableNames[CONFIGURABLES] = { "gINITIAL_AMP", "gROOT_NOTE_OFFSET", "gDFTIIR", "gFUZZ_IIR_BITS", "gFILTER_BLUR_PASSES", "gLOWER_CUTOFF",
 	"gSEMIBITSPERBIN", "gMAX_JUMP_DISTANCE", "gMAX_COMBINE_DISTANCE", "gAMP_1_IIR_BITS",
 	"gAMP_2_IIR_BITS", "gMIN_AMP_FOR_NOTE", "gMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR", "gNOTE_FINAL_AMP", "gNOTE_FINAL_SATURATION",
 	"gNERF_NOTE_PORP", "gUSE_NUM_LIN_LEDS", "gCOLORCHORD_ACTIVE", "gCOLORCHORD_OUTPUT_DRIVER", "gCOLORCHORD_SHIFT_INTERVAL", "gCOLORCHORD_FLIP_ON_PEAK", "gCOLORCHORD_SHIFT_DISTANCE", "gCOLORCHORD_SORT_NOTES", "gCOLORCHORD_LIN_WRAPAROUND", 0 };
@@ -120,15 +120,15 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 
 	case 'm': case 'M': //Oscilloscope
 	{
-//		buffend += ets_sprintf( buffend, "CM\t512\t" );
-		buffend += ets_sprintf( buffend, "CM\t128\t" );
+		buffend += ets_sprintf( buffend, "CM\t512\t" );
+//		buffend += ets_sprintf( buffend, "CM\t128\t" );
 #if PROTECT_OSOUNDDATA
 		EnterCritical();
 #endif
 //		int i, it = soundhead;
 		int i, it = 0;
-//		for( i = 0; i < 512; i++ )
-		for( i = 0; i < 128; i++ )
+		for( i = 0; i < 512; i++ )
+//		for( i = 0; i < 128; i++ )
 		{
 //TODO  if replace below with uint8_t samp = 127; to test why oscope causes interferance
 //      get wdt resets coninually. Why?? should have used 0x7f instead of 127

@@ -16,6 +16,7 @@
 #define memcpy ets_memcpy
 #define memset ets_memset
 
+#define INITIAL_AMP		CCS.gINITIAL_AMP
 #define ROOT_NOTE_OFFSET	CCS.gROOT_NOTE_OFFSET
 #define DFTIIR			CCS.gDFTIIR
 #define FUZZ_IIR_BITS  		CCS.gFUZZ_IIR_BITS
@@ -44,6 +45,7 @@
 struct CCSettings
 {
 	uint8_t gSETTINGS_KEY;
+	uint8_t gINITIAL_AMP;                       //=16  pre-amp muliplier of ADC output
 	uint8_t gROOT_NOTE_OFFSET; //Set to define what the root note is.  0 = A.
 	uint8_t gDFTIIR;                            //=6
 	uint8_t gFUZZ_IIR_BITS;                     //=1

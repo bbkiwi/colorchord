@@ -91,6 +91,7 @@ int wf = 64; //this will stagger calls to NewFrame and HandleFrameInfo
 int wh = 0;
 int samplesPerFrame = 128;
 int samplesPerHandleInfo = 1;
+int32_t samp;
 
 //Tasks that happen all the time.
 
@@ -134,53 +135,78 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 		};
 
 		while( soundtail != soundhead )
-//		while( 1 ) // tried breaking and protecting accessing soundhead, made very slow
-		{
-//			EnterCritical();
-//			bool checkdiff = (soundtail == soundhead);
-//			ExitCritical();
-//			if (checkdiff) break;
+
+// #if PROTECT_SOUNDDATA code
+// cleans noise and shows vcc/2 when oscope open or gui not showing page
+//    seems more sensitive to mic too.
+//  if showing gui and oscope closed or off get noise!, if gpio open less noise
+//  when oscope closed or off for NUM_LEDS 18 more noise than when 255
+//  still very sharp spikes dropping to vcc/3. Previously noise was drops
+//  to vcc/3 for longer periods so on oscope looked like square wave pulses
+//  the delays below and changing menuinterface.js improve, interferance seems
+//  to be occurring when system HZ in gui is too fast (400MHz) when oscope open it slows down.
+//  BUT freq response is different when gui open: with C# is blue, without C# is red. Which is correct freq?
+//      when gui is shut C# red both ways
+//  Also less stable when running off lipo 3.7 v
+
 #if PROTECT_SOUNDDATA
 			EnterCritical();
 			//ets_delay_us( 2);
 #endif
-			int16_t samp = sounddata[soundtail];
+			if (soundtail != soundhead) samp = sounddata[soundtail];
 #if PROTECT_SOUNDDATA
 			//ets_delay_us( 2 );
 			ExitCritical();
 #endif
-			sounddatacopy[soundtail] = median_filter(samp); //can't get to work
+			// from chlohr/colorchord master commit 1d86a1c52
+			samp_iir = samp_iir - (samp_iir>>10) + samp; // tracks mean signal times 2^10
+			int32_t samp_adjusted = samp - (samp_iir>>10); //samp adjusted to center about 0
+			samp_adjusted = (samp_adjusted * INITIAL_AMP /16); //amplified
+			//samp = (samp - (samp_iir>>10))*256;
+			PushSample32( samp_adjusted * 16 );
+//printf("%i %i : ", samp_iir, samp);
+
+//			sounddatacopy[soundtail] = median_filter(samp); //can't get to work
 //			sounddatacopy[soundtail] = samp;
-			samp_iir = samp_iir - (samp_iir>>10) + samp;
-			// #if PROTECT_SOUNDDATA code
-			// cleans noise and shows vcc/2 when oscope open or gui not showing page
-			//    seems more sensitive to mic too.
-			//  if showing gui and oscope closed or off get noise!, if gpio open less noise
-			//  when oscope closed or off for NUM_LEDS 18 more noise than when 255
-			//  still very sharp spikes dropping to vcc/3. Previously noise was drops
-			//  to vcc/3 for longer periods so on oscope looked like square wave pulses
-			//  the delays below and changing menuinterface.js improve, interferance seems
-			//  to be occurring when system HZ in gui is too fast (400MHz) when oscope open it slows down.
-			//  BUT freq response is different when gui open: with C# is blue, without C# is red. Which is correct freq?
-			//      when gui is shut C# red both ways
-			//  Also less stable when running off lipo 3.7 v
-			///EnterCritical();
-			///ets_delay_us( 1 ); // try slight delay 1 before and after improves but still dist when oscope closed
-			//  in menuinterface.js using dosend('e') rather than dosend('wx') improves greatly oscope issue
-			PushSample32( (samp - (samp_iir>>10))*16 );
-			///ets_delay_us( 1 );
-			///ExitCritical();
+			//WARNING samp_adjusted + samp_iir>>10 compiles as (samp_adjusted + samp_iir)>>10
+			int32_t samp_mean = (samp_iir>>10);
+			int32_t samp_oscope = samp_adjusted + samp_mean;
+//			sounddatacopy[soundtail] = samp_adjusted + (samp_iir>>10);
+
+			if (samp_oscope < (-samp_mean))
+			{
+				sounddatacopy[soundtail] = samp_mean;
+//printf("X\n");
+			}
+			else if (samp_oscope < 0)
+			{
+				sounddatacopy[soundtail] = 0x0;
+//printf("-");
+			}
+			else if (samp_oscope >255)
+			{
+				sounddatacopy[soundtail] = 0xff;
+				//sounddatacopy[soundtail] = samp_mean; //replace with mean
+//printf("b");
+			}
+			else
+			{
+				sounddatacopy[soundtail] = samp_oscope;
+			}
+
 			soundtail = (soundtail+1)&(HPABUFFSIZE-1);
 
 			wh++;
 			if( wh >= samplesPerHandleInfo )
 			{
+
 				HandleFrameInfo();
 				wh = 0;
 			}
 			wf++;
 			if( wf >= samplesPerFrame )
 			{
+//printf("\n");
 				NewFrame();
 				wf = 0;
 			}
@@ -268,7 +294,7 @@ void ICACHE_FLASH_ATTR user_init(void)
 //	StartHPATimer(); //Init the high speed  ADC timer.
 //	hpa_running = 1;
 
-	CSPreInit();
+	CSPreInit(); //Commonservices pre Init
 
 	pUdpServer = (struct espconn *)os_zalloc(sizeof(struct espconn));
 	ets_memset( pUdpServer, 0, sizeof( struct espconn ) );
@@ -283,7 +309,7 @@ void ICACHE_FLASH_ATTR user_init(void)
 		while(1) { uart0_sendStr( "\r\nFAULT\r\n" ); }
 	}
 
-	CSInit();
+	CSInit(); //Commonservices Init
 
 	//Add a process
 	system_os_task(procTask, procTaskPrio, procTaskQueue, procTaskQueueLen);
@@ -291,7 +317,7 @@ void ICACHE_FLASH_ATTR user_init(void)
 	//Timer example
 	os_timer_disarm(&some_timer);
 	os_timer_setfn(&some_timer, (os_timer_func_t *)myTimer, NULL);
-	os_timer_arm(&some_timer, 100, 1);
+	os_timer_arm(&some_timer, 100, 1); //100ms
 
 	//Set GPIO16 for Input
 	WRITE_PERI_REG(PAD_XPD_DCDC_CONF,
