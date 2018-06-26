@@ -135,7 +135,7 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 		};
 
 		while( soundtail != soundhead )
-
+		{
 // #if PROTECT_SOUNDDATA code
 // cleans noise and shows vcc/2 when oscope open or gui not showing page
 //    seems more sensitive to mic too.
