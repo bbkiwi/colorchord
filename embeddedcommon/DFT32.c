@@ -189,9 +189,9 @@ void UpdateOutputBins32()
 		//embeddedbins32[i] = mux >> octave;
 		mux = SquareRootRounded( mux );
 		//empirical adjust embeddedbins32 via a logistic data so between 0 and 65536 
-		embeddedbins32[i] = (mux << (21-octave))/adjstrens[DFTIIR]; // use adjust 8
-//TODO tried no adjustment using octave and to noisy in high octaves
-//		embeddedbins32[i] = (mux << 21)/adjstrens[DFTIIR]; // use adjust 8
+//		embeddedbins32[i] = (mux << (21-octave))/adjstrens[DFTIIR]; // use adjust 8
+//TODO tried no adjustment using octave and too noisy in high octaves
+		embeddedbins32[i] = (mux << 21)/adjstrens[DFTIIR]; // use adjust 8
 
 	}
 }

@@ -9,6 +9,8 @@
 
 uint16_t folded_bins[FIXBPERO];
 uint16_t fuzzed_bins[FIXBINS];
+uint16_t max_bins[FIXBINS];
+uint32_t maxallbins;
 int16_t  note_peak_freqs[MAXNOTES];
 uint16_t note_peak_amps[MAXNOTES];
 uint16_t note_peak_amps2[MAXNOTES];
@@ -112,17 +114,27 @@ void UpdateFreqs()
 
 void InitColorChord()
 {
+//TODO Is this all needed? Only non-zero needs initialzation
+
 	int i;
-	//Set up and initialize arrays.
+	//Set up and initialize
 	for( i = 0; i < MAXNOTES; i++ )
 	{
 		note_peak_freqs[i] = -1;
-		note_peak_amps[i] = 0;
-		note_peak_amps2[i] = 0;
+//		note_peak_amps[i] = 0;
+//		note_peak_amps2[i] = 0;
 	}
 
-	memset( folded_bins, 0, sizeof( folded_bins ) );
-	memset( fuzzed_bins, 0, sizeof( fuzzed_bins ) );
+	//max_bins[] initialized in CustomStart() find maximum
+	maxallbins=1;
+	for( i = 0; i < FIXBINS; i++ )
+	{
+		if (max_bins[i]>maxallbins) maxallbins = max_bins[i];
+	}
+
+//	memset( folded_bins, 0, sizeof( folded_bins ) );
+//	memset( fuzzed_bins, 0, sizeof( fuzzed_bins ) );
+//	memset( max_bins, 0, sizeof( max_bins ) );
 
 	//Step 1: Initialize the Integer DFT.
 #ifdef USE_32DFT
@@ -176,6 +188,7 @@ void HandleFrameInfo()
 	int i, j, k;
 	uint8_t hitnotes[MAXNOTES];
 	memset( hitnotes, 0, sizeof( hitnotes ) );
+	static uint16_t equalize_count;
 
 #ifdef USE_32DFT
 	uint16_t * strens;
@@ -209,14 +222,45 @@ void HandleFrameInfo()
 	//Copy out the bins from the DFT to our fuzzed bins.
 	for( i = 0; i < FIXBINS; i++ )
 	{
-		fuzzed_bins[i] -= (fuzzed_bins[i]>>FUZZ_IIR_BITS);
-		// Try clip out small bins
-		if (strens[i] > LOWER_CUTOFF * 256) fuzzed_bins[i] += (strens[i]>>FUZZ_IIR_BITS);
+		fuzzed_bins[i] -= (fuzzed_bins[i]>>FUZZ_IIR_BITS); // once above 1<<FUZZ_IIR_BITS sticks at 1 less
+		// Clip out small bins
+		if (EQUALIZER_SET==0)
+		{
+			//Equalize fuzzed_bins when not computing new max_bins
+			if (strens[i] > LOWER_CUTOFF * 256) fuzzed_bins[i] += (maxallbins * strens[i] / max_bins[i])>>FUZZ_IIR_BITS;
+		}
+		else
+		{
+			if (strens[i] > LOWER_CUTOFF * 256) fuzzed_bins[i] += (strens[i]>>FUZZ_IIR_BITS);
+		}
 		if (i < FIXBINS/3) bass += fuzzed_bins[i];
 		else if (i < 2*FIXBINS/3) mid += fuzzed_bins[i];
 		else treb += fuzzed_bins[i];
 	}
 
+	if (EQUALIZER_SET || (equalize_count>0))
+	// Compute maximum freq response over the next seconds by sweeping sound over range of freq
+	{
+		if (equalize_count==0)
+		{
+			for ( i = 0; i < FIXBINS; i++ ) max_bins[i]=1;
+			maxallbins = 1;
+			equalize_count=EQUALIZER_SET * 256;
+		}
+		else
+		{
+			for ( i = 0; i < FIXBINS; i++ )
+			{
+				if (fuzzed_bins[i] > max_bins[i]) max_bins[i] = fuzzed_bins[i];
+				if (max_bins[i]>maxallbins) maxallbins = max_bins[i];
+			}
+			equalize_count--;
+			EQUALIZER_SET = 1 + equalize_count / 256;
+			if (equalize_count==0) EQUALIZER_SET=0;
+		}
+	}
+
+/*
 	//Taper first octave
 	for( i = 0; i < FIXBPERO; i++ )
 	{
@@ -231,6 +275,18 @@ void HandleFrameInfo()
 		uint32_t taperamt = (65536 / FIXBPERO) * i;
 		fuzzed_bins[newi] = (taperamt * fuzzed_bins[newi]) >> 16;
 	}
+*/
+
+	//Equalize fuzzed_bins when not computing new max_bins
+/*
+	if (EQUALIZER_SET == 0)
+	{
+		for( i = 0; i < FIXBINS; i++ )
+		{
+			fuzzed_bins[i] = (maxallbins * fuzzed_bins[i]) / max_bins[i];
+		}
+	}
+*/
 
 	//Fold the bins from fuzzedbins into one octave.
 	for( i = 0; i < FIXBPERO; i++ )

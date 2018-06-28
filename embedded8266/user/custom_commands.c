@@ -11,25 +11,28 @@ extern volatile uint8_t sounddata[HPABUFFSIZE];
 extern volatile uint16_t soundhead;
 extern uint8_t sounddatacopy[HPABUFFSIZE];
 
-#define CONFIGURABLES 25 //(plus1)
+#define CONFIGURABLES 26 //(plus1)
 
 
 struct SaveLoad
 {
 	uint8_t configs[CONFIGURABLES];
+	uint16_t saved_max_bins[FIXBINS];
 	uint8_t SaveLoadKey; //Must be 0xaa to be valid.
 } settings;
 
 struct CCSettings CCS;
 
-uint8_t gConfigDefaults[CONFIGURABLES] =  { 16, 0, 6, 1, 2, 25, 3, 4, 7, 4, 2, 80, 64, 12, 255, 15, NUM_LIN_LEDS, 1, 0, 0 , 0, 0, 0, 0, 0};
+uint8_t gConfigDefaults[CONFIGURABLES] =  { 16, 0, 6, 3, 0,    5, 14, 3, 42, 44,     2, 4, 45, 1, 100,    255, 15, NUM_LIN_LEDS, 1, 0,   0 , 0, 0, 0, 0, 0};
 
-uint8_t * gConfigurables[CONFIGURABLES]={ &CCS.gINITIAL_AMP, &CCS.gROOT_NOTE_OFFSET, &CCS.gDFTIIR, &CCS.gFUZZ_IIR_BITS, &CCS.gFILTER_BLUR_PASSES, &CCS.gLOWER_CUTOFF,
+uint8_t * gConfigurables[CONFIGURABLES]={ &CCS.gINITIAL_AMP, &CCS.gROOT_NOTE_OFFSET, &CCS.gDFTIIR, &CCS.gFUZZ_IIR_BITS,
+	&CCS.gEQUALIZER_SET,  &CCS.gFILTER_BLUR_PASSES, &CCS.gLOWER_CUTOFF,
 	&CCS.gSEMIBITSPERBIN, &CCS.gMAX_JUMP_DISTANCE, &CCS.gMAX_COMBINE_DISTANCE, &CCS.gAMP_1_IIR_BITS,
 	&CCS.gAMP_2_IIR_BITS, &CCS.gMIN_AMP_FOR_NOTE, &CCS.gMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR, &CCS.gNOTE_FINAL_AMP, &CCS.gNOTE_FINAL_SATURATION,
 	&CCS.gNERF_NOTE_PORP, &CCS.gUSE_NUM_LIN_LEDS, &CCS.gCOLORCHORD_ACTIVE, &CCS.gCOLORCHORD_OUTPUT_DRIVER, &CCS.gCOLORCHORD_SHIFT_INTERVAL, &CCS.gCOLORCHORD_FLIP_ON_PEAK, &CCS.gCOLORCHORD_SHIFT_DISTANCE, &CCS.gCOLORCHORD_SORT_NOTES, &CCS.gCOLORCHORD_LIN_WRAPAROUND, 0 };
 
-char * gConfigurableNames[CONFIGURABLES] = { "gINITIAL_AMP", "gROOT_NOTE_OFFSET", "gDFTIIR", "gFUZZ_IIR_BITS", "gFILTER_BLUR_PASSES", "gLOWER_CUTOFF",
+char * gConfigurableNames[CONFIGURABLES] = { "gINITIAL_AMP", "gROOT_NOTE_OFFSET", "gDFTIIR", "gFUZZ_IIR_BITS", "gEQUALIZER_SET",
+	"gFILTER_BLUR_PASSES", "gLOWER_CUTOFF",
 	"gSEMIBITSPERBIN", "gMAX_JUMP_DISTANCE", "gMAX_COMBINE_DISTANCE", "gAMP_1_IIR_BITS",
 	"gAMP_2_IIR_BITS", "gMIN_AMP_FOR_NOTE", "gMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR", "gNOTE_FINAL_AMP", "gNOTE_FINAL_SATURATION",
 	"gNERF_NOTE_PORP", "gUSE_NUM_LIN_LEDS", "gCOLORCHORD_ACTIVE", "gCOLORCHORD_OUTPUT_DRIVER", "gCOLORCHORD_SHIFT_INTERVAL", "gCOLORCHORD_FLIP_ON_PEAK", "gCOLORCHORD_SHIFT_DISTANCE", "gCOLORCHORD_SORT_NOTES", "gCOLORCHORD_LIN_WRAPAROUND", 0 };
@@ -47,6 +50,10 @@ void ICACHE_FLASH_ATTR CustomStart( )
 				*gConfigurables[i] = settings.configs[i];
 			}
 		}
+		for( i = 0; i < FIXBINS; i++ )
+		{
+			max_bins[i] = settings.saved_max_bins[i];
+		}
 	}
 	else
 	{
@@ -56,6 +63,10 @@ void ICACHE_FLASH_ATTR CustomStart( )
 			{
 				*gConfigurables[i] = gConfigDefaults[i];
 			}
+		}
+		for( i = 0; i < FIXBINS; i++ )
+		{
+			max_bins[i] = 1;
 		}
 	}
 }
@@ -84,6 +95,8 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 		case 2:
 			qty = FIXBPERO;
 			which = folded_bins; break;
+		case 3:
+			which = max_bins; break;
 		default:
 			buffend += ets_sprintf( buffend, "!CB" );
 			return buffend-buffer;
@@ -186,6 +199,11 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 				if( gConfigurables[i] )
 					*gConfigurables[i] = gConfigDefaults[i];
 			}
+			for( i = 0; i < FIXBINS; i++ )
+			{
+				max_bins[i] = 1;
+			}
+			maxallbins=1;
 			buffend += ets_sprintf( buffend, "CD" );
 			return buffend-buffer;
 		}
@@ -197,6 +215,12 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 			{
 				if( gConfigurables[i] )
 					*gConfigurables[i] = settings.configs[i];
+			}
+			maxallbins=1;
+			for( i = 0; i < FIXBINS; i++ )
+			{
+				max_bins[i] = settings.saved_max_bins[i];
+				if (max_bins[i]>maxallbins) maxallbins = max_bins[i];
 			}
 			buffend += ets_sprintf( buffend, "CSR" );
 			return buffend-buffer;
@@ -210,6 +234,10 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 			{
 				if( gConfigurables[i] )
 					settings.configs[i] = *gConfigurables[i];
+			}
+			for( i = 0; i < FIXBINS; i++ )
+			{
+				settings.saved_max_bins[i] = max_bins[i];
 			}
 			settings.SaveLoadKey = 0xAA;
 

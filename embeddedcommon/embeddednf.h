@@ -95,7 +95,8 @@
 #include "DFT32.h"
 
 extern uint16_t fuzzed_bins[]; //[FIXBINS]  <- The Full DFT after IIR, Blur and Taper
-
+extern uint16_t max_bins[]; //[FIXBINS]  <- Max of bins after Full DFT after IIR, Blur and Taper
+extern uint32_t maxallbins;
 extern uint16_t folded_bins[]; //[FIXBPERO] <- The folded fourier output.
 
 //frequency of note; Note if it is == 255, then it means it is not set. It is

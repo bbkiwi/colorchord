@@ -20,6 +20,7 @@
 #define ROOT_NOTE_OFFSET	CCS.gROOT_NOTE_OFFSET
 #define DFTIIR			CCS.gDFTIIR
 #define FUZZ_IIR_BITS  		CCS.gFUZZ_IIR_BITS
+#define EQUALIZER_SET  		CCS.gEQUALIZER_SET
 #define MAXNOTES  12 //MAXNOTES cannot be changed dynamically.
 #define FILTER_BLUR_PASSES	CCS.gFILTER_BLUR_PASSES
 #define LOWER_CUTOFF		CCS.gLOWER_CUTOFF
@@ -48,21 +49,22 @@ struct CCSettings
 	uint8_t gINITIAL_AMP;                       //=16  pre-amp muliplier of ADC output
 	uint8_t gROOT_NOTE_OFFSET; //Set to define what the root note is.  0 = A.
 	uint8_t gDFTIIR;                            //=6
-	uint8_t gFUZZ_IIR_BITS;                     //=1
-	uint8_t gFILTER_BLUR_PASSES;                //=2
-	uint8_t gLOWER_CUTOFF;                      //=25 cut off at 256 times this
+	uint8_t gFUZZ_IIR_BITS;                     //=3
+	uint8_t gEQUALIZER_SET;                     //=0 when one sweep over freq range to get mic responce
+	uint8_t gFILTER_BLUR_PASSES;                //=5
+	uint8_t gLOWER_CUTOFF;                      //=14 cut off at 256 times this
 	uint8_t gSEMIBITSPERBIN;                    //=3
-	uint8_t gMAX_JUMP_DISTANCE;                 //=4
-	uint8_t gMAX_COMBINE_DISTANCE;              //=7
-	uint8_t gAMP_1_IIR_BITS;                    //=4
-	uint8_t gAMP_2_IIR_BITS;                    //=2
-	uint8_t gMIN_AMP_FOR_NOTE;                  //=80
-	uint8_t gMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR; //=64
-	uint8_t gNOTE_FINAL_AMP;                    //=12
+	uint8_t gMAX_JUMP_DISTANCE;                 //=42
+	uint8_t gMAX_COMBINE_DISTANCE;              //=44
+	uint8_t gAMP_1_IIR_BITS;                    //=2
+	uint8_t gAMP_2_IIR_BITS;                    //=4
+	uint8_t gMIN_AMP_FOR_NOTE;                  //=45
+	uint8_t gMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR; //=1
+	uint8_t gNOTE_FINAL_AMP;                    //=100
 	uint8_t gNOTE_FINAL_SATURATION;             //=255
 	uint8_t gNERF_NOTE_PORP;                    //=15
 	uint8_t gUSE_NUM_LIN_LEDS;                  // = NUM_LIN_LEDS
-	uint8_t gCOLORCHORD_ACTIVE;
+	uint8_t gCOLORCHORD_ACTIVE;			//=1
 	uint8_t gCOLORCHORD_OUTPUT_DRIVER;
 	uint8_t gCOLORCHORD_SHIFT_INTERVAL; // ==0 controls speed of shifting if 0 no shift
 	uint8_t gCOLORCHORD_FLIP_ON_PEAK; //==0 if non-zero gives flipping at peaks of shift direction, 0 no flip

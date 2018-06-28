@@ -281,7 +281,7 @@ void ICACHE_FLASH_ATTR user_init(void)
 //Uncomment this to force a system restore.
 //	system_restore();
 
-	CustomStart();
+	CustomStart(); //read saved info flash or set defaults
 
 #ifdef PROFILE
 	GPIO_OUTPUT_SET(GPIO_ID_PIN(0), 0);
