@@ -226,7 +226,7 @@ void UpdateLinearLEDs()
 		while( porpamps[i] > 0 )
 		{
 			ledFreqOut[j] = local_peak_freq[i];
-			ledAmpOut[j] = (local_peak_amps2[i]*NOTE_FINAL_AMP)>>8;
+			ledAmpOut[j] = ((uint32_t)local_peak_amps2[i]*NOTE_FINAL_AMP)>>16;
 			j++;
 			porpamps[i]--;
 		}
@@ -411,7 +411,7 @@ void UpdateRotatingLEDs()
 	// can have led_arc_len a fixed size or proportional to amp
 	//led_arc_len = 5;
 //TODO look below
-	led_arc_len = (amp * (USE_NUM_LIN_LEDS + 1) ) >> 14; // empirical
+	led_arc_len = ((uint32_t)amp * (USE_NUM_LIN_LEDS + 1) ) >> 15; // empirical
 	//printf("amp2 = %d, amp = %d, led_arc_len = %d, NOTE_FINAL_AMP = %d\n", amp2,  amp, led_arc_len, NOTE_FINAL_AMP );
 	//stt += ets_sprintf( stt, "amp2 = %d, amp = %d, led_arc_len = %d, NOTE_FINAL_AMP = %d\n", amp2,  amp, led_arc_len, NOTE_FINAL_AMP );
 	//uart0_sendStr(stret);
@@ -488,7 +488,7 @@ void PureRotatingLEDs()
 	if ( jshift < 0 ) jshift += NUM_LIN_LEDS;
 	for( i = 0; i < led_arc_len; i++, jshift++ )
 	{
-		uint32_t color = ECCtoAdjustedHEX( (freq + i*NERF_NOTE_PORP/led_arc_len)%NOTERANGE, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
+		uint32_t color = ECCtoAdjustedHEX( (freq + i*NOTERANGE*NERF_NOTE_PORP/led_arc_len/100)%NOTERANGE, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
 		// even if led_arc_len exceeds NUM_LIN_LEDS using jshift will prevent over running ledOut
 		if( jshift >= NUM_LIN_LEDS ) jshift = 0;
 		ledOut[jshift*3+0] = ( color >> 0 ) & 0xff;

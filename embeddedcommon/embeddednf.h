@@ -6,7 +6,7 @@
 #include <ccconfig.h>
 
 #ifndef MAX_AMP2_LOG2
-#define MAX_AMP2_LOG2 10
+#define MAX_AMP2_LOG2 16
 #endif
 
 
