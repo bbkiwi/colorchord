@@ -306,7 +306,7 @@ void UpdateLinearLEDs()
 	        printf("%d:%d/", ledFreqOut[minimizingShift], amp);
 #endif
 		if( amp > NOTE_FINAL_AMP ) amp = NOTE_FINAL_AMP;
-		uint32_t color = ECCtoHEX( (ledFreqOut[minimizingShift]+ROOT_NOTE_OFFSET)%NOTERANGE, NOTE_FINAL_SATURATION, amp );
+		uint32_t color = ECCtoAdjustedHEX( ledFreqOut[minimizingShift], NOTE_FINAL_SATURATION, amp );
 		ledOut[jshift*3+0] = ( color >> 0 ) & 0xff;
 		ledOut[jshift*3+1] = ( color >> 8 ) & 0xff;
 		ledOut[jshift*3+2] = ( color >>16 ) & 0xff;
@@ -356,7 +356,7 @@ void UpdateAllSameLEDs()
 	amp = (((uint32_t)(amp))*NOTE_FINAL_AMP)>>MAX_AMP2_LOG2;
 
 	if( amp > NOTE_FINAL_AMP ) amp = NOTE_FINAL_AMP;
-	uint32_t color = ECCtoHEX( (freq+ROOT_NOTE_OFFSET)%NOTERANGE, NOTE_FINAL_SATURATION, amp );
+	uint32_t color = ECCtoAdjustedHEX( freq, NOTE_FINAL_SATURATION, amp );
 	for( i = 0; i < NUM_LIN_LEDS; i++ )
 	{
 		ledOut[i*3+0] = ( color >> 0 ) & 0xff;
@@ -405,8 +405,8 @@ void UpdateRotatingLEDs()
 	// can set color intensity using amp2 or fixed value
 	amp2 = (((uint32_t)(amp2))*NOTE_FINAL_AMP)>>MAX_AMP2_LOG2; // for PC 14;
 	if( amp2 > NOTE_FINAL_AMP ) amp2 = NOTE_FINAL_AMP;
-	//uint32_t color = ECCtoHEX( (freq+ROOT_NOTE_OFFSET)%NOTERANGE, NOTE_FINAL_SATURATION, amp2 );
-	uint32_t color = ECCtoHEX( (freq+ROOT_NOTE_OFFSET)%NOTERANGE, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
+	//uint32_t color = ECCtoAdjustedHEX( freq, NOTE_FINAL_SATURATION, amp2 );
+	uint32_t color = ECCtoAdjustedHEX( freq, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
 
 	// can have led_arc_len a fixed size or proportional to amp
 	//led_arc_len = 5;
@@ -465,7 +465,7 @@ void PureRotatingLEDs()
 	int32_t led_arc_len;
 	int16_t freq;
 	freq = ColorCycle;
-//	uint32_t color = ECCtoHEX( (freq+ROOT_NOTE_OFFSET)%NOTERANGE, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
+//	uint32_t color = ECCtoAdjustedHEX( freq, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
 
 	// can have led_arc_len a fixed size or proportional to amp2
 	led_arc_len = USE_NUM_LIN_LEDS;
@@ -488,7 +488,7 @@ void PureRotatingLEDs()
 	if ( jshift < 0 ) jshift += NUM_LIN_LEDS;
 	for( i = 0; i < led_arc_len; i++, jshift++ )
 	{
-		uint32_t color = ECCtoHEX( (freq + i*NERF_NOTE_PORP/led_arc_len + ROOT_NOTE_OFFSET)%NOTERANGE, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
+		uint32_t color = ECCtoAdjustedHEX( (freq + i*NERF_NOTE_PORP/led_arc_len)%NOTERANGE, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
 		// even if led_arc_len exceeds NUM_LIN_LEDS using jshift will prevent over running ledOut
 		if( jshift >= NUM_LIN_LEDS ) jshift = 0;
 		ledOut[jshift*3+0] = ( color >> 0 ) & 0xff;
@@ -506,12 +506,10 @@ void PureRotatingLEDs()
 }
 
 
-
-
-
-uint32_t ECCtoHEX( int16_t note, uint8_t sat, uint8_t val )
+uint32_t ECCtoAdjustedHEX( int16_t note, uint8_t sat, uint8_t val )
 {
 	uint8_t hue = 0;
+	note=(note+ROOT_NOTE_OFFSET*NOTERANGE/120)%NOTERANGE;
 	uint32_t renote = ((uint32_t)note * 65535) / (NOTERANGE - 1);
 	#define rn0  0
 	#define hn0  298

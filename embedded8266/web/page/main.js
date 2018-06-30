@@ -486,12 +486,14 @@ function NotesTicker()
 
 function CCColor( note )
 {
-	return ECCtoHEX( (note * globalParams["rNOTERANGE"] / globalParams["rFIXBPERO"] + globalParams["gROOT_NOTE_OFFSET"] + globalParams["rNOTERANGE"] )%globalParams["rNOTERANGE"], 255, 255 );
+//	return ECCtoHEX( (note * globalParams["rNOTERANGE"] / globalParams["rFIXBPERO"] + globalParams["gROOT_NOTE_OFFSET"] + globalParams["rNOTERANGE"] )%globalParams["rNOTERANGE"], 255, 255 );
+	return ECCtoHEX( (note * globalParams["rNOTERANGE"] / globalParams["rFIXBPERO"] + Math.floor(globalParams["gROOT_NOTE_OFFSET"]*globalParams["rNOTERANGE"]/120) )%globalParams["rNOTERANGE"], 255, 255 );
 }
 
 function CCColorDetail( note )
 {
-	return ECCtoHEX( (note + globalParams["gROOT_NOTE_OFFSET"] + globalParams["rNOTERANGE"] )%globalParams["rNOTERANGE"], 255, 255 );
+//	return ECCtoHEX( (note + globalParams["gROOT_NOTE_OFFSET"] + globalParams["rNOTERANGE"] )%globalParams["rNOTERANGE"], 255, 255 );
+	return ECCtoHEX( (note + Math.floor(globalParams["gROOT_NOTE_OFFSET"]*globalParams["rNOTERANGE"]/120) )%globalParams["rNOTERANGE"], 255, 255 );
 }
 
 //function ECCtoHEX( note, sat, val )
