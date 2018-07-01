@@ -42,7 +42,7 @@
 #define COLORCHORD_SHIFT_DISTANCE	CCS.gCOLORCHORD_SHIFT_DISTANCE
 #define COLORCHORD_SORT_NOTES	CCS.gCOLORCHORD_SORT_NOTES
 #define COLORCHORD_LIN_WRAPAROUND	CCS.gCOLORCHORD_LIN_WRAPAROUND
-
+#define CONFIG_NUMBER		CCS.gCONFIG_NUMBER
 struct CCSettings
 {
 	uint8_t gSETTINGS_KEY;
@@ -71,6 +71,7 @@ struct CCSettings
 	int8_t gCOLORCHORD_SHIFT_DISTANCE; //==0 distance of shift
 	uint8_t gCOLORCHORD_SORT_NOTES; //==0  0 no sort, 1 inc freq, 2 dec amps, 3 dec amps2
 	uint8_t gCOLORCHORD_LIN_WRAPAROUND; //==0  0 no adjusting, else current led display has minimum deviation to prev
+	uint8_t gCONFIG_NUMBER; //=0 from 0 ..NUMBER_STORED_CONFIGURABLES-1
 };
 
 extern struct CCSettings CCS;
