@@ -21,6 +21,10 @@ void UpdateLinearLEDs()
 {
 	//Source material:
 	/*
+		extern uint16_t fuzzed_bins[]; //[FIXBINS]  <- The Full DFT after IIR, Blur and Taper
+		extern uint16_t max_bins[]; //[FIXBINS]  <- Max of bins after Full DFT after IIR, Blur and Taper
+		extern uint32_t maxallbins;
+		extern uint16_t folded_bins[]; //[FIXBPERO] <- The folded fourier output.
 		extern int16_t  note_peak_freqs[];
 		extern uint16_t note_peak_amps[];  //[MAXNOTES] 
 		extern uint16_t note_peak_amps2[];  //[MAXNOTES]  (Responds quicker)
@@ -398,7 +402,7 @@ void UpdateRotatingLEDs()
 			//total_note_a2 += ist;
 		}
 	}
-	total_note_a = bass;
+	total_note_a = octave_bins[0]+octave_bins[1]; // bass;
 
 	diff_a = total_note_a_prev - total_note_a;
 
@@ -426,6 +430,8 @@ void UpdateRotatingLEDs()
 	// now every COLORCHORD_SHIFT_INTERVAL th frame
 	if (COLORCHORD_SHIFT_INTERVAL != 0 ) {
 		if ( gFRAMECOUNT_MOD_SHIFT_INTERVAL == 0 ) {
+// move on beat	when amp2 IIR about 9
+//		if ( gFRAMECOUNT_MOD_SHIFT_INTERVAL == 0 && diff_a_prev <= 0 && diff_a > 0 ) {
 			gROTATIONSHIFT += rot_dir * COLORCHORD_SHIFT_DISTANCE;
 		        //printf("tnap tna %d %d dap da %d %d rot_dir %d, j shift %d\n",total_note_a_prev, total_note_a, diff_a_prev,  diff_a, rot_dir, j);
 		}
@@ -457,17 +463,62 @@ void UpdateRotatingLEDs()
 
 }
 
-// pure pattern not reacting to sound
+void DFTInLights()
+{
+// used folded_bins having FIXBPERO and map to USE_NUM_LIN_LEDS
+	int16_t i;
+	int16_t fbind;
+	int16_t freq;
+	uint16_t amp;
+	for( i = 0; i < USE_NUM_LIN_LEDS; i++ )
+	{
+//		fbind = i*(FIXBPERO-1)/(USE_NUM_LIN_LEDS-1); // exact tranformation but then need check divide by zero
+		fbind = i*FIXBPERO/USE_NUM_LIN_LEDS; // this is good enough and still will not exceed FIXBPERO-1
+		freq = fbind*(1<<SEMIBITSPERBIN);
+
+// 		assign colors (0, 1, ... FIXBPERO-1 ) * 2^SEMIBITSPERBIN
+// 		brightness is value of bins.
+		amp = folded_bins[fbind];
+		amp = (((uint32_t)(amp))*NOTE_FINAL_AMP)>>MAX_AMP2_LOG2; // for PC 14;
+		if( amp > NOTE_FINAL_AMP ) amp = NOTE_FINAL_AMP;
+		freq = fbind*(1<<SEMIBITSPERBIN);
+
+/*
+//		each leds color depends on value in bin. If want green lowest to yellow hightest use ROOT_NOTE_OFFSET = 110
+		freq = folded_bins[fbind];
+		freq = (((int32_t)(freq))*NOTE_FINAL_AMP)>>MAX_AMP2_LOG2; // for PC 14;
+		if( freq > NOTERANGE ) freq = NOTERANGE;
+		freq = NOTERANGE - freq;
+		amp = NOTE_FINAL_AMP;
+*/
+		uint32_t color = ECCtoAdjustedHEX( freq, NOTE_FINAL_SATURATION, amp );
+		ledOut[i*3+0] = ( color >> 0 ) & 0xff;
+		ledOut[i*3+1] = ( color >> 8 ) & 0xff;
+		ledOut[i*3+2] = ( color >>16 ) & 0xff;
+	}
+	for( i = USE_NUM_LIN_LEDS; i < NUM_LIN_LEDS; i++ )
+	{
+		ledOut[i*3+0] = 0x0;
+		ledOut[i*3+1] = 0x0;
+		ledOut[i*3+2] = 0x0;
+	}
+}
+
+// pure pattern only brightness related to sound bass amplitude
 void PureRotatingLEDs()
 {
 	int16_t i;
 	int16_t jshift; // int8_t jshift; caused instability especially for large no of LEDs
 	int32_t led_arc_len;
 	int16_t freq;
+	uint32_t amp;
 	freq = ColorCycle;
 //	uint32_t color = ECCtoAdjustedHEX( freq, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
 
 	// can have led_arc_len a fixed size or proportional to amp2
+	amp = octave_bins[0]+octave_bins[1]; // bass;
+	amp = (((uint32_t)(amp))*NOTE_FINAL_AMP)>>MAX_AMP2_LOG2; // for PC 14;
+	if( amp > NOTE_FINAL_AMP ) amp = NOTE_FINAL_AMP;
 	led_arc_len = USE_NUM_LIN_LEDS;
 
 	// now every COLORCHORD_SHIFT_INTERVAL th frame
@@ -488,7 +539,8 @@ void PureRotatingLEDs()
 	if ( jshift < 0 ) jshift += NUM_LIN_LEDS;
 	for( i = 0; i < led_arc_len; i++, jshift++ )
 	{
-		uint32_t color = ECCtoAdjustedHEX( (freq + i*NOTERANGE*NERF_NOTE_PORP/led_arc_len/100)%NOTERANGE, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
+//		uint32_t color = ECCtoAdjustedHEX( (freq + i*NOTERANGE*NERF_NOTE_PORP/led_arc_len/100)%NOTERANGE, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
+		uint32_t color = ECCtoAdjustedHEX( (freq + i*NOTERANGE*NERF_NOTE_PORP/led_arc_len/100)%NOTERANGE, NOTE_FINAL_SATURATION, amp );
 		// even if led_arc_len exceeds NUM_LIN_LEDS using jshift will prevent over running ledOut
 		if( jshift >= NUM_LIN_LEDS ) jshift = 0;
 		ledOut[jshift*3+0] = ( color >> 0 ) & 0xff;

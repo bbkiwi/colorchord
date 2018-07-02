@@ -96,6 +96,9 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 			qty = FIXBPERO;
 			which = folded_bins; break;
 		case 3:
+			qty = OCTAVES;
+			which = octave_bins; break;
+		case 4:
 			which = max_bins; break;
 		default:
 			buffend += ets_sprintf( buffend, "!CB" );

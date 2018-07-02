@@ -99,13 +99,14 @@ extern uint16_t max_bins[]; //[FIXBINS]  <- Max of bins after Full DFT after IIR
 extern uint32_t maxallbins;
 extern uint16_t folded_bins[]; //[FIXBPERO] <- The folded fourier output.
 
-//frequency of note; Note if it is == 255, then it means it is not set. It is
+//frequency of note; Note if it is <0, then  it is not set. It is
 //generally a value from 
 extern int16_t  note_peak_freqs[]; //[MAXNOTES]
 extern uint16_t note_peak_amps[];  //[MAXNOTES] 
 extern uint16_t note_peak_amps2[]; //[MAXNOTES]  (Responds quicker)
 extern uint8_t  note_jumped_to[];  //[MAXNOTES] When a note combines into another one,
 extern uint16_t bass, mid, treb;
+extern uint16_t octave_bins[OCTAVES];
 
 	//this records where it went.  I.e. if your note just disappeared, check this flag.
 

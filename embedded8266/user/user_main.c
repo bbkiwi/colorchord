@@ -75,6 +75,9 @@ static void ICACHE_FLASH_ATTR NewFrame()
 	case 3:
 		PureRotatingLEDs();
 		break;
+	case 4:
+		DFTInLights();
+		break;
 	};
 
 	//SendSPI2812( ledOut, NUM_LIN_LEDS );
@@ -125,12 +128,13 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 		case 0:
 		case 1:
 		case 2:
+		case 4:
 			samplesPerFrame = 128; // <= but if < required new def of max to respond to peaks
 			samplesPerHandleInfo = 128;
 			break;
 		case 3:
-			samplesPerFrame = 1;
-			samplesPerHandleInfo = 1000;
+			samplesPerFrame = 32;
+			samplesPerHandleInfo = 128;
 			break;
 		};
 

@@ -16,6 +16,7 @@ uint16_t note_peak_amps[MAXNOTES];
 uint16_t note_peak_amps2[MAXNOTES];
 uint8_t  note_jumped_to[MAXNOTES];
 uint16_t bass, mid, treb;
+uint16_t octave_bins[OCTAVES];
 
 
 /*
@@ -151,38 +152,6 @@ void InitColorChord()
 
 }
 
-/*
-void HandleFrameInfoShort()
-{
-	int i, j, k;
-	uint8_t hitnotes[MAXNOTES];
-	memset( hitnotes, 0, sizeof( hitnotes ) );
-
-#ifdef USE_32DFT
-	uint16_t * strens;
-	UpdateOutputBins32();
-	strens = embeddedbins32;
-#else
-	uint16_t * strens = embeddedbins;
-#endif
-	bass = 0;
-	mid = 0;
-	treb = 0;
-	//Copy out the bins from the DFT to our fuzzed bins.
-	for( i = 0; i < FIXBINS; i++ )
-	{
-		fuzzed_bins[i] = (fuzzed_bins[i] + (strens[i]>>FUZZ_IIR_BITS) -
-			(fuzzed_bins[i]>>FUZZ_IIR_BITS));
-	if (i < FIXBINS/3) bass += fuzzed_bins[i];
-	else if (i < 2*FIXBINS/3) mid += fuzzed_bins[i];
-	else treb += fuzzed_bins[i];
-	//printf("%4d ", fuzzed_bins[i]);
-	}
-	//printf("\n");
-	//printf("%5d %5d %5d \n", bass, mid, treb);
-}
-*/
-
 void HandleFrameInfo()
 {
 	int i, j, k;
@@ -289,14 +258,16 @@ void HandleFrameInfo()
 */
 
 	//Fold the bins from fuzzedbins into one octave.
-	for( i = 0; i < FIXBPERO; i++ )
-		folded_bins[i] = 0;
+	//  and collect bins from each octave
+	for( i = 0; i < FIXBPERO; i++ ) folded_bins[i] = 0;
+	for( i = 0; i < OCTAVES; i++ ) octave_bins[i] = 0;
 	k = 0;
 	for( j = 0; j < OCTAVES; j++ )
 	{
 		for( i = 0; i < FIXBPERO; i++ )
 		{
-			folded_bins[i] += fuzzed_bins[k++];
+			folded_bins[i] += fuzzed_bins[k];
+			octave_bins[j] += fuzzed_bins[k++];
 		}
 		//scale so in range 0..255
 		//for( i = 0; i < FIXBPERO; i++ ) folded_bins[i] /= 256*OCTAVES;
