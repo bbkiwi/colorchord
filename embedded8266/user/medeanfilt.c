@@ -12,7 +12,8 @@
 // datpoint = buffer is statement causing problem
 // wrote datpoint = &buffer[0] and then with printf at 44 and return at 46
 //     runs printing on serial, but if take out printf get resets
-
+// Do structures being pointed to need to be 32 bit aligned?
+// Must pointers be uint32_t?
 // datum will be uint8_t so between 0 and 255
 uint16_t median_filter(uint16_t datum)
 {

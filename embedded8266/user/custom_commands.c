@@ -211,10 +211,12 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 			return buffend-buffer;
 		}
 
-		case 'r': case 'R': //Revert
+		case 'r': case 'R': //Revert to CONFIG_NUMBER stored configuration
 		{
 			int i;
-			if (CONFIG_NUMBER < NUMBER_STORED_CONFIGURABLES)
+//TODO bailing out if bad configuration. Will fix by having defaults for all configurations
+			if (CONFIG_NUMBER < NUMBER_STORED_CONFIGURABLES & settings.configs[CONFIG_NUMBER][CONFIGURABLES-2]==CONFIG_NUMBER)
+//			if (CONFIG_NUMBER < NUMBER_STORED_CONFIGURABLES)
 			{
 				for( i = 0; i < CONFIGURABLES-1; i++ )
 				{
@@ -310,6 +312,18 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 			} while( 0 );
 
 			buffend += ets_sprintf( buffend, "!CV" );
+			return buffend-buffer;
+		}
+		else if( pusrdata[2] == 'C' || pusrdata[2] == 'c' ) //dump stored configs
+		{
+			int i, j;
+			buffend += ets_sprintf( buffend, "CVC\n" );
+			for (i=0; i< NUMBER_STORED_CONFIGURABLES;i++) {
+				for (j=0;j<CONFIGURABLES-1;j++) {
+				buffend += ets_sprintf( buffend, "%02x", settings.configs[i][j] );
+				}
+			buffend += ets_sprintf( buffend, "\n");
+			}
 			return buffend-buffer;
 		}
 		else
