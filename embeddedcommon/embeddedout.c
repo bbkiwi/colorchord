@@ -79,9 +79,10 @@ void UpdateLinearLEDs()
 
 	diff_a = total_note_a_prev - total_note_a;
 
-	note_nerf_a = ((total_note_a * NERF_NOTE_PORP)>>8);
+	note_nerf_a = total_note_a * NERF_NOTE_PORP /100;
 
-	// ignore notes with amp too small or neg (which means not a note)
+	// eliminates notes with amp too small relative to non-eleminated or neg (which means not a note)
+	// ideally want to got thru notes in increasing order
 	for( i = 0; i < MAXNOTES; i++ )
 	{
 		uint16_t ist = note_peak_amps[i];
@@ -92,6 +93,8 @@ void UpdateLinearLEDs()
 		}
 		if( ist < note_nerf_a )
 		{
+			total_note_a -= ist;
+			note_nerf_a = total_note_a * NERF_NOTE_PORP /100;
 			continue;
 		}
 		sorted_note_map[sorted_map_count] = i;
@@ -139,7 +142,7 @@ void UpdateLinearLEDs()
 
 	for( i = 0; i < sorted_map_count; i++ )
 	{
-		local_peak_amps[i] = note_peak_amps[sorted_note_map[i]] - note_nerf_a;
+		local_peak_amps[i] = note_peak_amps[sorted_note_map[i]];
 		local_peak_amps2[i] = note_peak_amps2[sorted_note_map[i]];
 		local_peak_freq[i] = note_peak_freqs[sorted_note_map[i]];
 		local_note_jumped_to[i] = note_jumped_to[sorted_note_map[i]];
@@ -210,15 +213,13 @@ void UpdateLinearLEDs()
 #endif
 
 
-	int addedlast = 1;
 	do
 	{
 		for( i = 0; i < sorted_map_count && total_unaccounted_leds; i++ )
 		{
 			porpamps[i]++; total_unaccounted_leds--;
-			addedlast = 1;
 		}
-	} while( addedlast && total_unaccounted_leds );
+	} while( total_unaccounted_leds );
 
 	//Assign the linear LEDs info for 0, 1, ..., USE_NUM_LIN_LEDS
 	//Each note (above a minimum amplitude) produces an interval
