@@ -17,6 +17,8 @@ int diff_a_prev = 0;
 int rot_dir = 1; // initial rotation direction 1
 int16_t ColorCycle =0;
 
+
+
 void UpdateLinearLEDs()
 {
 	//Source material:
@@ -48,13 +50,51 @@ void UpdateLinearLEDs()
 	int16_t minimizingShift;
 	uint32_t total_size_all_notes = 0;
 	int32_t porpamps[MAXNOTES]; //number of LEDs for each corresponding note.
-	uint8_t sorted_note_map[MAXNOTES]; //mapping from which note into the array of notes from the rest of the system.
+	uint16_t sorted_note_map[MAXNOTES]; //mapping from which note into the array of notes from the rest of the system.
+	uint16_t snmapmap[MAXNOTES];
 	uint8_t sorted_map_count = 0;
 	uint32_t note_nerf_a = 0;
 	uint32_t total_note_a = 0;
 	int diff_a = 0;
 	int8_t shift_dist = 0;
 	int16_t jshift; // int8_t jshift; caused instability especially for large no of LEDS
+
+#define DECREASING 2
+#define INCREASING 1
+
+
+	void Sort(uint8_t orderType, int16_t values[], uint16_t map[], uint8_t num)
+	{
+		//    bubble sort on a specified orderType to reorder sorted_note_map
+		uint8_t holdmap;
+		uint8_t change;
+		int not_correct_order;
+		int i,j;
+		for( i = 0; i < num; i++ )
+		{
+			change = 0;
+			for( j = 0; j < num -1 - i; j++ )
+			{
+				switch(orderType) {
+					case DECREASING :
+						not_correct_order = values[map[j]] < values[map[j+1]];
+					break;
+					default : // increasing
+						not_correct_order = values[map[j]] > values[map[j+1]];
+				}
+				if ( not_correct_order )
+				{
+					change = 1;
+					holdmap = map[j];
+					map[j] = map[j+1];
+					map[j+1] = holdmap;
+				}
+			}
+			if (!change) return;
+		}
+	}
+
+
 
 #if DEBUGPRINT
 	printf( "Note Peak Freq: " );
@@ -74,79 +114,85 @@ void UpdateLinearLEDs()
 	for( i = 0; i < MAXNOTES; i++ )
 	{
 		if( note_peak_freqs[i] < 0) continue;
+		sorted_note_map[sorted_map_count] = i;
+		sorted_map_count++;
 		total_note_a += note_peak_amps[i];
 	}
 
-	diff_a = total_note_a_prev - total_note_a;
+	Sort(DECREASING, note_peak_amps, sorted_note_map, sorted_map_count);
 
 	note_nerf_a = total_note_a * NERF_NOTE_PORP /100;
 
-	// eliminates notes with amp too small relative to non-eleminated or neg (which means not a note)
-	// ideally want to got thru notes in increasing order
-	for( i = 0; i < MAXNOTES; i++ )
+	// eliminates  and reduces count of notes with amp too small relative to non-eliminated
+	// adjusts total amplitude
+	j=sorted_map_count -1;
+	while (j>=0)
 	{
-		uint16_t ist = note_peak_amps[i];
-		int16_t nff = note_peak_freqs[i];
-		if( nff < 0 )
-		{
-			continue;
-		}
+		uint16_t ist = note_peak_amps[sorted_note_map[j]];
 		if( ist < note_nerf_a )
 		{
 			total_note_a -= ist;
 			note_nerf_a = total_note_a * NERF_NOTE_PORP /100;
+			sorted_map_count--;
+			j--;
 			continue;
 		}
-		sorted_note_map[sorted_map_count] = i;
-		sorted_map_count++;
+		else break;
 	}
 
-	if ( COLORCHORD_SORT_NOTES ) {
-		// note local_note_jumped_to still give original indices of notes (which may not even been inclued
-		//    due to being eliminated as too small amplitude
-		//    bubble sort on a specified key to reorder sorted_note_map
-		uint8_t hold8;
-		uint8_t change;
-		int not_correct_order;
-		for( i = 0; i < sorted_map_count; i++ )
-		{
-			change = 0;
-			for( j = 0; j < sorted_map_count -1 - i; j++ )
-			{
-				switch(COLORCHORD_SORT_NOTES) {
-					case 2 : // amps decreasing
-						not_correct_order = note_peak_amps[sorted_note_map[j]] < note_peak_amps[sorted_note_map[j+1]];
-					break;
-					case 3 : // amps2 decreasing
-						not_correct_order = note_peak_amps2[sorted_note_map[j]] < note_peak_amps2[sorted_note_map[j+1]];
-					break;
-					default : // freq increasing
-						not_correct_order = note_peak_freqs[sorted_note_map[j]] > note_peak_freqs[sorted_note_map[j+1]];
-				}
-				if ( not_correct_order )
-				{
-					change = 1;
-					hold8 = sorted_note_map[j];
-					sorted_note_map[j] = sorted_note_map[j+1];
-					sorted_note_map[j+1] = hold8;
-				}
-			}
-			if (!change) break;
-		}
+	diff_a = total_note_a_prev - total_note_a; // used to check increasing or decreasing
+
+#define ORDER_ORGINAL 0
+#define ORDER_FREQ_INC 1
+#define ORDER_AMP1_DEC 2
+#define ORDER_AMP2_DEC 3
+
+	switch (COLORCHORD_SORT_NOTES) {
+		case ORDER_ORGINAL : // restore orginal note order
+			for (i=0; i< sorted_map_count;i++) snmapmap[i]=i;
+			Sort(INCREASING, sorted_note_map, snmapmap, sorted_map_count);
+			break;
+		case ORDER_FREQ_INC :
+			Sort(INCREASING, note_peak_freqs, sorted_note_map, sorted_map_count);
+			break;
+		case ORDER_AMP1_DEC: // already sorted like this
+			//Sort(DECREASING, note_peak_amps, sorted_note_map, sorted_map_count);
+			break;
+		case ORDER_AMP2_DEC :
+			Sort(DECREASING, note_peak_amps2, sorted_note_map, sorted_map_count);
+			break;
 	}
-	//Make a copy of all of the variables into local ones so we don't have to keep double-dereferencing.
+
+
+	//Make a copy of all of the variables into these local ones so we don't have to keep triple or double-dereferencing.
 	uint16_t local_peak_amps[MAXNOTES];
 	uint16_t local_peak_amps2[MAXNOTES];
 	int16_t  local_peak_freq[MAXNOTES];
 	uint8_t  local_note_jumped_to[MAXNOTES];
 
-	for( i = 0; i < sorted_map_count; i++ )
-	{
-		local_peak_amps[i] = note_peak_amps[sorted_note_map[i]];
-		local_peak_amps2[i] = note_peak_amps2[sorted_note_map[i]];
-		local_peak_freq[i] = note_peak_freqs[sorted_note_map[i]];
-		local_note_jumped_to[i] = note_jumped_to[sorted_note_map[i]];
+	switch (COLORCHORD_SORT_NOTES) {
+		case ORDER_ORGINAL :
+			for( i = 0; i < sorted_map_count; i++ )
+			{
+				local_peak_amps[i] = note_peak_amps[sorted_note_map[snmapmap[i]]];
+				local_peak_amps2[i] = note_peak_amps2[sorted_note_map[snmapmap[i]]];
+				local_peak_freq[i] = note_peak_freqs[sorted_note_map[snmapmap[i]]];
+				local_note_jumped_to[i] = note_jumped_to[sorted_note_map[snmapmap[i]]];
+			}
+			break;
+		case ORDER_FREQ_INC :
+		case ORDER_AMP1_DEC :
+		case ORDER_AMP2_DEC :
+		default :
+			for( i = 0; i < sorted_map_count; i++ )
+			{
+				local_peak_amps[i] = note_peak_amps[sorted_note_map[i]];
+				local_peak_amps2[i] = note_peak_amps2[sorted_note_map[i]];
+				local_peak_freq[i] = note_peak_freqs[sorted_note_map[i]];
+				local_note_jumped_to[i] = note_jumped_to[sorted_note_map[i]];
+			}
 	}
+
 
 	for( i = 0; i < sorted_map_count; i++ )
 	{
