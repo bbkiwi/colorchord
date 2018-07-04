@@ -11,7 +11,7 @@ extern volatile uint8_t sounddata[HPABUFFSIZE];
 extern volatile uint16_t soundhead;
 extern uint8_t sounddatacopy[HPABUFFSIZE];
 
-#define CONFIGURABLES 27 //(plus1)
+#define CONFIGURABLES 29 //(plus1)
 #define NUMBER_STORED_CONFIGURABLES 16
 
 struct SaveLoad
@@ -23,23 +23,40 @@ struct SaveLoad
 
 struct CCSettings CCS;
 
-uint8_t gConfigDefaults[CONFIGURABLES] =  { 16, 0, 6, 3, 0,    5, 14, 3, 42, 44,     2, 4, 45, 1, 100,    255, 15, NUM_LIN_LEDS, 1, 0,   0 , 0, 0, 0, 0, 0, 0};
+uint8_t gConfigDefaults[NUMBER_STORED_CONFIGURABLES][CONFIGURABLES] = {
+		{16,0,6,3,0,5,14,3,42,44,2,16,4,16,45,1,200,255,15,NUM_LIN_LEDS,1,0,0,0,0,0,0,0},
+		{32,0,6,3,0,5,14,3,80,76,0,16,0,16,45,1,100,255,15,NUM_LIN_LEDS-2,1,2,4,1,1,0,0,1},
+		{32,0,5,3,0,5,14,3,85,85,4,16,7,16,82,1,255,255,15,(NUM_LIN_LEDS-1)/3,1,0,1,0,NUM_LIN_LEDS/3,0,0,2},
+		{16,0,6,6,0,5,21,3,42,44,2,16,4,16,45,1,100,255,10,NUM_LIN_LEDS,1,3,20,0,0,0,0,3},
+		{16,0,5,3,0,5,14,3,85,85,4,16,6,16,82,1,75,255,15,(NUM_LIN_LEDS-1)/3,1,2,1,0,NUM_LIN_LEDS/3,0,0,4},
+		{16,0,6,3,0,5,14,3,42,44,2,16,4,16,45,1,200,255,0,NUM_LIN_LEDS,1,0,5,1,1,1,0,5},
+		{32,0,6,3,0,5,14,3,80,76,0,16,9,16,45,1,100,255,15,NUM_LIN_LEDS-2,1,2,1,0,1,0,0,6},
+		{16,0,5,4,0,0,37,3,42,44,2,16,4,16,45,1,200,255,15,NUM_LIN_LEDS,1,4,0,0,0,0,0,7},
+		{32,0,6,3,0,5,51,3,255,0,3,16,8,16,45,1,100,255,15,NUM_LIN_LEDS-2,1,2,0,1,1,0,0,8},
+		{16,0,6,3,0,5,14,3,42,44,2,16,4,16,45,1,200,255,15,NUM_LIN_LEDS,1,0,0,0,0,0,0,9},
+		{16,0,6,3,0,5,14,3,42,44,2,16,4,16,45,1,200,255,15,NUM_LIN_LEDS,1,0,0,0,0,0,0,10},
+		{16,0,6,3,0,5,14,3,42,44,2,16,4,16,45,1,200,255,15,NUM_LIN_LEDS,1,0,0,0,0,0,0,11},
+		{16,0,6,3,0,5,14,3,42,44,2,16,4,16,45,1,200,255,15,NUM_LIN_LEDS,1,0,0,0,0,0,0,12},
+		{16,0,6,3,0,5,14,3,42,44,2,16,4,16,45,1,200,255,15,NUM_LIN_LEDS,1,0,0,0,0,0,0,13},
+		{16,0,6,3,0,5,14,3,42,44,2,16,4,16,45,1,200,255,15,NUM_LIN_LEDS,1,0,0,0,0,0,0,14},
+		{16,0,6,3,0,5,14,3,42,44,2,16,4,16,45,1,200,255,15,NUM_LIN_LEDS,1,0,0,0,0,0,0,15}
+	};
 
 uint8_t * gConfigurables[CONFIGURABLES]={ &CCS.gINITIAL_AMP, &CCS.gROOT_NOTE_OFFSET, &CCS.gDFTIIR, &CCS.gFUZZ_IIR_BITS,
 	&CCS.gEQUALIZER_SET,  &CCS.gFILTER_BLUR_PASSES, &CCS.gLOWER_CUTOFF,
-	&CCS.gSEMIBITSPERBIN, &CCS.gMAX_JUMP_DISTANCE, &CCS.gMAX_COMBINE_DISTANCE, &CCS.gAMP_1_IIR_BITS,
-	&CCS.gAMP_2_IIR_BITS, &CCS.gMIN_AMP_FOR_NOTE, &CCS.gMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR, &CCS.gNOTE_FINAL_AMP, &CCS.gNOTE_FINAL_SATURATION,
+	&CCS.gSEMIBITSPERBIN, &CCS.gMAX_JUMP_DISTANCE, &CCS.gMAX_COMBINE_DISTANCE, &CCS.gAMP_1_IIR_BITS, &CCS.gAMP_1_MULT,
+	&CCS.gAMP_2_IIR_BITS, &CCS.gAMP_2_MULT, &CCS.gMIN_AMP_FOR_NOTE, &CCS.gMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR, &CCS.gNOTE_FINAL_AMP, &CCS.gNOTE_FINAL_SATURATION,
 	&CCS.gNERF_NOTE_PORP, &CCS.gUSE_NUM_LIN_LEDS, &CCS.gCOLORCHORD_ACTIVE, &CCS.gCOLORCHORD_OUTPUT_DRIVER, &CCS.gCOLORCHORD_SHIFT_INTERVAL, &CCS.gCOLORCHORD_FLIP_ON_PEAK, &CCS.gCOLORCHORD_SHIFT_DISTANCE, &CCS.gCOLORCHORD_SORT_NOTES, &CCS.gCOLORCHORD_LIN_WRAPAROUND, &CCS.gCONFIG_NUMBER, 0 };
 
 char * gConfigurableNames[CONFIGURABLES] = { "gINITIAL_AMP", "gROOT_NOTE_OFFSET", "gDFTIIR", "gFUZZ_IIR_BITS", "gEQUALIZER_SET",
 	"gFILTER_BLUR_PASSES", "gLOWER_CUTOFF",
-	"gSEMIBITSPERBIN", "gMAX_JUMP_DISTANCE", "gMAX_COMBINE_DISTANCE", "gAMP_1_IIR_BITS",
-	"gAMP_2_IIR_BITS", "gMIN_AMP_FOR_NOTE", "gMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR", "gNOTE_FINAL_AMP", "gNOTE_FINAL_SATURATION",
+	"gSEMIBITSPERBIN", "gMAX_JUMP_DISTANCE", "gMAX_COMBINE_DISTANCE", "gAMP_1_IIR_BITS", "gAMP_1_MULT",
+	"gAMP_2_IIR_BITS", "gAMP_2_MULT", "gMIN_AMP_FOR_NOTE", "gMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR", "gNOTE_FINAL_AMP", "gNOTE_FINAL_SATURATION",
 	"gNERF_NOTE_PORP", "gUSE_NUM_LIN_LEDS", "gCOLORCHORD_ACTIVE", "gCOLORCHORD_OUTPUT_DRIVER", "gCOLORCHORD_SHIFT_INTERVAL", "gCOLORCHORD_FLIP_ON_PEAK", "gCOLORCHORD_SHIFT_DISTANCE", "gCOLORCHORD_SORT_NOTES", "gCOLORCHORD_LIN_WRAPAROUND","gCONFIG_NUMBER", 0 };
 
 void ICACHE_FLASH_ATTR CustomStart( )
 {
-	int i;
+	int i,j;
 	spi_flash_read( 0x3D000, (uint32*)&settings, sizeof( settings ) );
 	if( settings.SaveLoadKey == 0xaa )
 	{
@@ -61,7 +78,7 @@ void ICACHE_FLASH_ATTR CustomStart( )
 		{
 			if( gConfigurables[i] )
 			{
-				*gConfigurables[i] = gConfigDefaults[i];
+				*gConfigurables[i] = gConfigDefaults[0][i];
 			}
 		}
 		for( i = 0; i < FIXBINS; i++ )
@@ -194,41 +211,41 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 		switch (pusrdata[2] )
 		{
 
-		case 'd': case 'D': //Restore
+		case 'd': case 'D': //Restore default configuration or max_bins (if CONFIG_NUMBER not less than NUMBER_STORED_CONFIGURABLES)
 		{
 			int i;
-			for( i = 0; i < CONFIGURABLES-1; i++ )
-			{
-				if( gConfigurables[i] )
-					*gConfigurables[i] = gConfigDefaults[i];
+			if (CONFIG_NUMBER < NUMBER_STORED_CONFIGURABLES) {
+				for( i = 0; i < CONFIGURABLES-1; i++ ) {
+					if( gConfigurables[i] ) *gConfigurables[i] = gConfigDefaults[CONFIG_NUMBER][i];
+				}
+			} else {
+				for( i = 0; i < FIXBINS; i++ ) max_bins[i] = 1;
+				maxallbins=1;
 			}
-			for( i = 0; i < FIXBINS; i++ )
-			{
-				max_bins[i] = 1;
-			}
-			maxallbins=1;
 			buffend += ets_sprintf( buffend, "CD" );
 			return buffend-buffer;
 		}
 
-		case 'r': case 'R': //Revert to CONFIG_NUMBER stored configuration
+		case 'r': case 'R': //Revert to CONFIG_NUMBER stored configuration or default if hasn't been stored
 		{
 			int i;
-//TODO bailing out if bad configuration. Will fix by having defaults for all configurations
-			if (CONFIG_NUMBER < NUMBER_STORED_CONFIGURABLES & settings.configs[CONFIG_NUMBER][CONFIGURABLES-2]==CONFIG_NUMBER)
-//			if (CONFIG_NUMBER < NUMBER_STORED_CONFIGURABLES)
-			{
-				for( i = 0; i < CONFIGURABLES-1; i++ )
-				{
-					if( gConfigurables[i] )
-						*gConfigurables[i] = settings.configs[CONFIG_NUMBER][i];
+			if (CONFIG_NUMBER < NUMBER_STORED_CONFIGURABLES) {
+				if (settings.configs[CONFIG_NUMBER][CONFIGURABLES-2]==CONFIG_NUMBER) { // configuration ok
+					for( i = 0; i < CONFIGURABLES-1; i++ ) {
+						if( gConfigurables[i] ) *gConfigurables[i] = settings.configs[CONFIG_NUMBER][i];
+					}
+				} else { //bailing out  and using default
+					for( i = 0; i < CONFIGURABLES-1; i++ ) {
+						if( gConfigurables[i] ) *gConfigurables[i] = gConfigDefaults[CONFIG_NUMBER][i];
+					}
 				}
-			}
-			maxallbins=1;
-			for( i = 0; i < FIXBINS; i++ )
-			{
-				max_bins[i] = settings.saved_max_bins[i];
-				if (max_bins[i]>maxallbins) maxallbins = max_bins[i];
+			} else { //max_bins
+				maxallbins=1;
+				for( i = 0; i < FIXBINS; i++ )
+				{
+					max_bins[i] = settings.saved_max_bins[i];
+					if (max_bins[i]>maxallbins) maxallbins = max_bins[i];
+				}
 			}
 			buffend += ets_sprintf( buffend, "CSR" );
 			return buffend-buffer;
@@ -245,10 +262,11 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 					if( gConfigurables[i] )
 						settings.configs[CONFIG_NUMBER][i] = *gConfigurables[i];
 				}
-			}
-			for( i = 0; i < FIXBINS; i++ )
-			{
-				settings.saved_max_bins[i] = max_bins[i];
+			} else {
+				for( i = 0; i < FIXBINS; i++ )
+				{
+					settings.saved_max_bins[i] = max_bins[i];
+				}
 			}
 			settings.SaveLoadKey = 0xAA;
 			EnterCritical();

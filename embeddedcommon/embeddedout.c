@@ -25,6 +25,7 @@ void UpdateLinearLEDs()
 	/*
 		extern uint16_t fuzzed_bins[]; //[FIXBINS]  <- The Full DFT after IIR, Blur and Taper
 		extern uint16_t max_bins[]; //[FIXBINS]  <- Max of bins after Full DFT after IIR, Blur and Taper
+		extern uint16_t octave_bins[OCTAVES];
 		extern uint32_t maxallbins;
 		extern uint16_t folded_bins[]; //[FIXBPERO] <- The folded fourier output.
 		extern int16_t  note_peak_freqs[];
@@ -198,6 +199,7 @@ void UpdateLinearLEDs()
 	{
 		uint16_t ist = local_peak_amps[i];
 		porpamps[i] = 0;
+//TODO   probably redundant as should be same as total_note_a
 		total_size_all_notes += local_peak_amps[i];
 	}
 
@@ -298,6 +300,7 @@ void UpdateLinearLEDs()
 			localj = j;
 			for( l = 0; l < USE_NUM_LIN_LEDS; l++ )
 			{
+//TODO  d might be better is used both freq and amp, now only using freq
 				int32_t d = (int32_t)ledFreqOut[localj] - (int32_t)ledFreqOutOld[l];
 				if( d < 0 ) d *= -1;
 				if( d > (NOTERANGE>>1) ) { d = NOTERANGE - d + 1; }

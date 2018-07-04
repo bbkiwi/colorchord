@@ -327,9 +327,9 @@ void HandleFrameInfo()
 		uint8_t adjRight = 1;
 		for( i = 0; i < FIXBPERO; i++ )
 		{
-			int16_t prev = folded_bins[adjLeft];
-			int16_t next = folded_bins[adjRight];
-			int16_t this = folded_bins[i];
+			int32_t prev = folded_bins[adjLeft];
+			int32_t next = folded_bins[adjRight];
+			int32_t this = folded_bins[i];
 			int16_t thisfreq = i<<SEMIBITSPERBIN;
 			int16_t offset;
 			adjLeft++; if( adjLeft >= FIXBPERO ) adjLeft = 0;
@@ -429,16 +429,29 @@ void HandleFrameInfo()
 			if( marked_note != -1 )
 			{
 				hitnotes[marked_note] = 1;
+//TODO can have different attack and decay speed
+				int32_t newpeak = (this*AMP_1_MULT)>>4;
+				if (newpeak > note_peak_amps[marked_note]) {
+					note_peak_amps[marked_note] = note_peak_amps[marked_note] -
+					((note_peak_amps[marked_note]>>AMP_1_IIR_BITS) +
+					(newpeak >> AMP_1_IIR_BITS));
+				} else {
+					note_peak_amps[marked_note] = note_peak_amps[marked_note] -
+					(note_peak_amps[marked_note]>>AMP_1_IIR_BITS) +
+					(newpeak >> AMP_1_IIR_BITS);
+				}
 
+/*
 				note_peak_amps[marked_note] =
 					note_peak_amps[marked_note] -
 					(note_peak_amps[marked_note]>>AMP_1_IIR_BITS) +
-					(this>>(AMP_1_IIR_BITS));
-
+					((this*AMP_1_MULT)>>(AMP_1_IIR_BITS+4));
+*/
+				int32_t newpeak2 = (this*AMP_2_MULT)>>4;
 				note_peak_amps2[marked_note] =
 					note_peak_amps2[marked_note] -
 					(note_peak_amps2[marked_note]>>AMP_2_IIR_BITS) +
-					(this>>(AMP_2_IIR_BITS));
+					(newpeak2>>AMP_2_IIR_BITS);
 			}
 		}
 	}
