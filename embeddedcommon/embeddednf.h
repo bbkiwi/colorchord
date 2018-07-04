@@ -62,16 +62,34 @@
 #define MAX_COMBINE_DISTANCE 7
 #endif
 
-//These control how quickly the IIR for the note strengths respond.  AMP 1 is
-//the response for the slow-response, or what we use to determine size of
-//splotches, AMP 2 is the quick response, or what we use to see the visual
-//strength of the notes.
-#ifndef AMP_1_IIR_BITS
-#define AMP_1_IIR_BITS 4
+//These control how quickly the IIR for the note strengths respond for
+// both attack when increasing and decay when decreasing.
+// AMP1 is the (slow) response to determine size of splotches
+// AMP2 is the (quick) response to set the brightness of the notes.
+
+#ifndef AMP1_ATTACK_BITS
+#define AMP1_ATTACK_BITS 4
 #endif
 
-#ifndef AMP_2_IIR_BITS
-#define AMP_2_IIR_BITS 2
+#ifndef AMP1_DECAY_BITS
+#define AMP1_DECAY_BITS 4
+#endif
+
+#ifndef AMP2_ATTACK_BITS
+#define AMP2_ATTACK_BITS 2
+#endif
+
+#ifndef AMP2_DECAY_BITS
+#define AMP2_DECAY_BITS 2
+#endif
+
+// the amps are scaled by mult/16
+#ifndef AMP_1_MULT
+#define AMP_1_MULT 16
+#endif
+
+#ifndef AMP_2_MULT
+#define AMP_2_MULT 16
 #endif
 
 //This is the amplitude, coming from folded_bins.  If the value is below this

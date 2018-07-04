@@ -27,9 +27,11 @@
 #define SEMIBITSPERBIN		CCS.gSEMIBITSPERBIN
 #define MAX_JUMP_DISTANCE	CCS.gMAX_JUMP_DISTANCE
 #define MAX_COMBINE_DISTANCE CCS.gMAX_COMBINE_DISTANCE
-#define AMP_1_IIR_BITS		CCS.gAMP_1_IIR_BITS
+#define AMP1_ATTACK_BITS	CCS.gAMP1_ATTACK_BITS
+#define AMP1_DECAY_BITS		CCS.gAMP1_DECAY_BITS
 #define AMP_1_MULT		CCS.gAMP_1_MULT
-#define AMP_2_IIR_BITS		CCS.gAMP_2_IIR_BITS
+#define AMP2_ATTACK_BITS	CCS.gAMP2_ATTACK_BITS
+#define AMP2_DECAY_BITS		CCS.gAMP2_DECAY_BITS
 #define AMP_2_MULT		CCS.gAMP_2_MULT
 #define MIN_AMP_FOR_NOTE	CCS.gMIN_AMP_FOR_NOTE
 #define MINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR CCS.gMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR
@@ -58,9 +60,11 @@ struct CCSettings
 	uint8_t gSEMIBITSPERBIN;                    //=3
 	uint8_t gMAX_JUMP_DISTANCE;                 //=42
 	uint8_t gMAX_COMBINE_DISTANCE;              //=44
-	uint8_t gAMP_1_IIR_BITS;                    //=2
+	uint8_t gAMP1_ATTACK_BITS;                  //=2
+	uint8_t gAMP1_DECAY_BITS;                   //=2
 	uint8_t gAMP_1_MULT;                        //=16 before amp1 used multiplied by this/16
-	uint8_t gAMP_2_IIR_BITS;                    //=4
+	uint8_t gAMP2_ATTACK_BITS;                  //=4
+	uint8_t gAMP2_DECAY_BITS;                   //=4
 	uint8_t gAMP_2_MULT;                        //=16 before amp2 used multiplied by this/16
 	uint8_t gMIN_AMP_FOR_NOTE;                  //=45
 	uint8_t gMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR; //=1

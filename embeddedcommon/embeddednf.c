@@ -429,29 +429,29 @@ void HandleFrameInfo()
 			if( marked_note != -1 )
 			{
 				hitnotes[marked_note] = 1;
-//TODO can have different attack and decay speed
 				int32_t newpeak = (this*AMP_1_MULT)>>4;
 				if (newpeak > note_peak_amps[marked_note]) {
-					note_peak_amps[marked_note] = note_peak_amps[marked_note] -
-					((note_peak_amps[marked_note]>>AMP_1_IIR_BITS) +
-					(newpeak >> AMP_1_IIR_BITS));
+					note_peak_amps[marked_note] -=
+					(note_peak_amps[marked_note]>>AMP1_ATTACK_BITS) -
+					(newpeak >> AMP1_ATTACK_BITS);
 				} else {
-					note_peak_amps[marked_note] = note_peak_amps[marked_note] -
-					(note_peak_amps[marked_note]>>AMP_1_IIR_BITS) +
-					(newpeak >> AMP_1_IIR_BITS);
+					note_peak_amps[marked_note] -=
+					(note_peak_amps[marked_note]>>AMP2_DECAY_BITS) -
+					(newpeak >> AMP2_DECAY_BITS);
 				}
 
-/*
-				note_peak_amps[marked_note] =
-					note_peak_amps[marked_note] -
-					(note_peak_amps[marked_note]>>AMP_1_IIR_BITS) +
-					((this*AMP_1_MULT)>>(AMP_1_IIR_BITS+4));
-*/
-				int32_t newpeak2 = (this*AMP_2_MULT)>>4;
-				note_peak_amps2[marked_note] =
-					note_peak_amps2[marked_note] -
-					(note_peak_amps2[marked_note]>>AMP_2_IIR_BITS) +
-					(newpeak2>>AMP_2_IIR_BITS);
+				newpeak = (this*AMP_2_MULT)>>4;
+				if (newpeak > note_peak_amps2[marked_note]) {
+					note_peak_amps2[marked_note] -=
+					(note_peak_amps2[marked_note]>>AMP2_ATTACK_BITS) -
+					(newpeak >> AMP2_ATTACK_BITS);
+				} else {
+					note_peak_amps2[marked_note] -=
+					(note_peak_amps2[marked_note]>>AMP2_DECAY_BITS) -
+					(newpeak >> AMP2_DECAY_BITS);
+				}
+
+
 			}
 		}
 	}
@@ -521,14 +521,14 @@ void HandleFrameInfo()
 		note_jumped_to[from] = into + 1;
 	}
 
-	//For al lof the notes that have not been hit, we have to allow them to
+	//For all of the notes that have not been hit, we have to allow them to
 	//to decay.  We only do this for notes that have not found a peak.
 	for( i = 0; i < MAXNOTES; i++ )
 	{
 		if( note_peak_freqs[i] < 0 || hitnotes[i] ) continue;
 
-		note_peak_amps[i] -= note_peak_amps[i]>>AMP_1_IIR_BITS;
-		note_peak_amps2[i] -= note_peak_amps2[i]>>AMP_2_IIR_BITS;
+		note_peak_amps[i] -= note_peak_amps[i]>>AMP1_DECAY_BITS;
+		note_peak_amps2[i] -= note_peak_amps2[i]>>AMP2_DECAY_BITS;
 
 		//In the event a note is not strong enough anymore, it is to be
 		//returned back into the great pool of unused notes.

@@ -11,7 +11,7 @@ td { vertical-align: top; }
 .inbutton { background-color:blue; }
 #SystemMessage { position: fixed; top: 5px; background-color: DarkSlateBlue; color: #ffffff; left: 5px; display:none; }
 .dragandrophandler { border:2px dotted #0B85A1; color:#92AAB0;vertical-align:middle;padding:10px 10px 10 10px;margin-bottom:10px;font-size:200%;}
-input[type="range"] {position: relative;margin-left: 1em;}
+input[type="range"] {position: relative;margin-left: 1em;width: 100px;}
 input[type="range"]:after, input[type="range"]:before {position: absolute;top: 1em;color: #aaa;}
 input[type="range"]:before {left:0em; content: attr(min);}input[type="range"]:after {right: 0em;content: attr(max);}
 </style>
@@ -78,10 +78,20 @@ MAX Jump  <input id="parmsgMAX_JUMP_DISTANCE" type="range" value="10" max="255" 
 <output id="parmsgMAX_JUMP_DISTANCEOut"></output><br>
 MAX Combine  <input id="parmsgMAX_COMBINE_DISTANCE" type="range" value="0" max="255" min="0" step="2.125" onchange="ChangeParam(this)">
 <output id="parmsgMAX_COMBINE_DISTANCEOut"></output><br>
-AMP_1_IIR_BITS  <input id="parmsgAMP_1_IIR_BITS" type="range" value="4" max="16" min="0" step="1" onchange="ChangeParam(this)">
-<output id="parmsgAMP_1_IIR_BITSOut"></output><br>
-AMP_2_IIR_BITS  <input id="parmsgAMP_2_IIR_BITS" type="range" value="7" max="16" min="0" step="1" onchange="ChangeParam(this)">
-<output id="parmsgAMP_2_IIR_BITSOut"></output><br>
+AMP1 ATTACK  <input id="parmsgAMP1_ATTACK_BITS" type="range" value="4" max="16" min="0" step="1" onchange="ChangeParam(this)">
+<output id="parmsgAMP1_ATTACK_BITSOut"></output>
+ DECAY  <input id="parmsgAMP1_DECAY_BITS" type="range" value="4" max="16" min="0" step="1" onchange="ChangeParam(this)">
+<output id="parmsgAMP1_DECAY_BITSOut"></output>
+ MULT  <input id="parmsgAMP_1_MULT" type="range" value="16" max="255" min="0" step="1" onchange="ChangeParam(this)">
+<output id="parmsgAMP_1_MULTOut"></output>
+<br>
+AMP2 ATTACK  <input id="parmsgAMP2_ATTACK_BITS" type="range" value="7" max="16" min="0" step="1" onchange="ChangeParam(this)">
+<output id="parmsgAMP2_ATTACK_BITSOut"></output>
+ DECAY  <input id="parmsgAMP2_DECAY_BITS" type="range" value="7" max="16" min="0" step="1" onchange="ChangeParam(this)">
+<output id="parmsgAMP2_DECAY_BITSOut"></output>
+ MULT  <input id="parmsgAMP_2_MULT" type="range" value="16" max="255" min="0" step="1" onchange="ChangeParam(this)">
+<output id="parmsgAMP_2_MULTOut"></output>
+<br>
 AMP Create  <input id="parmsgMIN_AMP_FOR_NOTE" type="range" value="0" max="255" min="0" step="1" onchange="ChangeParam(this)">
 <output id="parmsgMIN_AMP_FOR_NOTEOut"></output><br>
 AMP Disappear  <input id="parmsgMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR" type="range" value="0" max="255" min="0" step="1" onchange="ChangeParam(this)">
