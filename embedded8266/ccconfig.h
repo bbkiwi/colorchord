@@ -39,6 +39,7 @@
 #define NOTE_FINAL_SATURATION	CCS.gNOTE_FINAL_SATURATION
 #define NERF_NOTE_PORP		CCS.gNERF_NOTE_PORP
 #define USE_NUM_LIN_LEDS	CCS.gUSE_NUM_LIN_LEDS
+#define SYMMETRY_REPEAT		CCS.gSYMMETRY_REPEAT
 #define COLORCHORD_OUTPUT_DRIVER	CCS.gCOLORCHORD_OUTPUT_DRIVER
 #define COLORCHORD_ACTIVE	CCS.gCOLORCHORD_ACTIVE
 #define COLORCHORD_SHIFT_INTERVAL	CCS.gCOLORCHORD_SHIFT_INTERVAL
@@ -72,7 +73,8 @@ struct CCSettings
 	uint8_t gNOTE_FINAL_SATURATION;             //=255
 	uint8_t gNERF_NOTE_PORP;                    //=15
 	uint8_t gUSE_NUM_LIN_LEDS;                  // = NUM_LIN_LEDS
-	uint8_t gCOLORCHORD_ACTIVE;			//=1
+	uint8_t gSYMMETRY_REPEAT;                   //=0
+	uint8_t gCOLORCHORD_ACTIVE;		    //=1
 	uint8_t gCOLORCHORD_OUTPUT_DRIVER;
 	uint8_t gCOLORCHORD_SHIFT_INTERVAL; // ==0 controls speed of shifting if 0 no shift
 	uint8_t gCOLORCHORD_FLIP_ON_PEAK; //==0 if non-zero gives flipping at peaks of shift direction, 0 no flip

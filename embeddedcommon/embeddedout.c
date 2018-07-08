@@ -16,7 +16,53 @@ uint32_t total_note_a_prev = 0;
 int diff_a_prev = 0;
 int rot_dir = 1; // initial rotation direction 1
 int16_t ColorCycle =0;
+#define DECREASING 2
+#define INCREASING 1
 
+
+void Sort(uint8_t orderType, int16_t values[], uint16_t map[], uint8_t num)
+{
+	//    bubble sort on a specified orderType to reorder sorted_note_map
+	uint8_t holdmap;
+	uint8_t change;
+	int not_correct_order;
+	int i,j;
+	for( i = 0; i < num; i++ )
+	{
+		change = 0;
+		for( j = 0; j < num -1 - i; j++ )
+		{
+			switch(orderType) {
+				case DECREASING :
+					not_correct_order = values[map[j]] < values[map[j+1]];
+				break;
+				default : // increasing
+					not_correct_order = values[map[j]] > values[map[j+1]];
+			}
+			if ( not_correct_order )
+			{
+				change = 1;
+				holdmap = map[j];
+				map[j] = map[j+1];
+				map[j+1] = holdmap;
+			}
+		}
+		if (!change) return;
+	}
+}
+
+void AssignColorledOut(uint32_t color, int16_t jshift, uint8_t repeats )
+{
+	int16_t i,indled;
+	int16_t rmult = NUM_LIN_LEDS/(repeats+1);
+	for (i=0;i<=repeats;i++) {
+		indled = jshift + i*rmult;
+		if( indled >= NUM_LIN_LEDS ) indled -= NUM_LIN_LEDS;
+		ledOut[indled*3+0] = ( color >> 0 ) & 0xff;
+		ledOut[indled*3+1] = ( color >> 8 ) & 0xff;
+		ledOut[indled*3+2] = ( color >>16 ) & 0xff;
+	}
+}
 
 
 void UpdateLinearLEDs()
@@ -59,41 +105,6 @@ void UpdateLinearLEDs()
 	int diff_a = 0;
 	int8_t shift_dist = 0;
 	int16_t jshift; // int8_t jshift; caused instability especially for large no of LEDS
-
-#define DECREASING 2
-#define INCREASING 1
-
-
-	void Sort(uint8_t orderType, int16_t values[], uint16_t map[], uint8_t num)
-	{
-		//    bubble sort on a specified orderType to reorder sorted_note_map
-		uint8_t holdmap;
-		uint8_t change;
-		int not_correct_order;
-		int i,j;
-		for( i = 0; i < num; i++ )
-		{
-			change = 0;
-			for( j = 0; j < num -1 - i; j++ )
-			{
-				switch(orderType) {
-					case DECREASING :
-						not_correct_order = values[map[j]] < values[map[j+1]];
-					break;
-					default : // increasing
-						not_correct_order = values[map[j]] > values[map[j+1]];
-				}
-				if ( not_correct_order )
-				{
-					change = 1;
-					holdmap = map[j];
-					map[j] = map[j+1];
-					map[j+1] = holdmap;
-				}
-			}
-			if (!change) return;
-		}
-	}
 
 
 
@@ -346,6 +357,9 @@ void UpdateLinearLEDs()
 	printf("NOTE_FINAL_AMP = %d\n", NOTE_FINAL_AMP);
 	printf("leds: ");
 #endif
+	// Zero all led's - maybe for very large number of led's this takes too much time and need to zero only onces that won't get reassigned below
+	memset( ledOut, 0, sizeof( ledOut ) );
+
 	// put linear pattern of USE_NUM_LIN_LEDS on ring NUM_LIN_LEDs
 	for( l = 0; l < USE_NUM_LIN_LEDS; l++, jshift++, minimizingShift++ )
 	{
@@ -361,20 +375,8 @@ void UpdateLinearLEDs()
 #endif
 		if( amp > NOTE_FINAL_AMP ) amp = NOTE_FINAL_AMP;
 		uint32_t color = ECCtoAdjustedHEX( ledFreqOut[minimizingShift], NOTE_FINAL_SATURATION, amp );
-		ledOut[jshift*3+0] = ( color >> 0 ) & 0xff;
-		ledOut[jshift*3+1] = ( color >> 8 ) & 0xff;
-		ledOut[jshift*3+2] = ( color >>16 ) & 0xff;
-	}
-	// blackout remaining LEDs on ring
-//TODO this could be sped up in case NUM_LIN_LEDS is much greater than USE_NUM_LIN_LEDS
-//      by blacking out only previous COLORCHORD_SHIFT_DISTANCE LEDs that were not overwritten 
-//      but if direction changing might be tricky
-	for( l = USE_NUM_LIN_LEDS; l < NUM_LIN_LEDS; l++, jshift++ )
-	{
-		if( jshift >= NUM_LIN_LEDS ) jshift = 0;
-		ledOut[jshift*3+0] = 0x0;
-		ledOut[jshift*3+1] = 0x0;
-		ledOut[jshift*3+2] = 0x0;
+
+		AssignColorledOut(color, jshift, SYMMETRY_REPEAT );
 	}
 
 
@@ -388,6 +390,8 @@ void UpdateLinearLEDs()
 	total_note_a_prev = total_note_a;
 	diff_a_prev = diff_a;
 }
+
+
 
 void UpdateAllSameLEDs()
 {
@@ -413,9 +417,7 @@ void UpdateAllSameLEDs()
 	uint32_t color = ECCtoAdjustedHEX( freq, NOTE_FINAL_SATURATION, amp );
 	for( i = 0; i < NUM_LIN_LEDS; i++ )
 	{
-		ledOut[i*3+0] = ( color >> 0 ) & 0xff;
-		ledOut[i*3+1] = ( color >> 8 ) & 0xff;
-		ledOut[i*3+2] = ( color >>16 ) & 0xff;
+	AssignColorledOut(color, i, 0x00 );
 	}
 }
 
@@ -491,23 +493,12 @@ void UpdateRotatingLEDs()
 
 	jshift = ( gROTATIONSHIFT - led_arc_len/2 ) % NUM_LIN_LEDS; // neg % pos is neg so fix
 	if ( jshift < 0 ) jshift += NUM_LIN_LEDS;
-
+	memset( ledOut, 0, sizeof( ledOut ) );
 	for( i = 0; i < led_arc_len; i++, jshift++ )
 	{
-		// even if led_arc_len exceeds NUM_LIN_LEDS using jshift will prevent over running ledOut
-		if( jshift >= NUM_LIN_LEDS ) jshift = 0;
-		ledOut[jshift*3+0] = ( color >> 0 ) & 0xff;
-		ledOut[jshift*3+1] = ( color >> 8 ) & 0xff;
-		ledOut[jshift*3+2] = ( color >>16 ) & 0xff;
+		AssignColorledOut(color, jshift, SYMMETRY_REPEAT );
 	}
 
-	for( i = led_arc_len; i < NUM_LIN_LEDS; i++, jshift++ )
-	{
-		if( jshift >= NUM_LIN_LEDS ) jshift = 0;
-		ledOut[jshift*3+0] = 0x0;
-		ledOut[jshift*3+1] = 0x0;
-		ledOut[jshift*3+2] = 0x0;
-	}
 	total_note_a_prev = total_note_a;
 	diff_a_prev = diff_a;
 
@@ -520,6 +511,7 @@ void DFTInLights()
 	int16_t fbind;
 	int16_t freq;
 	uint16_t amp;
+	memset( ledOut, 0, sizeof( ledOut ) );
 	for( i = 0; i < USE_NUM_LIN_LEDS; i++ )
 	{
 //		fbind = i*(FIXBPERO-1)/(USE_NUM_LIN_LEDS-1); // exact tranformation but then need check divide by zero
@@ -542,15 +534,7 @@ void DFTInLights()
 		amp = NOTE_FINAL_AMP;
 */
 		uint32_t color = ECCtoAdjustedHEX( freq, NOTE_FINAL_SATURATION, amp );
-		ledOut[i*3+0] = ( color >> 0 ) & 0xff;
-		ledOut[i*3+1] = ( color >> 8 ) & 0xff;
-		ledOut[i*3+2] = ( color >>16 ) & 0xff;
-	}
-	for( i = USE_NUM_LIN_LEDS; i < NUM_LIN_LEDS; i++ )
-	{
-		ledOut[i*3+0] = 0x0;
-		ledOut[i*3+1] = 0x0;
-		ledOut[i*3+2] = 0x0;
+		AssignColorledOut(color, i, SYMMETRY_REPEAT );
 	}
 }
 
@@ -587,23 +571,12 @@ void PureRotatingLEDs()
 
 	jshift = ( gROTATIONSHIFT - led_arc_len/2 ) % NUM_LIN_LEDS; // neg % pos is neg so fix
 	if ( jshift < 0 ) jshift += NUM_LIN_LEDS;
+	memset( ledOut, 0, sizeof( ledOut ) );
 	for( i = 0; i < led_arc_len; i++, jshift++ )
 	{
 //		uint32_t color = ECCtoAdjustedHEX( (freq + i*NOTERANGE*NERF_NOTE_PORP/led_arc_len/100)%NOTERANGE, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
 		uint32_t color = ECCtoAdjustedHEX( (freq + i*NOTERANGE*NERF_NOTE_PORP/led_arc_len/100)%NOTERANGE, NOTE_FINAL_SATURATION, amp );
-		// even if led_arc_len exceeds NUM_LIN_LEDS using jshift will prevent over running ledOut
-		if( jshift >= NUM_LIN_LEDS ) jshift = 0;
-		ledOut[jshift*3+0] = ( color >> 0 ) & 0xff;
-		ledOut[jshift*3+1] = ( color >> 8 ) & 0xff;
-		ledOut[jshift*3+2] = ( color >>16 ) & 0xff;
-	}
-
-	for( i = led_arc_len; i < NUM_LIN_LEDS; i++, jshift++ )
-	{
-		if( jshift >= NUM_LIN_LEDS ) jshift = 0;
-		ledOut[jshift*3+0] = 0x0;
-		ledOut[jshift*3+1] = 0x0;
-		ledOut[jshift*3+2] = 0x0;
+		AssignColorledOut(color, jshift, SYMMETRY_REPEAT );
 	}
 }
 
