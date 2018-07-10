@@ -1,6 +1,5 @@
 //Copyright 2015 <>< Charles Lohr under the ColorChord License.
 
-
 #include "embeddedout.h"
 #if DEBUGPRINT
 #include <stdio.h>
@@ -20,7 +19,7 @@ int16_t ColorCycle =0;
 #define INCREASING 1
 
 
-void Sort(uint8_t orderType, int16_t values[], uint16_t map[], uint8_t num)
+void Sort(uint8_t orderType, uint16_t values[], uint16_t *map, uint8_t num)
 {
 	//    bubble sort on a specified orderType to reorder sorted_note_map
 	uint8_t holdmap;
@@ -130,9 +129,7 @@ void UpdateLinearLEDs()
 		sorted_map_count++;
 		total_note_a += note_peak_amps[i];
 	}
-
 	Sort(DECREASING, note_peak_amps, sorted_note_map, sorted_map_count);
-
 	note_nerf_a = total_note_a * NERF_NOTE_PORP /100;
 
 	// eliminates  and reduces count of notes with amp too small relative to non-eliminated
@@ -234,6 +231,13 @@ void UpdateLinearLEDs()
 	}
 
 	int16_t total_unaccounted_leds = USE_NUM_LIN_LEDS - total_accounted_leds;
+	do
+	{
+		for( i = 0; (i < sorted_map_count) && total_unaccounted_leds; i++ )
+		{
+			porpamps[i]++; total_unaccounted_leds--;
+		}
+	} while( total_unaccounted_leds );
 
 #if DEBUGPRINT
 	printf( "note_nerf_a = %d,  total_size_all_notes =  %d, porportional = %d, total_accounted_leds = %d \n", note_nerf_a, total_size_all_notes, porportional,  total_accounted_leds );
@@ -245,12 +249,12 @@ void UpdateLinearLEDs()
         for( i = 0; i < sorted_map_count; i++ )  printf( "%d /", note_peak_freqs[sorted_note_map[i]]);
 	printf( "\n" );
 
-	printf("lpf: ");
-        for( i = 0; i < sorted_map_count; i++ )  printf( "%d /", local_peak_freq[i]);
-	printf( "\n" );
-
 	printf("npa: ");
         for( i = 0; i < sorted_map_count; i++ )  printf( "%d /", note_peak_amps[sorted_note_map[i]]);
+	printf( "\n" );
+
+	printf("lpf: ");
+        for( i = 0; i < sorted_map_count; i++ )  printf( "%d /", local_peak_freq[i]);
 	printf( "\n" );
 
 	printf("lpa: ");
@@ -268,17 +272,9 @@ void UpdateLinearLEDs()
 	printf("lnjt: ");
         for( i = 0; i < sorted_map_count; i++ )  printf( "%d /", local_note_jumped_to[i]);
 	printf( "\n" );
-
 #endif
 
 
-	do
-	{
-		for( i = 0; i < sorted_map_count && total_unaccounted_leds; i++ )
-		{
-			porpamps[i]++; total_unaccounted_leds--;
-		}
-	} while( total_unaccounted_leds );
 
 	//Assign the linear LEDs info for 0, 1, ..., USE_NUM_LIN_LEDS
 	//Each note (above a minimum amplitude) produces an interval

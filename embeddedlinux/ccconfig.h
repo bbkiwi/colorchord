@@ -3,19 +3,25 @@
 
 
 #define CCEMBEDDED
-#define DEBUGPRINT 0
+#define DEBUGPRINT 1
 #define DFTHIST 0
 #define DFTSAMPLE 0
 #define RING
 #define LEDS_PER_ROW 16
-#define NUM_LIN_LEDS 60
-#define USE_NUM_LIN_LEDS 60
+#define NUM_LIN_LEDS 24
+#define USE_NUM_LIN_LEDS 24
 #define DFREQ 16000
-#define NOTE_FINAL_AMP  50		//Final brightness Number from 0...255
+#define NOTE_FINAL_AMP  100		//Final brightness Number from 0...255
 #define NOTE_FINAL_SATURATION  255	//Final saturation Number from 0...255
 #define ROOT_NOTE_OFFSET 0
+#define SYMMETRY_REPEAT 0
+#define EQUALIZER_SET gEQUALIZER_SET
+#define LOWER_CUTOFF 21
+int gEQUALIZER_SET; //=0 from 0 ..NUMBER_STORED_CONFIGURABLES-1
+
+
 //Controls, basically, the minimum size of the splotches.
-#define NERF_NOTE_PORP 15 //value from 0 to 255
+#define NERF_NOTE_PORP 20 //value from 0 to 255
 
 #define COLORCHORD_OUTPUT_DRIVER 0    // 0 UpdateLinearLEDs, 1 UpdateAllSameLEDs, 2 UpdateRotatingLEDs; 3 PureRotatingLEDs (not depend on sound);
 #define COLORCHORD_SHIFT_INTERVAL 0   // shift after this many frames, 0 no shifts
@@ -52,8 +58,14 @@
 //the response for the slow-response, or what we use to determine size of
 //splotches, AMP 2 is the quick response, or what we use to see the visual
 //strength of the notes.
-#define AMP_1_IIR_BITS 2 // 0 fastest reactions
-#define AMP_2_IIR_BITS 4 // 0 fastest reactions
+#define AMP_1_ATTACK_BITS 0
+#define AMP_2_ATTACK_BITS 0
+#define AMP_1_DECAY_BITS 6
+#define AMP_2_DECAY_BITS 16
+#define AMP_1_MULT 16
+#define AMP_2_MULT 16
+#define CONFIG_NUMBER 0
+
 //This is the amplitude, coming from folded_bins.  If the value is below this
 //it is considered a non-note.
 #define MIN_AMP_FOR_NOTE 90

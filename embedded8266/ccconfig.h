@@ -2,6 +2,7 @@
 #define _CCCONFIG_H
 
 #include <c_types.h>
+#include "esp82xxutil.h"
 
 #define HPABUFFSIZE 512
 
