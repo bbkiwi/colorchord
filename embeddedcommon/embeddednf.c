@@ -436,17 +436,19 @@ void HandleFrameInfo()
 			{
 				hitnotes[marked_note] = 1;
 				int32_t newpeak = (this*AMP_1_MULT)>>4;
+				if (newpeak > 65535) newpeak = 65535;
 				if (newpeak > note_peak_amps[marked_note]) {
 					note_peak_amps[marked_note] -=
 					(note_peak_amps[marked_note]>>AMP1_ATTACK_BITS) -
 					(newpeak >> AMP1_ATTACK_BITS);
 				} else {
 					note_peak_amps[marked_note] -=
-					(note_peak_amps[marked_note]>>AMP2_DECAY_BITS) -
-					(newpeak >> AMP2_DECAY_BITS);
+					(note_peak_amps[marked_note]>>AMP1_DECAY_BITS) -
+					(newpeak >> AMP1_DECAY_BITS);
 				}
 
 				newpeak = (this*AMP_2_MULT)>>4;
+				if (newpeak > 65535) newpeak = 65535;
 				if (newpeak > note_peak_amps2[marked_note]) {
 					note_peak_amps2[marked_note] -=
 					(note_peak_amps2[marked_note]>>AMP2_ATTACK_BITS) -
