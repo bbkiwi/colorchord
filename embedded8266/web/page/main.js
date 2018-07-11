@@ -294,16 +294,16 @@ function ToggleLEDPause()
 	KickLEDs();
 }
 
-// undoes gamma correction and NOTE_FINAL_AMP now looks closer to actual LEDs
-function brighten(color) {
+// undoes gamma =2.6 correction and NOTE_FINAL_AMP. Looks closer to actual LEDs
+function brighten(color, note_final_amp) {
 	var r=parseInt(color.substr(1,2),16);
 	var g=parseInt(color.substr(3,2),16);
 	var b=parseInt(color.substr(5,2),16);
-	var paramgNOTE_FINAL_AMP = globalParams["gNOTE_FINAL_AMP"];
+	var scale = 65025/note_final_amp; // 255*255 = 65025
 	return '#'+
-		("0" + Math.floor(Math.pow(r/255,1/2.6)*255*255/paramgNOTE_FINAL_AMP).toString(16)).slice(-2)+
-		("0" + Math.floor(Math.pow(g/255,1/2.6)*255*255/paramgNOTE_FINAL_AMP).toString(16)).slice(-2)+
-		("0" + Math.floor(Math.pow(b/255,1/2.6)*255*255/paramgNOTE_FINAL_AMP).toString(16)).slice(-2);
+		("0" + Math.floor(Math.pow(r/255,1/2.6)*scale).toString(16)).slice(-2)+
+		("0" + Math.floor(Math.pow(g/255,1/2.6)*scale).toString(16)).slice(-2)+
+		("0" + Math.floor(Math.pow(b/255,1/2.6)*scale).toString(16)).slice(-2);
 }
 
 var totalpower = 0; //
@@ -327,12 +327,13 @@ function GotLED(req,data)
 	var ledpowerest = 0;
 	var data = secs[2];
 	ctx.clearRect( 0, 0, canvas.width, canvas.height );
+	var gNOTE_FINAL_AMP = globalParams["gNOTE_FINAL_AMP"];
 	for( var i = 0; i < samps; i++ )
 	{
 		var x2 = i * canvas.clientWidth / samps;
 		var samp = data.substr(i*6,6);
 		ledpowerest += parseInt(samp.substr( 0, 2 ),16) + parseInt(samp.substr( 2, 2 ),16) + parseInt(samp.substr( 4, 2 ),16);
-		ctx.fillStyle = brighten("#" + samp.substr( 2, 2 ) + samp.substr( 0, 2 ) + samp.substr( 4, 2 ));
+		ctx.fillStyle = brighten("#" + samp.substr( 2, 2 ) + samp.substr( 0, 2 ) + samp.substr( 4, 2 ), gNOTE_FINAL_AMP);
 		ctx.lineWidth = 0;
 		ctx.fillRect( x2, 0, canvas.clientWidth / samps+1, canvas.clientHeight );
 	}
