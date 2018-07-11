@@ -94,7 +94,6 @@ void UpdateLinearLEDs()
 	int16_t i; // uint8_t i; caused instability especially for large no of LEDS
 	int16_t j, l;
 	int16_t minimizingShift;
-	uint32_t total_size_all_notes = 0;
 	int32_t porpamps[MAXNOTES]; //number of LEDs for each corresponding note.
 	uint16_t sorted_note_map[MAXNOTES]; //mapping from which note into the array of notes from the rest of the system.
 	uint16_t snmapmap[MAXNOTES];
@@ -148,6 +147,8 @@ void UpdateLinearLEDs()
 		}
 		else break;
 	}
+	//Now all notes to be used will have amps1 >= floor of NERF_NOTE_PORP percent of total amplitudes
+	// e.g. NERF_NOTE_PORP = 25 and total amp1 130003 all notes to use will have amp1 >= 32500
 
 	diff_a = total_note_a_prev - total_note_a; // used to check increasing or decreasing
 
@@ -202,45 +203,28 @@ void UpdateLinearLEDs()
 			}
 	}
 
+	// Zero all led's - maybe for very large number of led's this takes too much time and need to zero only onces that won't get reassigned below
+	memset( ledOut, 0, sizeof( ledOut ) );
 
-	for( i = 0; i < sorted_map_count; i++ )
-	{
-		uint16_t ist = local_peak_amps[i];
-		porpamps[i] = 0;
-//TODO   probably redundant as should be same as total_note_a
-		total_size_all_notes += local_peak_amps[i];
-	}
+	if( total_note_a == 0 ) return;
 
-	if( total_size_all_notes == 0 )
-	{
-		for( j = 0; j < NUM_LIN_LEDS * 3; j++ )
-		{
-			ledOut[j] = 0;
-		}
-		return;
-	}
-
-	uint32_t porportional = (uint32_t)(USE_NUM_LIN_LEDS<<16)/((uint32_t)total_size_all_notes);
-
+	uint32_t porportional = (uint32_t)(USE_NUM_LIN_LEDS<<16)/((uint32_t)total_note_a);
 	uint16_t total_accounted_leds = 0;
-
 	for( i = 0; i < sorted_map_count; i++ )
 	{
 		porpamps[i] = (local_peak_amps[i] * porportional) >> 16;
 		total_accounted_leds += porpamps[i];
 	}
-
+	// porpamps[i] is the floor of the proportional number of leds for i-th note. Adjoin some
 	int16_t total_unaccounted_leds = USE_NUM_LIN_LEDS - total_accounted_leds;
-	do
+	for( i = 0; (i < sorted_map_count) && total_unaccounted_leds; i++ )
 	{
-		for( i = 0; (i < sorted_map_count) && total_unaccounted_leds; i++ )
-		{
-			porpamps[i]++; total_unaccounted_leds--;
-		}
-	} while( total_unaccounted_leds );
+		porpamps[i]++; total_unaccounted_leds--;
+	}
+
 
 #if DEBUGPRINT
-	printf( "note_nerf_a = %d,  total_size_all_notes =  %d, porportional = %d, total_accounted_leds = %d \n", note_nerf_a, total_size_all_notes, porportional,  total_accounted_leds );
+	printf( "note_nerf_a = %d,  total_note_a =  %d, porportional = %d, total_accounted_leds = %d \n", note_nerf_a, total_note_a, porportional,  total_accounted_leds );
 	printf("snm: ");
         for( i = 0; i < sorted_map_count; i++ )  printf( "%d /", sorted_note_map[i]);
 	printf( "\n" );
@@ -353,8 +337,6 @@ void UpdateLinearLEDs()
 	printf("NOTE_FINAL_AMP = %d\n", NOTE_FINAL_AMP);
 	printf("leds: ");
 #endif
-	// Zero all led's - maybe for very large number of led's this takes too much time and need to zero only onces that won't get reassigned below
-	memset( ledOut, 0, sizeof( ledOut ) );
 
 	// put linear pattern of USE_NUM_LIN_LEDS on ring NUM_LIN_LEDs
 	for( l = 0; l < USE_NUM_LIN_LEDS; l++, jshift++, minimizingShift++ )
@@ -610,10 +592,11 @@ uint32_t EHSVtoHEX( uint8_t hue, uint8_t sat, uint8_t val )
 	#define SIXTH3 128
 	#define SIXTH4 171
 	#define SIXTH5 213
+	// using gamma = 2.6 but adjusting 0,1,2 to fill up a bit more
 	static const uint8_t gamma_correction_table[256] = {
-		0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
-		0,   0,   0,   0,   0,   0,   0,   0,   1,   1,   1,   1,   1,   1,   1,   1,
-		1,   1,   1,   1,   2,   2,   2,   2,   2,   2,   2,   2,   3,   3,   3,   3,
+		0,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,
+		1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   1,   2,   2,
+		2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   3,   3,   3,   3,   3,
 		3,   3,   4,   4,   4,   4,   5,   5,   5,   5,   5,   6,   6,   6,   6,   7,
 		7,   7,   8,   8,   8,   9,   9,   9,  10,  10,  10,  11,  11,  11,  12,  12,
 		13,  13,  13,  14,  14,  15,  15,  16,  16,  17,  17,  18,  18,  19,  19,  20,

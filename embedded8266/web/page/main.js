@@ -294,16 +294,16 @@ function ToggleLEDPause()
 	KickLEDs();
 }
 
+// undoes gamma correction and NOTE_FINAL_AMP now looks closer to actual LEDs
 function brighten(color) {
 	var r=parseInt(color.substr(1,2),16);
 	var g=parseInt(color.substr(3,2),16);
 	var b=parseInt(color.substr(5,2),16);
-	var magfac=255/Math.max(1,r,g,b);
-
+	var paramgNOTE_FINAL_AMP = globalParams["gNOTE_FINAL_AMP"];
 	return '#'+
-		("0" + Math.floor(r*magfac).toString(16)).slice(-2)+
-		("0" + Math.floor(g*magfac).toString(16)).slice(-2)+
-		("0" + Math.floor(b*magfac).toString(16)).slice(-2);
+		("0" + Math.floor(Math.pow(r/255,1/2.6)*255*255/paramgNOTE_FINAL_AMP).toString(16)).slice(-2)+
+		("0" + Math.floor(Math.pow(g/255,1/2.6)*255*255/paramgNOTE_FINAL_AMP).toString(16)).slice(-2)+
+		("0" + Math.floor(Math.pow(b/255,1/2.6)*255*255/paramgNOTE_FINAL_AMP).toString(16)).slice(-2);
 }
 
 var totalpower = 0; //
