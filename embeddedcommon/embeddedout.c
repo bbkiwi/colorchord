@@ -53,9 +53,9 @@ void Sort(uint8_t orderType, uint16_t values[], uint16_t *map, uint8_t num)
 void AssignColorledOut(uint32_t color, int16_t jshift, uint8_t repeats )
 {
 	int16_t i,indled;
-	int16_t rmult = NUM_LIN_LEDS/(repeats+1);
+	uint16_t rmult = (NUM_LIN_LEDS<<8)/(repeats+1);
 	for (i=0;i<=repeats;i++) {
-		indled = jshift + i*rmult;
+		indled = jshift + ((i*rmult)>>8);
 		if( indled >= NUM_LIN_LEDS ) indled -= NUM_LIN_LEDS;
 		ledOut[indled*3+0] = ( color >> 0 ) & 0xff;
 		ledOut[indled*3+1] = ( color >> 8 ) & 0xff;
