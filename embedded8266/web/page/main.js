@@ -358,6 +358,8 @@ function LEDDataTicker()
 	else
 	{
 		is_leds_running = 0;
+		document.getElementById('powerest').innerHTML =  0;
+		document.getElementById('avgpowerest').innerHTML = 0;
 		document.getElementById('maxpowerest').innerHTML = 0;
 		totalGotLEDcount=0;
 		totalpower=0;

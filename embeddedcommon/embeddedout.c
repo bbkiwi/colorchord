@@ -367,7 +367,7 @@ void UpdateLinearLEDs()
 #endif
 	total_note_a_prev = total_note_a;
 	diff_a_prev = diff_a;
-}
+} //end UpdateLinearLEDs()
 
 
 
@@ -397,7 +397,7 @@ void UpdateAllSameLEDs()
 	{
 	AssignColorledOut(color, i, 0x00 );
 	}
-}
+} // end UpdateAllSameLEDs()
 
 void UpdateRotatingLEDs()
 {
@@ -480,7 +480,7 @@ void UpdateRotatingLEDs()
 	total_note_a_prev = total_note_a;
 	diff_a_prev = diff_a;
 
-}
+} // end UpdateRotatingLEDs()
 
 void DFTInLights()
 {
@@ -514,7 +514,7 @@ void DFTInLights()
 		uint32_t color = ECCtoAdjustedHEX( freq, NOTE_FINAL_SATURATION, amp );
 		AssignColorledOut(color, i, SYMMETRY_REPEAT );
 	}
-}
+} // end DFTInLights()
 
 // pure pattern only brightness related to sound bass amplitude
 void PureRotatingLEDs()
@@ -556,7 +556,7 @@ void PureRotatingLEDs()
 		uint32_t color = ECCtoAdjustedHEX( (freq + i*NOTERANGE*NERF_NOTE_PORP/led_arc_len/100)%NOTERANGE, NOTE_FINAL_SATURATION, amp );
 		AssignColorledOut(color, jshift, SYMMETRY_REPEAT );
 	}
-}
+} // end PureRotatingLEDs()
 
 
 uint32_t ECCtoAdjustedHEX( int16_t note, uint8_t sat, uint8_t val )
