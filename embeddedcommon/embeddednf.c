@@ -15,7 +15,6 @@ int16_t  note_peak_freqs[MAXNOTES];
 uint16_t note_peak_amps[MAXNOTES];
 uint16_t note_peak_amps2[MAXNOTES];
 uint8_t  note_jumped_to[MAXNOTES];
-uint16_t bass, mid, treb;
 uint16_t octave_bins[OCTAVES];
 
 
@@ -184,9 +183,6 @@ void HandleFrameInfo()
 	printf( "\n" );
 #endif
 
-	bass = 0;
-	mid = 0;
-	treb = 0;
 
 	//Copy out the bins from the DFT to our fuzzed bins.
 	for( i = 0; i < FIXBINS; i++ )
@@ -202,9 +198,6 @@ void HandleFrameInfo()
 		{
 			if (strens[i] > LOWER_CUTOFF * 256) fuzzed_bins[i] += (strens[i]>>FUZZ_IIR_BITS);
 		}
-		if (i < FIXBINS/3) bass += fuzzed_bins[i];
-		else if (i < 2*FIXBINS/3) mid += fuzzed_bins[i];
-		else treb += fuzzed_bins[i];
 	}
 
 	if (EQUALIZER_SET || (equalize_count>0))
@@ -269,10 +262,6 @@ void HandleFrameInfo()
 			folded_bins[i] += fuzzed_bins[k];
 			octave_bins[j] += fuzzed_bins[k++];
 		}
-		//scale so in range 0..255
-		//for( i = 0; i < FIXBPERO; i++ ) folded_bins[i] /= 256*OCTAVES;
-		//for( i = 0; i < FIXBPERO; i++ ) folded_bins[i] /= 256;
-		//for( i = 0; i < FIXBPERO; i++ ) folded_bins[i] /= 20;
 	}
 
 	//Now, we must blur the folded bins to get a good result.
