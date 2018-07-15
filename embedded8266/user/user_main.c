@@ -167,6 +167,14 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 			int32_t samp_adjusted = samp - (samp_iir>>10); //samp adjusted to center about 0
 			samp_adjusted = (samp_adjusted * INITIAL_AMP /16); //amplified
 			//samp = (samp - (samp_iir>>10))*256;
+
+//TODO glitches should be removed here via median filter and clean of of oscope will not be needed.
+			// the glitches caused by wifi at pulse that drop down to a min. If cutoff
+			// will eliminate but also cutoff all signals.
+			// NOTE if (samp_adjusted < -COLORCHORD_SHIFT_INTERVAL) for the test caused resets
+			//      since one var is int32_t and other is uint_8
+//			if (samp_adjusted + COLORCHORD_SHIFT_INTERVAL < 0) samp_adjusted = 0;
+
 			PushSample32( samp_adjusted * 16 );
 //printf("%i %i : ", samp_iir, samp);
 
@@ -175,8 +183,10 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 			//WARNING samp_adjusted + samp_iir>>10 compiles as (samp_adjusted + samp_iir)>>10
 			int32_t samp_mean = (samp_iir>>10);
 			int32_t samp_oscope = samp_adjusted + samp_mean;
+
 //			sounddatacopy[soundtail] = samp_adjusted + (samp_iir>>10);
 
+			// attempt to hide glitches from oscope, but really want to eliminate from being sent to PushSample32 above
 			if (samp_oscope < (-samp_mean))
 			{
 				sounddatacopy[soundtail] = samp_mean;
@@ -197,6 +207,8 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 			{
 				sounddatacopy[soundtail] = samp_oscope;
 			}
+//TODO tried this which should just call median_filter but not do anything cause wdt resets
+			//samp_oscope = median_filter(sounddatacopy[soundtail]);
 
 			soundtail = (soundtail+1)&(HPABUFFSIZE-1);
 
