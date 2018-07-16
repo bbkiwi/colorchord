@@ -336,23 +336,20 @@ void HandleFrameInfo()
 #endif
 //TODO needs rewrite finding peak. Really want to handle jump up, stay roughly level, ... , jump down
 //     NOT just one either side of this
-			int32_t totaldiff = (( this - prev ) + ( this - next ));
-			int32_t porpdiffP = ((this-prev)<<16) / totaldiff; //close to 0 =
-					//closer to this side, 32768 = in the middle, 65535 away.
-			int32_t porpdiffN = ((this-next)<<16) / totaldiff;
-//TODO can compare (this-prev) and (this-next) and then decide on correct proportion to use.
-			if( porpdiffP < porpdiffN )
+
+			// Corrected way to linear adjust. If prev=next offset should be zero.
+			// When prev=this>next should offset left 1/2 (of 1<<SEMIBITSPERBIN) (toward prev)
+			//   and linearly to offset 0 at prev=next
+			// When prev<this=next should offset right by 1/2 (of 1<<SEMIBITSPERBIN) (toward next)
+			// note code this replaces was not linear
+			if( next < prev ) //Closer to prev.
 			{
-				//Closer to prev.
-				offset = -(32768 - porpdiffP);
-			}
-			else
-			{
-				//Closer to next
-				offset = (32768 - porpdiffN);
+				offset = -( ((prev-next)<<15)/(this-next));
+			} else {
+				offset = (((next-prev)<<15)/(this-prev));
 			}
 
-			//Need to round.  That's what that extra +(15.. is in the center.
+			//Round multiply by 1<<SEMIBITSPERBIN and shift back to correct range and adjust thisfreq
 			thisfreq += (offset+(1<<(15-SEMIBITSPERBIN)))>>(16-SEMIBITSPERBIN);
 
 			//In the event we went 'below zero' need to wrap to the top.
