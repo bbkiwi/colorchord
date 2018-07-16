@@ -95,6 +95,8 @@ int wh = 0;
 int samplesPerFrame = 128;
 int samplesPerHandleInfo = 1;
 int32_t samp;
+int32_t samp_prior;
+uint8_t glitch_count;
 
 //Tasks that happen all the time.
 
@@ -162,36 +164,41 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 			//ets_delay_us( 2 );
 			ExitCritical();
 #endif
+
 			// from chlohr/colorchord master commit 1d86a1c52
 			samp_iir = samp_iir - (samp_iir>>10) + samp; // tracks mean signal times 2^10
 			int32_t samp_adjusted = samp - (samp_iir>>10); //samp adjusted to center about 0
+
+			// Attempt to ignore glitches which is a sudden drop at least GLITCH_DROP
+			// Can get stuck if somehow get very large samp_prior, then samp_adjusted get quiet.
+			// So have counter to prevent this
+			if ((glitch_count > 30) || ((samp_prior - samp_adjusted - GLITCH_DROP) < 0))
+			{
+				samp_prior = samp_adjusted; // no glitch
+				glitch_count = 0;
+			} else {
+				samp_adjusted = samp_prior; // still in glitch zone
+				glitch_count++;
+			}
+
+
+
 			samp_adjusted = (samp_adjusted * INITIAL_AMP /16); //amplified
-			//samp = (samp - (samp_iir>>10))*256;
 			PushSample32( samp_adjusted * 16 );
-//printf("%i %i : ", samp_iir, samp);
 
 //			sounddatacopy[soundtail] = median_filter(samp); //can't get to work
-//			sounddatacopy[soundtail] = samp;
 			//WARNING samp_adjusted + samp_iir>>10 compiles as (samp_adjusted + samp_iir)>>10
 			int32_t samp_mean = (samp_iir>>10);
 			int32_t samp_oscope = samp_adjusted + samp_mean;
-//			sounddatacopy[soundtail] = samp_adjusted + (samp_iir>>10);
 
-			if (samp_oscope < (-samp_mean))
-			{
-				sounddatacopy[soundtail] = samp_mean;
-//printf("X\n");
-			}
-			else if (samp_oscope < 0)
+			// clip for oscope
+			if (samp_oscope < 0)
 			{
 				sounddatacopy[soundtail] = 0x0;
-//printf("-");
 			}
 			else if (samp_oscope >255)
 			{
 				sounddatacopy[soundtail] = 0xff;
-				//sounddatacopy[soundtail] = samp_mean; //replace with mean
-//printf("b");
 			}
 			else
 			{
@@ -210,7 +217,6 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 			wf++;
 			if( wf >= samplesPerFrame )
 			{
-//printf("\n");
 				NewFrame();
 				wf = 0;
 			}
