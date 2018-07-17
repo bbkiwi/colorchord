@@ -385,6 +385,10 @@ void HandleFrameInfo()
 					distance = NOTERANGE - distance;
 				}
 
+//TODO minor bug - if SEMIBITSPERBIN is lowered while music playing thus decreasing NOTERANGE
+//  distance can be computed as negative by above, thus the note will be marked as desired and
+//  absorb all other notes till it disappears
+
 				//If we find a note closer to where we are than any of the 
 				//others, we can mark it as our desired note.
 				if( distance < closest_note_distance )
@@ -398,7 +402,6 @@ void HandleFrameInfo()
 			uint8_t is_a_new_note = 1;
 			//MAX_JUMP_DISTANCE is in range 0..255 while distance is in range 0..floor(NOTERANGE/2)
 			// so compare distance/floor(NOTERANGE/2) to MAX_JUMP_DISTANCE/255
-			//need to scale
 			if( closest_note_distance * 255 <= NOTERANGE / 2 * MAX_JUMP_DISTANCE )
 			{
 				//We found the note we need to augment.

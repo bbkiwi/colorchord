@@ -367,13 +367,13 @@ void ICACHE_FLASH_ATTR user_init(void)
 // Tried this wrapper and using in EnterCritical and ExitCritical
 //    but doesn't work. Wanted to try having hpa_running static in
 //    the helper funciton. 
-void CriticalHelper(bool pause)
-{	if (pause) {
-		PauseHPATimer();
-	} else {
-		ContinueHPATimer();
-	}
-}
+//void CriticalHelper(bool pause)
+//{	if (pause) {
+//		PauseHPATimer();
+//	} else {
+//		ContinueHPATimer();
+//	}
+//}
 
 // With TEST fiddle starting HPATimer early for AP mode could
 //    put print and setting hpa_running = 0; but not if statments

@@ -316,19 +316,16 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 			int val = ParamCaptureAndAdvanceInt();
 			int i = 0;
 
-			do
+			while( gConfigurableNames[i] )
 			{
-				while( gConfigurableNames[i] )
+				if( strcmp( name, gConfigurableNames[i] ) == 0 )
 				{
-					if( strcmp( name, gConfigurableNames[i] ) == 0 )
-					{
-						*gConfigurables[i] = val;
-						buffend += ets_sprintf( buffend, "CVW" );
-						return buffend-buffer;
-					}
-					i++;
+					*gConfigurables[i] = val;
+					buffend += ets_sprintf( buffend, "CVW" );
+					return buffend-buffer;
 				}
-			} while( 0 );
+				i++;
+			}
 
 			buffend += ets_sprintf( buffend, "!CV" );
 			return buffend-buffer;
