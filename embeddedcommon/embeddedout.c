@@ -93,6 +93,7 @@ void UpdateLinearLEDs()
 
 	int16_t i; // uint8_t i; caused instability especially for large no of LEDS
 	int16_t j, l;
+	uint32_t k;
 	int16_t minimizingShift;
 	int32_t porpamps[MAXNOTES]; //number of LEDs for each corresponding note.
 	uint16_t sorted_note_map[MAXNOTES]; //mapping from which note into the array of notes from the rest of the system.
@@ -267,14 +268,43 @@ void UpdateLinearLEDs()
 	j = 0;
 	for( i = 0; i < sorted_map_count; i++ )
 	{
-		while( porpamps[i] > 0 )
+		for (k=0; k<porpamps[i];k++, j++)
 		{
 			ledFreqOut[j] = local_peak_freq[i];
-			ledAmpOut[j] = ((uint32_t)local_peak_amps2[i]*NOTE_FINAL_AMP)>>16;
-			j++;
-			porpamps[i]--;
+//			ledAmpOut[j] = ((uint32_t)local_peak_amps2[i]*NOTE_FINAL_AMP)>>16; //(1)
+//			ledAmpOut[j] = (k<<16) < ((uint32_t)local_peak_amps2[i]*porpamps[i]) ? NOTE_FINAL_AMP : 0; //(2)
+//			ledAmpOut[j] = (k<<16) < ((uint32_t)local_peak_amps2[i]*porpamps[i]) ?
+//						NOTE_FINAL_AMP - (uint32_t)NOTE_FINAL_AMP*(k<<16)/ local_peak_amps2[i] / porpamps[i] : 0; //(3)
+//			ledAmpOut[j] = (k<<1)<porpamps[i] ?
+//				NOTE_FINAL_AMP - (((uint32_t)NOTE_FINAL_AMP * ((1<<16) -local_peak_amps2[i]) * (porpamps[i]-(k<<1))/porpamps[i])>>16) :
+//				NOTE_FINAL_AMP - (((uint32_t)NOTE_FINAL_AMP * ((1<<16) -local_peak_amps2[i]) * ((k<<1)-porpamps[i])/porpamps[i])>>16); //(4)
+
+			ledAmpOut[j] = (k<<1)<porpamps[i] ?
+				(uint32_t)local_peak_amps2[i]  - local_peak_amps2[i] * 3 / 4 * (porpamps[i]-(k<<1))/porpamps[i] :
+				(uint32_t)local_peak_amps2[i]  - local_peak_amps2[i] * 3 / 4 * ((k<<1)-porpamps[i])/porpamps[i]; //(5) N=4
+			ledAmpOut[j] = ((uint32_t)NOTE_FINAL_AMP *ledAmpOut[j])>>16;
+
+//			ledAmpOut[j] = ( (k<<17)/porpamps[i]  + (uint32_t)local_peak_amps2[i] >= (1<<16) ) &&
+//					(( uint32_t)local_peak_amps2[i]+(1<<16) >= (k<<17)/porpamps[i]   ) ? NOTE_FINAL_AMP : 0; //(6)
+
+//			ledAmpOut[j] = ( (k<<17)/porpamps[i]  + (uint32_t)local_peak_amps2[i] >= (1<<16) ) &&
+//					(( uint32_t)local_peak_amps2[i]+(1<<16) >= (k<<17)/porpamps[i]   ) ? NOTE_FINAL_AMP :
+//					(k<<1)<porpamps[i] ? ((uint32_t)NOTE_FINAL_AMP*(k<<17)/porpamps[i]/((1<<16)-local_peak_amps2[i]) ) :
+//					((uint32_t)NOTE_FINAL_AMP*(((porpamps[i]-k)<<17))/porpamps[i]/((1<<16)-local_peak_amps2[i]) ); //(7)
 		}
 	}
+
+
+
+//general idea: ledAmpOut[j] = AmpFun(local_peak_amps2[i]/2^16, k/porpamps[i]) *NOTE_FINAL_AMP;
+// AmpFun(relative amp, relative distance) returns relative brightness
+// AmpFun(a,d) = a gives orginal (1) brightness proportional to a
+// AmpFun(a,d) = 1 if d<a else 0 (2) length from start proportional to a
+// AmpFun(a,d) = 1 - d/a for d<a else 0 (3) fade over length from start proportional to a
+// AmpFun(a,d) = 1 - (1-a)(1-2d) for d<1/2 else 1 - (1-a)(2d-1) (4) full at middle fade to a at ends
+// AmpFun(a,d) = a - a(N-1)/N(1-2d) for d<1/2 else a - a(N-1)/N(2d-1) (5) a at middle fade to a/N at ends
+// AmpFun(a,d) = 1 for (2d+a>=1) and (a+1>=2d) else 0 (6) width of middle interval proportional to a full
+// AmpFun(a,d) = 1 for (2d+a>=1) and (a+1>=2d) else 0 (7) width of middle interval proportional to a full then taper either side to 0
 
 	//This part possibly run on an embedded system with small number of LEDs.
 	if (COLORCHORD_LIN_WRAPAROUND ) {
