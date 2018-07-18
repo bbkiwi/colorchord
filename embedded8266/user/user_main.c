@@ -63,21 +63,23 @@ static void ICACHE_FLASH_ATTR NewFrame()
 
 	switch( COLORCHORD_OUTPUT_DRIVER )
 	{
-	case 0:
-		UpdateLinearLEDs();
-		break;
-	case 1:
-		UpdateAllSameLEDs();
-		break;
-	case 2:
-		UpdateRotatingLEDs();
-		break;
-	case 3:
+//	case 0:
+//		UpdateLinearLEDs();
+//		break;
+//	case 1:
+//		UpdateAllSameLEDs(); not needed, just have NERF_NOTE_PORP>50, Display brightness proportional to amp2
+//		break;
+//	case 2:
+//		UpdateRotatingLEDs(); not needed, just have NERF_NOTE_PORP>50, Display brightness fixed and middle interval size prop to amp2, flip on 'bass'
+//		break;
+	case 254:
 		PureRotatingLEDs();
 		break;
-	case 4:
+	case 255:
 		DFTInLights();
 		break;
+	default:
+		UpdateLinearLEDs(); // have variety of display options and uses COLORCHORD_OUTPUT_DRIVER to select them
 	};
 
 	//SendSPI2812( ledOut, NUM_LIN_LEDS );

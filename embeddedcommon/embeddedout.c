@@ -11,8 +11,8 @@ uint16_t ledAmpOut[NUM_LIN_LEDS];
 int16_t ledFreqOut[NUM_LIN_LEDS];
 int16_t ledFreqOutOld[NUM_LIN_LEDS];
 
-uint32_t total_note_a_prev = 0;
-int diff_a_prev = 0;
+uint32_t flip_amount_prev = 0;
+int diff_flip_amount_prev = 0;
 int rot_dir = 1; // initial rotation direction 1
 int16_t ColorCycle =0;
 #define DECREASING 2
@@ -84,6 +84,16 @@ void UpdateLinearLEDs()
 		COLORCHORD_SHIFT_DISTANCE; //distance of shift
 		COLORCHORD_SORT_NOTES; // 0 no sort, 1 inc freq, 2 dec amps, 3 dec amps2
 		COLORCHORD_LIN_WRAPAROUND; // 0 no adjusting, else current led display has minimum deviation to prev
+TODO in anticipation of refactoring
+1. Which notes to display? all, all non-zero amp, top N of non-zero, top with amp above min proportion of total
+2. What order to display?
+3. Max leds (from USE_NUM_LIN_LEDS leds) to use each displayed note?  equal amounts, proportional to note's amp,
+      (thinking this get mapped to consecutive leds giving segments, but could disperse throughout)
+4. How to display the note in its interval: color by freq and (use fixed brightness, brightness prop to amp2; mask to fade out from one or both ends, length prop
+   to amp2 or amp1.
+5. How to embed USE_NUM_LIN_LEDS leds into full ring of NUM_LIN_LEDS leds. Repeat, Move and/or flip via peaks of total amp or octave_bin values
+
+
 	*/
 
 	//Notes are found above a minimum amplitude
@@ -101,7 +111,8 @@ void UpdateLinearLEDs()
 	uint8_t sorted_map_count = 0;
 	uint32_t note_nerf_a = 0;
 	uint32_t total_note_a = 0;
-	int diff_a = 0;
+	uint32_t flip_amount = 0;
+	int diff_flip_amount = 0;
 	int8_t shift_dist = 0;
 	int16_t jshift; // int8_t jshift; caused instability especially for large no of LEDS
 
@@ -134,6 +145,7 @@ void UpdateLinearLEDs()
 
 	// eliminates  and reduces count of notes with amp too small relative to non-eliminated
 	// adjusts total amplitude
+//TODO could have option to just take top so many notes
 	j=sorted_map_count -1;
 	while (j>=0)
 	{
@@ -151,7 +163,10 @@ void UpdateLinearLEDs()
 	//Now all notes to be used will have amps1 >= floor of NERF_NOTE_PORP percent of total amplitudes
 	// e.g. NERF_NOTE_PORP = 25 and total amp1 130003 all notes to use will have amp1 >= 32500
 
-	diff_a = total_note_a_prev - total_note_a; // used to check increasing or decreasing
+//TODO Options here of what to use for flipping
+	flip_amount = total_note_a; // octave_bins[0]+octave_bins[1] etc.
+
+	diff_flip_amount = flip_amount_prev - flip_amount; // used to check increasing or decreasing and find when flip
 
 #define ORDER_ORGINAL 0
 #define ORDER_FREQ_INC 1
@@ -209,14 +224,22 @@ void UpdateLinearLEDs()
 
 	if( total_note_a == 0 ) return;
 
+	// Assign number of LEDs for each note: proportional to amp vs equal fraction
 	uint32_t porportional = (uint32_t)(USE_NUM_LIN_LEDS<<16)/((uint32_t)total_note_a);
 	uint16_t total_accounted_leds = 0;
 	for( i = 0; i < sorted_map_count; i++ )
 	{
-		porpamps[i] = (local_peak_amps[i] * porportional) >> 16;
+		switch (COLORCHORD_OUTPUT_DRIVER & 0x01) {
+			case 0 : // proportional to amps
+				porpamps[i] = (local_peak_amps[i] * porportional) >> 16;
+				break;
+			default : // equal sized
+				porpamps[i] = USE_NUM_LIN_LEDS/sorted_map_count;
+		}
 		total_accounted_leds += porpamps[i];
 	}
-	// porpamps[i] is the floor of the proportional number of leds for i-th note. Adjoin some
+
+	// porpamps[i] is the floor of correct proportion so adjoin some if needed
 	int16_t total_unaccounted_leds = USE_NUM_LIN_LEDS - total_accounted_leds;
 	for( i = 0; (i < sorted_map_count) && total_unaccounted_leds; i++ )
 	{
@@ -263,48 +286,67 @@ void UpdateLinearLEDs()
 
 	//Assign the linear LEDs info for 0, 1, ..., USE_NUM_LIN_LEDS
 	//Each note (above a minimum amplitude) produces an interval
-	//Its color relates to the notes frequency, the intensity to amps2,
-	//  and the length proportional to amps
+	//Its color relates to the notes frequency, display brightness and interval size -
+	//general idea: ledAmpOut[j] = AmpFun(local_peak_amps2[i]/2^16, k/porpamps[i]) *NOTE_FINAL_AMP;
+	// AmpFun(relative amp, relative distance) returns relative brightness
+	//0,1 AmpFun(a,d) = a gives orginal brightness proportional to a
+	//2,3 AmpFun(a,d) = 1 if d<a else 0 length from start proportional to a
+	//4,5 AmpFun(a,d) = 1 - d/a for d<a else 0  fade over length from start proportional to a
+	//6,7 AmpFun(a,d) = 1 - (1-a)(1-2d) for d<1/2 else 1 - (1-a)(2d-1)  full at middle fade to a at ends
+	//8,9 AmpFun(a,d) = a - a(N-1)/N(1-2d) for d<1/2 else a - a(N-1)/N(2d-1)  a at middle fade to a/N at ends
+	//10,11 AmpFun(a,d) = 1 for (2d+a>=1) and (a+1>=2d) else 0 width of middle interval proportional to a full
+	//12,13 AmpFun(a,d) = 1 for (2d+a>=1) and (a+1>=2d) else 0  width of middle interval proportional to a full then taper either side to 0
+
 	j = 0;
 	for( i = 0; i < sorted_map_count; i++ )
 	{
 		for (k=0; k<porpamps[i];k++, j++)
 		{
 			ledFreqOut[j] = local_peak_freq[i];
-//			ledAmpOut[j] = ((uint32_t)local_peak_amps2[i]*NOTE_FINAL_AMP)>>16; //(1)
-//			ledAmpOut[j] = (k<<16) < ((uint32_t)local_peak_amps2[i]*porpamps[i]) ? NOTE_FINAL_AMP : 0; //(2)
-//			ledAmpOut[j] = (k<<16) < ((uint32_t)local_peak_amps2[i]*porpamps[i]) ?
-//						NOTE_FINAL_AMP - (uint32_t)NOTE_FINAL_AMP*(k<<16)/ local_peak_amps2[i] / porpamps[i] : 0; //(3)
-//			ledAmpOut[j] = (k<<1)<porpamps[i] ?
-//				NOTE_FINAL_AMP - (((uint32_t)NOTE_FINAL_AMP * ((1<<16) -local_peak_amps2[i]) * (porpamps[i]-(k<<1))/porpamps[i])>>16) :
-//				NOTE_FINAL_AMP - (((uint32_t)NOTE_FINAL_AMP * ((1<<16) -local_peak_amps2[i]) * ((k<<1)-porpamps[i])/porpamps[i])>>16); //(4)
+			switch (COLORCHORD_OUTPUT_DRIVER) {
+				case 2 :
+				case 3 :
+					ledAmpOut[j] = (k<<16) < ((uint32_t)local_peak_amps2[i]*porpamps[i]) ? NOTE_FINAL_AMP : 0;
+					break;
+				case 4 :
+				case 5 :
+					ledAmpOut[j] = (k<<16) < ((uint32_t)local_peak_amps2[i]*porpamps[i]) ?
+							NOTE_FINAL_AMP - (uint32_t)NOTE_FINAL_AMP*(k<<16)/ local_peak_amps2[i] / porpamps[i] : 0;
+					break;
+				case 6 :
+				case 7 :
+					ledAmpOut[j] = (k<<1)<porpamps[i] ?
+					NOTE_FINAL_AMP - (((uint32_t)NOTE_FINAL_AMP * ((1<<16) -local_peak_amps2[i]) * (porpamps[i]-(k<<1))/porpamps[i])>>16) :
+					NOTE_FINAL_AMP - (((uint32_t)NOTE_FINAL_AMP * ((1<<16) -local_peak_amps2[i]) * ((k<<1)-porpamps[i])/porpamps[i])>>16);
+					break;
+				case 8 :
+				case 9 :
+					ledAmpOut[j] = (k<<1)<porpamps[i] ?
+						(uint32_t)local_peak_amps2[i]  - local_peak_amps2[i] * 3 / 4 * (porpamps[i]-(k<<1))/porpamps[i] :
+						(uint32_t)local_peak_amps2[i]  - local_peak_amps2[i] * 3 / 4 * ((k<<1)-porpamps[i])/porpamps[i];
+					ledAmpOut[j] = ((uint32_t)NOTE_FINAL_AMP *ledAmpOut[j])>>16;
+					break;
+				case 10 :
+				case 11 :
+					ledAmpOut[j] = ( (k<<17)/porpamps[i]  + (uint32_t)local_peak_amps2[i] >= (1<<16) ) &&
+						(( uint32_t)local_peak_amps2[i]+(1<<16) >= (k<<17)/porpamps[i]   ) ? NOTE_FINAL_AMP : 0;
+					break;
+				case 12 :
+				case 13 :
+					ledAmpOut[j] = ( (k<<17)/porpamps[i]  + (uint32_t)local_peak_amps2[i] >= (1<<16) ) &&
+						(( uint32_t)local_peak_amps2[i]+(1<<16) >= (k<<17)/porpamps[i]   ) ? NOTE_FINAL_AMP :
+						(k<<1)<porpamps[i] ? ((uint32_t)NOTE_FINAL_AMP*(k<<17)/porpamps[i]/((1<<16)-local_peak_amps2[i]) ) :
+						((uint32_t)NOTE_FINAL_AMP*(((porpamps[i]-k)<<17))/porpamps[i]/((1<<16)-local_peak_amps2[i]) );
+					break;
+				default :
+					ledAmpOut[j] = ((uint32_t)local_peak_amps2[i]*NOTE_FINAL_AMP)>>16; //(1)
+			}
 
-			ledAmpOut[j] = (k<<1)<porpamps[i] ?
-				(uint32_t)local_peak_amps2[i]  - local_peak_amps2[i] * 3 / 4 * (porpamps[i]-(k<<1))/porpamps[i] :
-				(uint32_t)local_peak_amps2[i]  - local_peak_amps2[i] * 3 / 4 * ((k<<1)-porpamps[i])/porpamps[i]; //(5) N=4
-			ledAmpOut[j] = ((uint32_t)NOTE_FINAL_AMP *ledAmpOut[j])>>16;
-
-//			ledAmpOut[j] = ( (k<<17)/porpamps[i]  + (uint32_t)local_peak_amps2[i] >= (1<<16) ) &&
-//					(( uint32_t)local_peak_amps2[i]+(1<<16) >= (k<<17)/porpamps[i]   ) ? NOTE_FINAL_AMP : 0; //(6)
-
-//			ledAmpOut[j] = ( (k<<17)/porpamps[i]  + (uint32_t)local_peak_amps2[i] >= (1<<16) ) &&
-//					(( uint32_t)local_peak_amps2[i]+(1<<16) >= (k<<17)/porpamps[i]   ) ? NOTE_FINAL_AMP :
-//					(k<<1)<porpamps[i] ? ((uint32_t)NOTE_FINAL_AMP*(k<<17)/porpamps[i]/((1<<16)-local_peak_amps2[i]) ) :
-//					((uint32_t)NOTE_FINAL_AMP*(((porpamps[i]-k)<<17))/porpamps[i]/((1<<16)-local_peak_amps2[i]) ); //(7)
 		}
 	}
 
 
 
-//general idea: ledAmpOut[j] = AmpFun(local_peak_amps2[i]/2^16, k/porpamps[i]) *NOTE_FINAL_AMP;
-// AmpFun(relative amp, relative distance) returns relative brightness
-// AmpFun(a,d) = a gives orginal (1) brightness proportional to a
-// AmpFun(a,d) = 1 if d<a else 0 (2) length from start proportional to a
-// AmpFun(a,d) = 1 - d/a for d<a else 0 (3) fade over length from start proportional to a
-// AmpFun(a,d) = 1 - (1-a)(1-2d) for d<1/2 else 1 - (1-a)(2d-1) (4) full at middle fade to a at ends
-// AmpFun(a,d) = a - a(N-1)/N(1-2d) for d<1/2 else a - a(N-1)/N(2d-1) (5) a at middle fade to a/N at ends
-// AmpFun(a,d) = 1 for (2d+a>=1) and (a+1>=2d) else 0 (6) width of middle interval proportional to a full
-// AmpFun(a,d) = 1 for (2d+a>=1) and (a+1>=2d) else 0 (7) width of middle interval proportional to a full then taper either side to 0
 
 	//This part possibly run on an embedded system with small number of LEDs.
 	if (COLORCHORD_LIN_WRAPAROUND ) {
@@ -342,7 +384,7 @@ void UpdateLinearLEDs()
 	}
 	// if option change direction on max peaks of total amplitude
 	if (COLORCHORD_FLIP_ON_PEAK ) {
-		if (diff_a_prev <= 0 && diff_a > 0) {
+		if (diff_flip_amount_prev <= 0 && diff_flip_amount > 0) {
 			rot_dir *= -1;
 		}
 	} else rot_dir = 1;
@@ -352,7 +394,7 @@ void UpdateLinearLEDs()
 	if (COLORCHORD_SHIFT_INTERVAL != 0 ) {
 		if ( gFRAMECOUNT_MOD_SHIFT_INTERVAL == 0 ) {
 			gROTATIONSHIFT += rot_dir * COLORCHORD_SHIFT_DISTANCE;
-		        //printf("tnap tna %d %d dap da %d %d rot_dir %d, j shift %d\n",total_note_a_prev, total_note_a, diff_a_prev,  diff_a, rot_dir, j);
+		        //printf("tna %d dfap dfa %d %d rot_dir %d, j shift %d\n", total_note_a, diff_flip_amount_prev,  diff_flip_amount, rot_dir, j);
 		}
 	} else {
 		gROTATIONSHIFT = 0; // reset
@@ -368,7 +410,7 @@ void UpdateLinearLEDs()
 	printf("leds: ");
 #endif
 
-	// put linear pattern of USE_NUM_LIN_LEDS on ring NUM_LIN_LEDs
+	// put linear pattern of USE_NUM_LIN_LEDS on earlier cleared ring NUM_LIN_LEDs
 	for( l = 0; l < USE_NUM_LIN_LEDS; l++, jshift++, minimizingShift++ )
 	{
 		if( jshift >= NUM_LIN_LEDS ) jshift = 0;
@@ -395,120 +437,9 @@ void UpdateLinearLEDs()
         for( i = 0; i < USE_NUM_LIN_LEDS; i++ )  printf( "%02x%02x%02x-", ledOut[i*3+0], ledOut[i*3+1],ledOut[i*3+2]);
 	printf( "\n\n" );
 #endif
-	total_note_a_prev = total_note_a;
-	diff_a_prev = diff_a;
+	flip_amount_prev = flip_amount;
+	diff_flip_amount_prev = diff_flip_amount;
 } //end UpdateLinearLEDs()
-
-
-
-void UpdateAllSameLEDs()
-{
-	int16_t i;
-	int8_t j;
-	int16_t freq = 0;
-	uint16_t amp = 0;
-
-
-	for( i = 0; i < MAXNOTES; i++ )
-	{
-		uint16_t ist = note_peak_amps[i];
-		int16_t ifrq = note_peak_freqs[i];
-		if( ifrq >= 0 && ist > amp  )
-		{
-			freq = ifrq;
-			amp = ist;
-		}
-	}
-	amp = (((uint32_t)(amp))*NOTE_FINAL_AMP)>>MAX_AMP2_LOG2;
-
-	if( amp > NOTE_FINAL_AMP ) amp = NOTE_FINAL_AMP;
-	uint32_t color = ECCtoAdjustedHEX( freq, NOTE_FINAL_SATURATION, amp );
-	for( i = 0; i < NUM_LIN_LEDS; i++ )
-	{
-	AssignColorledOut(color, i, 0x00 );
-	}
-} // end UpdateAllSameLEDs()
-
-void UpdateRotatingLEDs()
-{
-	int16_t i;
-	int16_t jshift; // int8_t jshift; caused instability especially for large no of LEDs
-	int8_t shift_dist;
-	int16_t freq = 0;
-	uint16_t amp = 0;
-	uint16_t amp2 = 0;
-	uint32_t note_nerf_a = 0;
-	uint32_t total_note_a = 0;
-	//uint32_t total_note_a2 = 0;
-	int diff_a = 0;
-	int32_t led_arc_len;
-	char stret[256];
-	char *stt = &stret[0];
-
-	for( i = 0; i < MAXNOTES; i++ )
-	{
-		uint16_t ist = note_peak_amps2[i];
-		int16_t ifrq = note_peak_freqs[i];
-		if( ifrq >= 0 )
-		{
-			if( ist > amp2 ) {
-				freq = ifrq;
-				amp2 = ist;
-				amp = note_peak_amps[i];
-			}
-			//total_note_a += note_peak_amps[i]; // or see outside loop to use bass
-			//total_note_a2 += ist;
-		}
-	}
-	total_note_a = octave_bins[0]+octave_bins[1]; // bass;
-
-	diff_a = total_note_a_prev - total_note_a;
-
-	// can set color intensity using amp2 or fixed value
-	amp2 = (((uint32_t)(amp2))*NOTE_FINAL_AMP)>>MAX_AMP2_LOG2; // for PC 14;
-	if( amp2 > NOTE_FINAL_AMP ) amp2 = NOTE_FINAL_AMP;
-	//uint32_t color = ECCtoAdjustedHEX( freq, NOTE_FINAL_SATURATION, amp2 );
-	uint32_t color = ECCtoAdjustedHEX( freq, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
-
-	// can have led_arc_len a fixed size or proportional to amp
-	//led_arc_len = 5;
-//TODO look below
-	led_arc_len = ((uint32_t)amp * (USE_NUM_LIN_LEDS + 1) ) >> 15; // empirical
-	//printf("amp2 = %d, amp = %d, led_arc_len = %d, NOTE_FINAL_AMP = %d\n", amp2,  amp, led_arc_len, NOTE_FINAL_AMP );
-	//stt += ets_sprintf( stt, "amp2 = %d, amp = %d, led_arc_len = %d, NOTE_FINAL_AMP = %d\n", amp2,  amp, led_arc_len, NOTE_FINAL_AMP );
-	//uart0_sendStr(stret);
-
-        // want possible extra spin to relate to changes peak intensity
-	if (COLORCHORD_FLIP_ON_PEAK ) {
-		if (diff_a_prev <= 0 && diff_a > 0) {
-			rot_dir *= -1;
-		}
-	} else rot_dir = 1;
-
-	// now every COLORCHORD_SHIFT_INTERVAL th frame
-	if (COLORCHORD_SHIFT_INTERVAL != 0 ) {
-		if ( gFRAMECOUNT_MOD_SHIFT_INTERVAL == 0 ) {
-// move on beat	when amp2 IIR about 9
-//		if ( gFRAMECOUNT_MOD_SHIFT_INTERVAL == 0 && diff_a_prev <= 0 && diff_a > 0 ) {
-			gROTATIONSHIFT += rot_dir * COLORCHORD_SHIFT_DISTANCE;
-		        //printf("tnap tna %d %d dap da %d %d rot_dir %d, j shift %d\n",total_note_a_prev, total_note_a, diff_a_prev,  diff_a, rot_dir, j);
-		}
-	} else {
-		gROTATIONSHIFT = 0; // reset
-	}
-
-	jshift = ( gROTATIONSHIFT - led_arc_len/2 ) % NUM_LIN_LEDS; // neg % pos is neg so fix
-	if ( jshift < 0 ) jshift += NUM_LIN_LEDS;
-	memset( ledOut, 0, sizeof( ledOut ) );
-	for( i = 0; i < led_arc_len; i++, jshift++ )
-	{
-		AssignColorledOut(color, jshift, SYMMETRY_REPEAT );
-	}
-
-	total_note_a_prev = total_note_a;
-	diff_a_prev = diff_a;
-
-} // end UpdateRotatingLEDs()
 
 void DFTInLights()
 {
@@ -565,7 +496,7 @@ void PureRotatingLEDs()
 	if (COLORCHORD_SHIFT_INTERVAL != 0 ) {
 		if ( gFRAMECOUNT_MOD_SHIFT_INTERVAL == 0 ) {
 			gROTATIONSHIFT += rot_dir * COLORCHORD_SHIFT_DISTANCE;
-		        //printf("tnap tna %d %d dap da %d %d rot_dir %d, j shift %d\n",total_note_a_prev, total_note_a, diff_a_prev,  diff_a, rot_dir, j);
+		        //printf("tna %d dfap dfa %d %d rot_dir %d, j shift %d\n",total_note_a, diff_flip_amount_prev,  diff_flip_amount, rot_dir, j);
 			ColorCycle++;
 			if (ColorCycle >= NOTERANGE) ColorCycle = 0;
 			if (ColorCycle == 0 && COLORCHORD_FLIP_ON_PEAK) rot_dir *= -1;
