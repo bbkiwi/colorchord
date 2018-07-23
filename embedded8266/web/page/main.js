@@ -112,11 +112,12 @@ function ToggleOScopePause()
 function GotOScope(req,data)
 {
 	//var OSCOPE_ZERO = 57/255;
-	var OSCOPE_ZERO = 90/255;
 	var mult = Number(document.getElementById('OSCMultIn').value);
+	var zerolevel = Number(document.getElementById('OSCZeroIn').value);
+	var OSCOPE_ZERO = zerolevel/255;
 	document.getElementById('OSCMultOut').innerHTML = "mult: " + mult + " from " +
                       Math.floor(255 * (-0.5/mult + OSCOPE_ZERO)) + " to " + Math.floor(255 * (0.5/mult + OSCOPE_ZERO)) +
-                      " with center at " + Math.floor(255 *  OSCOPE_ZERO);
+                      " with center at " + zerolevel;
 	var canvas = document.getElementById('OScopeCanvas');
 	var ctx = canvas.getContext('2d');
 	var h = canvas.height;

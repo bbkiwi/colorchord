@@ -239,17 +239,6 @@ void HandleFrameInfo()
 	}
 */
 
-	//Equalize fuzzed_bins when not computing new max_bins
-/*
-	if (EQUALIZER_SET == 0)
-	{
-		for( i = 0; i < FIXBINS; i++ )
-		{
-			fuzzed_bins[i] = (maxallbins * fuzzed_bins[i]) / max_bins[i];
-		}
-	}
-*/
-
 	//Fold the bins from fuzzedbins into one octave.
 	//  and collect bins from each octave
 	for( i = 0; i < FIXBPERO; i++ ) folded_bins[i] = 0;
