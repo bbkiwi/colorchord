@@ -111,7 +111,6 @@ function ToggleOScopePause()
 
 function GotOScope(req,data)
 {
-	//var OSCOPE_ZERO = 57/255;
 	var mult = Number(document.getElementById('OSCMultIn').value);
 	var zerolevel = Number(document.getElementById('OSCZeroIn').value);
 	var OSCOPE_ZERO = zerolevel/255;
