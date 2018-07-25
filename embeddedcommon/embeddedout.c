@@ -141,27 +141,36 @@ TODO in anticipation of refactoring
 		total_note_a += note_peak_amps[i];
 	}
 	Sort(DECREASING, note_peak_amps, sorted_note_map, sorted_map_count);
-	note_nerf_a = total_note_a * NERF_NOTE_PORP /100;
 
-	// eliminates  and reduces count of notes with amp too small relative to non-eliminated
-	// adjusts total amplitude
-//TODO could have option to just take top so many notes
-	j=sorted_map_count -1;
-	while (j>=0)
-	{
-		uint16_t ist = note_peak_amps[sorted_note_map[j]];
-		if( ist < note_nerf_a )
-		{
-			total_note_a -= ist;
-			note_nerf_a = total_note_a * NERF_NOTE_PORP /100;
-			sorted_map_count--;
-			j--;
-			continue;
-		}
-		else break;
-	}
-	//Now all notes to be used will have amps1 >= floor of NERF_NOTE_PORP percent of total amplitudes
+	// eliminate and reduces count of notes to keep top ones or those with amp 
+	//  too small relative to non-eliminated
+	//  adjust total amplitude
+	if (NERF_NOTE_PORP <= 100) {
+	//All notes to be used will have amps1 >= floor of NERF_NOTE_PORP percent of total amplitudes
 	// e.g. NERF_NOTE_PORP = 25 and total amp1 130003 all notes to use will have amp1 >= 32500
+		note_nerf_a = total_note_a * NERF_NOTE_PORP /100;
+		j=sorted_map_count -1;
+		while (j>=0)
+		{
+			uint16_t ist = note_peak_amps[sorted_note_map[j]];
+			if( ist < note_nerf_a )
+			{
+				total_note_a -= ist;
+				note_nerf_a = total_note_a * NERF_NOTE_PORP /100;
+				sorted_map_count--;
+				j--;
+				continue;
+			}
+			else break;
+		}
+	} else {
+	//Use at most NERF_NOTE_PORP - 100 top notes
+		while (sorted_map_count > NERF_NOTE_PORP - 100) {
+			sorted_map_count--;
+			total_note_a -= note_peak_amps[sorted_note_map[sorted_map_count]];
+		}
+	}
+
 
 //TODO Options here of what to use for flipping
 	flip_amount = total_note_a; // octave_bins[0]+octave_bins[1] etc.
