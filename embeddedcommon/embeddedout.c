@@ -172,8 +172,19 @@ TODO in anticipation of refactoring
 	}
 
 
-//TODO Options here of what to use for flipping
-	flip_amount = total_note_a; // octave_bins[0]+octave_bins[1] etc.
+	// Options here of what to use for flipping
+	// 255 total amplitude of notes, 1 octave_bin[0], 2 octave_bin[1], 3 octave_bin[0]+ocatave_bin[1] etc.
+	flip_amount = 0;
+	if (COLORCHORD_FLIP_ON_PEAK == 0) {
+	} else if (COLORCHORD_FLIP_ON_PEAK == 255) {
+		flip_amount = total_note_a;
+	} else {
+		for (j = 0; j < OCTAVES; j++) {
+			if (COLORCHORD_FLIP_ON_PEAK & (1<<j)) {
+				flip_amount += octave_bins[j];
+			}
+		}
+	}
 
 	diff_flip_amount = flip_amount_prev - flip_amount; // used to check increasing or decreasing and find when flip
 
