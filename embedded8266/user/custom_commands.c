@@ -18,6 +18,7 @@ struct SaveLoad
 {
 	uint8_t configs[NUMBER_STORED_CONFIGURABLES][CONFIGURABLES];
 	uint16_t saved_max_bins[FIXBINS];
+	uint8_t current_config;
 	uint8_t SaveLoadKey; //Must be 0xaa to be valid.
 } settings __attribute__ ((aligned (16)));
 
@@ -58,37 +59,47 @@ char * gConfigurableNames[CONFIGURABLES] = { "gINITIAL_AMP", "gROOT_NOTE_OFFSET"
 	"gNOTE_FINAL_SATURATION", "gNERF_NOTE_PORP", "gUSE_NUM_LIN_LEDS", "gSYMMETRY_REPEAT", "gCOLORCHORD_ACTIVE", "gCOLORCHORD_OUTPUT_DRIVER", "gCOLORCHORD_SHIFT_INTERVAL",
 	"gCOLORCHORD_FLIP_ON_PEAK", "gCOLORCHORD_SHIFT_DISTANCE", "gCOLORCHORD_SORT_NOTES", "gCOLORCHORD_LIN_WRAPAROUND","gCONFIG_NUMBER", 0 };
 
+void ICACHE_FLASH_ATTR SaveSettingsToFlash( )
+{
+	settings.SaveLoadKey = 0xAA;
+	EnterCritical();
+	ets_intr_lock();
+	spi_flash_erase_sector( 0x3D000/4096 );
+	spi_flash_write( 0x3D000, (uint32*)&settings, ((sizeof( settings )-1)&(~0xf))+0x10 );
+	ets_intr_unlock();
+	ExitCritical();
+}
+
+
 void ICACHE_FLASH_ATTR CustomStart( )
 {
 	int i,j;
 	spi_flash_read( 0x3D000, (uint32*)&settings, sizeof( settings ) );
-	if( settings.SaveLoadKey == 0xaa )
+	if( settings.SaveLoadKey != 0xaa ) // set settings to defaults and save to flash
 	{
+		settings.current_config = 0;
+		for( j = 0; j < NUMBER_STORED_CONFIGURABLES; j++)
 		for( i = 0; i < CONFIGURABLES; i++ )
 		{
-			if( gConfigurables[i] )
-			{
-				*gConfigurables[i] = settings.configs[0][i];
-			}
+			settings.configs[j][i] = gConfigDefaults[j][i];
 		}
 		for( i = 0; i < FIXBINS; i++ )
 		{
-			max_bins[i] = settings.saved_max_bins[i];
+			settings.saved_max_bins[i] = 1;
+		}
+		SaveSettingsToFlash();
+	}
+	// load settings
+	for( i = 0; i < CONFIGURABLES-1; i++ )
+	{
+		if( gConfigurables[i] )
+		{
+			*gConfigurables[i] = settings.configs[settings.current_config][i];
 		}
 	}
-	else
+	for( i = 0; i < FIXBINS; i++ )
 	{
-		for( i = 0; i < CONFIGURABLES; i++ )
-		{
-			if( gConfigurables[i] )
-			{
-				*gConfigurables[i] = gConfigDefaults[0][i];
-			}
-		}
-		for( i = 0; i < FIXBINS; i++ )
-		{
-			max_bins[i] = 1;
-		}
+		max_bins[i] = settings.saved_max_bins[i];
 	}
 }
 
@@ -261,6 +272,7 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 
 			if (CONFIG_NUMBER < NUMBER_STORED_CONFIGURABLES)
 			{
+				settings.current_config = CONFIG_NUMBER;
 				for( i = 0; i < CONFIGURABLES-1; i++ )
 				{
 					if( gConfigurables[i] )
@@ -272,13 +284,9 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 					settings.saved_max_bins[i] = max_bins[i];
 				}
 			}
-			settings.SaveLoadKey = 0xAA;
-			EnterCritical();
-			ets_intr_lock();
-			spi_flash_erase_sector( 0x3D000/4096 );
-			spi_flash_write( 0x3D000, (uint32*)&settings, ((sizeof( settings )-1)&(~0xf))+0x10 );
-			ets_intr_unlock();
-			ExitCritical();
+
+			SaveSettingsToFlash();
+
 
 			buffend += ets_sprintf( buffend, "CS" );
 			return buffend-buffer;

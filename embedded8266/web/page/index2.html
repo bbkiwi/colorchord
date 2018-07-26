@@ -110,7 +110,7 @@ AMP Disappear  <input id="parmsgMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR" type="range" 
 <input type=submit onclick="ShowHideEvent( 'Parameters' );" value="Parameters"></td><td>
 <div id=Parameters class="collapsible">
 <div id=InnerParameters></div>
-<input type=button value="Save" onclick='QueueOperation( "CSS", function(){IssueSystemMessage("Settings Saved to Flash" );} )'> <input type=button value="Revert" onclick='QueueOperation( "CSR", function() { IssueSystemMessage("Settings Read from Flash" );} )'> <input type=button value="Restore" onclick='QueueOperation( "CSD", function(){IssueSystemMessage("Settings in RAM Reverted to Factory" );} )'> 
+<input type=button value="Save" onclick='QueueOperation( "CSS", function(){IssueSystemMessage("Settings Saved to Flash" );} )'> <input type=button value="Load" onclick='QueueOperation( "CSR", function() { IssueSystemMessage("Settings Read from Flash" );} )'> <input type=button value="Default" onclick='QueueOperation( "CSD", function(){IssueSystemMessage("Settings in RAM Reverted to Factory" );} )'>
 </div>
 </td></tr>
 
