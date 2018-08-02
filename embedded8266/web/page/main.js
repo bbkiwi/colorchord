@@ -462,15 +462,15 @@ function GotNotes(req,data)
 
 		ctx.fillStyle = CCColorDetail( peak );
 		ctx.lineWidth = 0;
-		ctx.fillRect( 70, i*25, 50,25);
-		ctx.fillRect( 171, i*25, amped>>7,25);
-		ctx.fillRect( 419, i*25, amped2>>7,25);
+		ctx.fillRect( 70, i*25, 40,25);
+		ctx.fillRect( 151, i*25, amped>>8,25);
+		ctx.fillRect( 419, i*25, amped2>>8,25);
 
 		// use complementary color for text
 		ctx.fillStyle = CCColorDetail( peak + globalParams["rNOTERANGE"]/2 );
 		// in gui display note as tenths of semitone, so octave is 0 to 119
 		ctx.fillText( Math.floor(peak/NOTERANGE*119), 80, i*25 + 20 );
-		ctx.fillText( amped, 191, i*25 + 20 );
+		ctx.fillText( amped, 171, i*25 + 20 );
 		ctx.fillText( amped2, 430, i*25 + 20 );
 	}
 

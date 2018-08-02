@@ -97,8 +97,13 @@ int wh = 0;
 int samplesPerFrame = 128;
 int samplesPerHandleInfo = 1;
 int32_t samp;
+int32_t samp_centered;
 int32_t samp_prior;
+int32_t samp_adjustment;
+int32_t samp_adjusted;
 uint8_t glitch_count;
+uint8_t glitch_count_max=GLITCH_COUNT_MAX;
+uint8_t glitch_drop=GLITCH_DROP;
 
 //Tasks that happen all the time.
 
@@ -169,19 +174,40 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 
 			// from chlohr/colorchord master commit 1d86a1c52
 			samp_iir = samp_iir - (samp_iir>>10) + samp; // tracks mean signal times 2^10
-			int32_t samp_adjusted = samp - (samp_iir>>10); //samp adjusted to center about 0
-
+			samp_centered = samp - (samp_iir>>10); //samp centered about 0
+/*
 			// Attempt to ignore glitches which is a sudden drop at least GLITCH_DROP
-			// Can get stuck if somehow get very large samp_prior, then samp_adjusted get quiet.
+			// Can get stuck if somehow get very large samp_prior, then samp_centered get quiet.
 			// So have counter to prevent this
-			if ((glitch_count > 30) || ((samp_prior - samp_adjusted - GLITCH_DROP) < 0))
+			if ((glitch_count > glitch_count_max) || ((samp_prior - samp_centered - glitch_drop) < 0))
 			{
-				samp_prior = samp_adjusted; // no glitch
+				samp_prior = samp_centered; // no glitch
 				glitch_count = 0;
 			} else {
-				samp_adjusted = samp_prior; // still in glitch zone
+				samp_centered = samp_prior; // still in glitch zone
 				glitch_count++;
 			}
+*/
+			// Alternative attempt to ignore glitches. Assume sudden drop  at least GLITCH_DROP
+			//   means requires adding or subtracting the actual change. When jump of at least
+			//   HALF this size the glitch ends.
+			// Can get stuck if somehow get very large samp_prior, then samp_centered get quiet.
+			// So have counter to prevent this
+
+			if (samp_prior - samp_centered > glitch_drop) //drop happened
+			{
+				samp_adjustment += samp_prior - samp_centered;
+				glitch_count = 0;
+			} else if (samp_centered - samp_prior > glitch_drop/2) // jump happened
+			{
+				//samp_adjustment += samp_prior - samp_centered;
+				samp_adjustment = 0;
+			}
+			samp_prior = samp_centered;
+			glitch_count++;
+			if (glitch_count > glitch_count_max) samp_adjustment = 0;
+
+			samp_adjusted = samp_centered + samp_adjustment;
 
 
 
@@ -189,7 +215,7 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 			PushSample32( samp_adjusted * 16 );
 
 //			sounddatacopy[soundtail] = median_filter(samp); //can't get to work
-			//WARNING samp_adjusted + samp_iir>>10 compiles as (samp_adjusted + samp_iir)>>10
+			//WARNING samp_centered + samp_iir>>10 compiles as (samp_centered + samp_iir)>>10
 			int32_t samp_mean = (samp_iir>>10);
 			int32_t samp_oscope = samp_adjusted + samp_mean;
 

@@ -10,6 +10,8 @@
 extern volatile uint8_t sounddata[HPABUFFSIZE];
 extern volatile uint16_t soundhead;
 extern uint8_t sounddatacopy[HPABUFFSIZE];
+extern uint8_t glitch_count_max;
+extern uint8_t glitch_drop;
 
 #define CONFIGURABLES 32 //(plus1)
 #define NUMBER_STORED_CONFIGURABLES 16
@@ -339,6 +341,22 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 			}
 
 			buffend += ets_sprintf( buffend, "!CV" );
+			return buffend-buffer;
+		}
+		else if( pusrdata[2] == 'G' || pusrdata[2] == 'g' )
+		{
+			parameters+=2;
+			int val = ParamCaptureAndAdvanceInt();
+			buffend += ets_sprintf( buffend, "CVG glitch_count_max changed from %d to %d", glitch_count_max, val );
+			glitch_count_max = val;
+			return buffend-buffer;
+		}
+		else if( pusrdata[2] == 'H' || pusrdata[2] == 'h' )
+		{
+			parameters+=2;
+			int val = ParamCaptureAndAdvanceInt();
+			buffend += ets_sprintf( buffend, "CVH glitch_drop changed from %d to %d", glitch_drop, val );
+			glitch_drop = val;
 			return buffend-buffer;
 		}
 		else if( pusrdata[2] == 'C' || pusrdata[2] == 'c' ) //dump stored configs

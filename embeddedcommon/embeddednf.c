@@ -413,30 +413,30 @@ void HandleFrameInfo()
 			if( marked_note != -1 )
 			{
 				hitnotes[marked_note] = 1;
-				int32_t newpeak = (this*AMP_1_MULT)>>4;
-				if (newpeak > 65535) newpeak = 65535;
-				if (newpeak > note_peak_amps[marked_note]) {
+				int32_t newpeakamp1 = (this*AMP_1_MULT)>>4;
+				if (newpeakamp1 > 65535) newpeakamp1 = 65535;
+				if (newpeakamp1 > note_peak_amps[marked_note]) {
 					note_peak_amps[marked_note] -=
 					(note_peak_amps[marked_note]>>AMP1_ATTACK_BITS) -
-					(newpeak >> AMP1_ATTACK_BITS);
+					(newpeakamp1 >> AMP1_ATTACK_BITS);
 				} else {
 					note_peak_amps[marked_note] -=
 					(note_peak_amps[marked_note]>>AMP1_DECAY_BITS) -
-					(newpeak >> AMP1_DECAY_BITS);
+					(newpeakamp1 >> AMP1_DECAY_BITS);
 				}
 
-				newpeak = (this*AMP_2_MULT)>>4;
-				if (newpeak > 65535) newpeak = 65535;
-				if (newpeak > note_peak_amps2[marked_note]) {
+				int32_t newpeakamp2 = (this*AMP_2_MULT)>>4;
+				if (newpeakamp2 > 65535) newpeakamp2 = 65535;
+				if (newpeakamp2 > note_peak_amps2[marked_note]) {
 					note_peak_amps2[marked_note] -=
 					(note_peak_amps2[marked_note]>>AMP2_ATTACK_BITS) -
-					(newpeak >> AMP2_ATTACK_BITS);
+					(newpeakamp2 >> AMP2_ATTACK_BITS);
 				} else {
 					note_peak_amps2[marked_note] -=
 					(note_peak_amps2[marked_note]>>AMP2_DECAY_BITS) -
-					(newpeak >> AMP2_DECAY_BITS);
+					(newpeakamp2 >> AMP2_DECAY_BITS);
 				}
-				if( is_a_new_note && (note_peak_amps[marked_note] < MIN_AMP_FOR_NOTE<<8) ) //kill it
+				if( is_a_new_note && (newpeakamp1 < MIN_AMP_FOR_NOTE<<8) ) //kill it
 				{
 					note_peak_freqs[marked_note] = -1;
 					note_peak_amps[marked_note] = 0;
