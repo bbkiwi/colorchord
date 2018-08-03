@@ -5,11 +5,10 @@
 #include <stdio.h>
 #endif
 
-//uint8_t ledArray[NUM_LIN_LEDS]; //Points to which notes correspond to these LEDs
-uint8_t ledOut[NUM_LIN_LEDS*3];
-uint16_t ledAmpOut[NUM_LIN_LEDS];
-int16_t ledFreqOut[NUM_LIN_LEDS];
-int16_t ledFreqOutOld[NUM_LIN_LEDS];
+uint8_t ledOut[MAX_NUM_LIN_LEDS*3];
+uint16_t ledAmpOut[MAX_NUM_LIN_LEDS];
+int16_t ledFreqOut[MAX_NUM_LIN_LEDS];
+int16_t ledFreqOutOld[MAX_NUM_LIN_LEDS];
 
 uint32_t flip_amount_prev = 0;
 int diff_flip_amount_prev = 0;
