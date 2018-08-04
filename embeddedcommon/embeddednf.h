@@ -123,7 +123,6 @@ extern int16_t  note_peak_freqs[]; //[MAXNOTES]
 extern uint16_t note_peak_amps[];  //[MAXNOTES] 
 extern uint16_t note_peak_amps2[]; //[MAXNOTES]  (Responds quicker)
 extern uint8_t  note_jumped_to[];  //[MAXNOTES] When a note combines into another one,
-extern uint16_t bass, mid, treb;
 extern uint16_t octave_bins[OCTAVES];
 
 	//this records where it went.  I.e. if your note just disappeared, check this flag.

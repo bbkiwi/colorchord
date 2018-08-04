@@ -111,12 +111,12 @@ function ToggleOScopePause()
 
 function GotOScope(req,data)
 {
-	//var OSCOPE_ZERO = 57/255;
-	var OSCOPE_ZERO = 90/255;
 	var mult = Number(document.getElementById('OSCMultIn').value);
+	var zerolevel = Number(document.getElementById('OSCZeroIn').value);
+	var OSCOPE_ZERO = zerolevel/255;
 	document.getElementById('OSCMultOut').innerHTML = "mult: " + mult + " from " +
                       Math.floor(255 * (-0.5/mult + OSCOPE_ZERO)) + " to " + Math.floor(255 * (0.5/mult + OSCOPE_ZERO)) +
-                      " with center at " + Math.floor(255 *  OSCOPE_ZERO);
+                      " with center at " + zerolevel;
 	var canvas = document.getElementById('OScopeCanvas');
 	var ctx = canvas.getContext('2d');
 	var h = canvas.height;
@@ -294,16 +294,16 @@ function ToggleLEDPause()
 	KickLEDs();
 }
 
-function brighten(color) {
+// undoes gamma =2.2 correction and NOTE_FINAL_AMP. Looks closer to actual LEDs
+function brighten(color, note_final_amp) {
 	var r=parseInt(color.substr(1,2),16);
 	var g=parseInt(color.substr(3,2),16);
 	var b=parseInt(color.substr(5,2),16);
-	var magfac=255/Math.max(1,r,g,b);
-
+	var scale = 65025/note_final_amp; // 255*255 = 65025
 	return '#'+
-		("0" + Math.floor(r*magfac).toString(16)).slice(-2)+
-		("0" + Math.floor(g*magfac).toString(16)).slice(-2)+
-		("0" + Math.floor(b*magfac).toString(16)).slice(-2);
+		("0" + Math.floor(Math.pow(r/255,1/2.2)*scale).toString(16)).slice(-2)+
+		("0" + Math.floor(Math.pow(g/255,1/2.2)*scale).toString(16)).slice(-2)+
+		("0" + Math.floor(Math.pow(b/255,1/2.2)*scale).toString(16)).slice(-2);
 }
 
 var totalpower = 0; //
@@ -327,12 +327,13 @@ function GotLED(req,data)
 	var ledpowerest = 0;
 	var data = secs[2];
 	ctx.clearRect( 0, 0, canvas.width, canvas.height );
+	var gNOTE_FINAL_AMP = globalParams["gNOTE_FINAL_AMP"];
 	for( var i = 0; i < samps; i++ )
 	{
 		var x2 = i * canvas.clientWidth / samps;
 		var samp = data.substr(i*6,6);
 		ledpowerest += parseInt(samp.substr( 0, 2 ),16) + parseInt(samp.substr( 2, 2 ),16) + parseInt(samp.substr( 4, 2 ),16);
-		ctx.fillStyle = brighten("#" + samp.substr( 2, 2 ) + samp.substr( 0, 2 ) + samp.substr( 4, 2 ));
+		ctx.fillStyle = brighten("#" + samp.substr( 2, 2 ) + samp.substr( 0, 2 ) + samp.substr( 4, 2 ), gNOTE_FINAL_AMP);
 		ctx.lineWidth = 0;
 		ctx.fillRect( x2, 0, canvas.clientWidth / samps+1, canvas.clientHeight );
 	}
@@ -357,6 +358,8 @@ function LEDDataTicker()
 	else
 	{
 		is_leds_running = 0;
+		document.getElementById('powerest').innerHTML =  0;
+		document.getElementById('avgpowerest').innerHTML = 0;
 		document.getElementById('maxpowerest').innerHTML = 0;
 		totalGotLEDcount=0;
 		totalpower=0;
@@ -459,15 +462,15 @@ function GotNotes(req,data)
 
 		ctx.fillStyle = CCColorDetail( peak );
 		ctx.lineWidth = 0;
-		ctx.fillRect( 70, i*25, 50,25);
-		ctx.fillRect( 171, i*25, amped>>7,25);
-		ctx.fillRect( 419, i*25, amped2>>7,25);
+		ctx.fillRect( 70, i*25, 40,25);
+		ctx.fillRect( 151, i*25, amped>>8,25);
+		ctx.fillRect( 419, i*25, amped2>>8,25);
 
 		// use complementary color for text
 		ctx.fillStyle = CCColorDetail( peak + globalParams["rNOTERANGE"]/2 );
 		// in gui display note as tenths of semitone, so octave is 0 to 119
 		ctx.fillText( Math.floor(peak/NOTERANGE*119), 80, i*25 + 20 );
-		ctx.fillText( amped, 191, i*25 + 20 );
+		ctx.fillText( amped, 171, i*25 + 20 );
 		ctx.fillText( amped2, 430, i*25 + 20 );
 	}
 

@@ -58,26 +58,28 @@ static void ICACHE_FLASH_ATTR NewFrame()
 	if( !COLORCHORD_ACTIVE ) return;
 	gFRAMECOUNT_MOD_SHIFT_INTERVAL++;
 	if ( gFRAMECOUNT_MOD_SHIFT_INTERVAL >= COLORCHORD_SHIFT_INTERVAL ) gFRAMECOUNT_MOD_SHIFT_INTERVAL = 0;
-	//printf("MOD FRAME %d ******\n", gFRAMECOUNT_MOD_SHIFT_INTERVAL);	//uint8_t led_outs[NUM_LIN_LEDS*3];
+	//printf("MOD FRAME %d ******\n", gFRAMECOUNT_MOD_SHIFT_INTERVAL);
 	int i;
 
 	switch( COLORCHORD_OUTPUT_DRIVER )
 	{
-	case 0:
-		UpdateLinearLEDs();
-		break;
-	case 1:
-		UpdateAllSameLEDs();
-		break;
-	case 2:
-		UpdateRotatingLEDs();
-		break;
-	case 3:
+//	case 0:
+//		UpdateLinearLEDs();
+//		break;
+//	case 1:
+//		UpdateAllSameLEDs(); not needed, just have NERF_NOTE_PORP>50, Display brightness proportional to amp2
+//		break;
+//	case 2:
+//		UpdateRotatingLEDs(); not needed, just have NERF_NOTE_PORP>50, Display brightness fixed and middle interval size prop to amp2, flip on 'bass'
+//		break;
+	case 254:
 		PureRotatingLEDs();
 		break;
-	case 4:
+	case 255:
 		DFTInLights();
 		break;
+	default:
+		UpdateLinearLEDs(); // have variety of display options and uses COLORCHORD_OUTPUT_DRIVER to select them
 	};
 
 	//SendSPI2812( ledOut, NUM_LIN_LEDS );
@@ -95,6 +97,13 @@ int wh = 0;
 int samplesPerFrame = 128;
 int samplesPerHandleInfo = 1;
 int32_t samp;
+int32_t samp_centered;
+int32_t samp_prior;
+int32_t samp_adjustment;
+int32_t samp_adjusted;
+uint8_t glitch_count;
+uint8_t glitch_count_max=GLITCH_COUNT_MAX;
+uint8_t glitch_drop=GLITCH_DROP;
 
 //Tasks that happen all the time.
 
@@ -162,36 +171,62 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 			//ets_delay_us( 2 );
 			ExitCritical();
 #endif
+
 			// from chlohr/colorchord master commit 1d86a1c52
 			samp_iir = samp_iir - (samp_iir>>10) + samp; // tracks mean signal times 2^10
-			int32_t samp_adjusted = samp - (samp_iir>>10); //samp adjusted to center about 0
+			samp_centered = samp - (samp_iir>>10); //samp centered about 0
+/*
+			// Attempt to ignore glitches which is a sudden drop at least GLITCH_DROP
+			// Can get stuck if somehow get very large samp_prior, then samp_centered get quiet.
+			// So have counter to prevent this
+			if ((glitch_count > glitch_count_max) || ((samp_prior - samp_centered - glitch_drop) < 0))
+			{
+				samp_prior = samp_centered; // no glitch
+				glitch_count = 0;
+			} else {
+				samp_centered = samp_prior; // still in glitch zone
+				glitch_count++;
+			}
+*/
+			// Alternative attempt to ignore glitches. Assume sudden drop  at least GLITCH_DROP
+			//   means requires adding or subtracting the actual change. When jump of at least
+			//   HALF this size the glitch ends.
+			// Can get stuck if somehow get very large samp_prior, then samp_centered get quiet.
+			// So have counter to prevent this
+
+			if (samp_prior - samp_centered > glitch_drop) //drop happened
+			{
+				samp_adjustment += samp_prior - samp_centered;
+				glitch_count = 0;
+			} else if (samp_centered - samp_prior > glitch_drop/2) // jump happened
+			{
+				//samp_adjustment += samp_prior - samp_centered;
+				samp_adjustment = 0;
+			}
+			samp_prior = samp_centered;
+			glitch_count++;
+			if (glitch_count > glitch_count_max) samp_adjustment = 0;
+
+			samp_adjusted = samp_centered + samp_adjustment;
+
+
+
 			samp_adjusted = (samp_adjusted * INITIAL_AMP /16); //amplified
-			//samp = (samp - (samp_iir>>10))*256;
 			PushSample32( samp_adjusted * 16 );
-//printf("%i %i : ", samp_iir, samp);
 
 //			sounddatacopy[soundtail] = median_filter(samp); //can't get to work
-//			sounddatacopy[soundtail] = samp;
-			//WARNING samp_adjusted + samp_iir>>10 compiles as (samp_adjusted + samp_iir)>>10
+			//WARNING samp_centered + samp_iir>>10 compiles as (samp_centered + samp_iir)>>10
 			int32_t samp_mean = (samp_iir>>10);
 			int32_t samp_oscope = samp_adjusted + samp_mean;
-//			sounddatacopy[soundtail] = samp_adjusted + (samp_iir>>10);
 
-			if (samp_oscope < (-samp_mean))
-			{
-				sounddatacopy[soundtail] = samp_mean;
-//printf("X\n");
-			}
-			else if (samp_oscope < 0)
+			// clip for oscope
+			if (samp_oscope < 0)
 			{
 				sounddatacopy[soundtail] = 0x0;
-//printf("-");
 			}
 			else if (samp_oscope >255)
 			{
 				sounddatacopy[soundtail] = 0xff;
-				//sounddatacopy[soundtail] = samp_mean; //replace with mean
-//printf("b");
 			}
 			else
 			{
@@ -210,7 +245,6 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 			wf++;
 			if( wf >= samplesPerFrame )
 			{
-//printf("\n");
 				NewFrame();
 				wf = 0;
 			}
@@ -361,13 +395,13 @@ void ICACHE_FLASH_ATTR user_init(void)
 // Tried this wrapper and using in EnterCritical and ExitCritical
 //    but doesn't work. Wanted to try having hpa_running static in
 //    the helper funciton. 
-void CriticalHelper(bool pause)
-{	if (pause) {
-		PauseHPATimer();
-	} else {
-		ContinueHPATimer();
-	}
-}
+//void CriticalHelper(bool pause)
+//{	if (pause) {
+//		PauseHPATimer();
+//	} else {
+//		ContinueHPATimer();
+//	}
+//}
 
 // With TEST fiddle starting HPATimer early for AP mode could
 //    put print and setting hpa_running = 0; but not if statments

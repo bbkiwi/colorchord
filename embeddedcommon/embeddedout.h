@@ -26,6 +26,14 @@ extern int gROTATIONSHIFT; //Amount of spinning of pattern around a LED ring
 #define NERF_NOTE_PORP 15 //value from 0 to 255
 #endif
 
+// used to allocate arrays related to LEDs,
+// so can have up to this may leds without recompile
+// only need to lower if run out of space
+#endif
+#ifndef MAX_NUM_LIN_LEDS
+#define MAX_NUM_LIN_LEDS 256
+
+// this is now a parameter and is number of actual LEDs in attached ring.
 #ifndef NUM_LIN_LEDS
 #define NUM_LIN_LEDS 32
 #endif
@@ -54,8 +62,7 @@ extern int gROTATIONSHIFT; //Amount of spinning of pattern around a LED ring
 #define COLORCHORD_LIN_WRAPAROUND 0// 0 no adjusting, else current led display has minimum deviation to prev
 #endif
 
-extern uint8_t ledArray[];
-extern uint8_t ledOut[]; //[NUM_LIN_LEDS*3]
+extern uint8_t ledOut[]; //[MAX_NUM_LIN_LEDS*3]
 extern uint8_t RootNoteOffset; //Set to define what the root note is.  0 = A.
 
 //For doing the nice linear strip LED updates

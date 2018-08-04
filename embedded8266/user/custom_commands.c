@@ -10,82 +10,100 @@
 extern volatile uint8_t sounddata[HPABUFFSIZE];
 extern volatile uint16_t soundhead;
 extern uint8_t sounddatacopy[HPABUFFSIZE];
+extern uint8_t glitch_count_max;
+extern uint8_t glitch_drop;
 
-#define CONFIGURABLES 31 //(plus1)
+#define CONFIGURABLES 33 //(plus1)
 #define NUMBER_STORED_CONFIGURABLES 16
 
 struct SaveLoad
 {
 	uint8_t configs[NUMBER_STORED_CONFIGURABLES][CONFIGURABLES];
 	uint16_t saved_max_bins[FIXBINS];
+	uint8_t current_config;
 	uint8_t SaveLoadKey; //Must be 0xaa to be valid.
-} settings;
+} settings __attribute__ ((aligned (16)));
 
 struct CCSettings CCS;
 
 uint8_t gConfigDefaults[NUMBER_STORED_CONFIGURABLES][CONFIGURABLES] = {
-		{16,0,6,3,0,5,14,3,42,44,2,2,16,4,4,16,45,1,200,255,15,NUM_LIN_LEDS,1,0,0,0,0,0,0,0},
-		{32,0,6,3,0,5,14,3,80,76,0,0,16,0,0,16,45,1,100,255,15,NUM_LIN_LEDS-2,1,2,4,1,1,0,0,1},
-		{32,0,5,3,0,5,14,3,85,85,4,4,16,7,7,16,82,1,255,255,15,(NUM_LIN_LEDS-1)/3,1,0,1,0,NUM_LIN_LEDS/3,0,0,2},
-		{16,0,6,6,0,5,21,3,42,44,2,2,16,4,4,16,45,1,100,255,10,NUM_LIN_LEDS,1,3,20,0,0,0,0,3},
-		{16,0,5,3,0,5,14,3,85,85,4,4,16,6,6,16,82,1,75,255,15,(NUM_LIN_LEDS-1)/3,1,2,1,0,NUM_LIN_LEDS/3,0,0,4},
-		{16,0,6,3,0,5,14,3,42,44,2,2,16,4,4,16,45,1,200,255,0,NUM_LIN_LEDS,1,0,5,1,1,1,0,5},
-		{32,0,6,3,0,5,14,3,80,76,0,0,16,9,9,16,45,1,100,255,15,NUM_LIN_LEDS-2,1,2,1,0,1,0,0,6},
-		{16,0,5,4,0,0,37,3,42,44,2,2,16,4,4,16,45,1,200,255,15,NUM_LIN_LEDS,1,4,0,0,0,0,0,7},
-		{32,0,6,3,0,5,51,3,255,0,3,3,16,8,8,16,45,1,100,255,15,NUM_LIN_LEDS-2,1,2,0,1,1,0,0,8},
-		{16,0,6,3,0,5,14,3,42,44,2,2,16,4,4,16,45,1,200,255,15,NUM_LIN_LEDS,1,0,0,0,0,0,0,9},
-		{16,0,6,3,0,5,14,3,42,44,2,2,16,4,4,16,45,1,200,255,15,NUM_LIN_LEDS,1,0,0,0,0,0,0,10},
-		{16,0,6,3,0,5,14,3,42,44,2,2,16,4,4,16,45,1,200,255,15,NUM_LIN_LEDS,1,0,0,0,0,0,0,11},
-		{16,0,6,3,0,5,14,3,42,44,2,2,16,4,4,16,45,1,200,255,15,NUM_LIN_LEDS,1,0,0,0,0,0,0,12},
-		{16,0,6,3,0,5,14,3,42,44,2,2,16,4,4,16,45,1,200,255,15,NUM_LIN_LEDS,1,0,0,0,0,0,0,13},
-		{16,0,6,3,0,5,14,3,42,44,2,2,16,4,4,16,45,1,200,255,15,NUM_LIN_LEDS,1,0,0,0,0,0,0,14},
-		{16,0,6,3,0,5,14,3,42,44,2,2,16,4,4,16,45,1,200,255,15,NUM_LIN_LEDS,1,0,0,0,0,0,0,15}
+//               i  o d f e   f l  s j  c    a d m    a d m    m  m b   s     p  u                       s  a d    s  f    d      s w   c  n
+//               a  f i i q   b c  b m  o    1 1 1    2 2 2    a  a r   a     r  s                       y  c r    h  l    i      r r   f  l
+//                  f r r u   p o  b p  m                      n  d i   t     o  e                       m  t v    f  p    s      t p   #  d
+		{64,0,6,3,0,  5,15,3,44,0,   2,2,96,  4,4,69,  45,1,100,255,  25,DEFAULT_NUM_LEDS,       0, 1,0,   0, 0,   0,     1,1,  0, DEFAULT_NUM_LEDS,   0},
+		{32,0,6,3,0,  5,14,3,80,76,  0,0,16,  0,0,16,  45,1,100,255,  55,DEFAULT_NUM_LEDS-2,     0, 1,8,   4, 255, 1,     0,0,  1, DEFAULT_NUM_LEDS,   0},
+		{32,0,5,3,0,  5,14,3,85,85,  4,4,16,  7,7,16,  82,1,255,255,  15,(DEFAULT_NUM_LEDS-1)/3, 2, 1,0,   1, 0,   2,     0,0,  2, DEFAULT_NUM_LEDS,   0},
+		{16,0,6,6,0,  5,21,3,42,44,  2,2,16,  4,4,16,  45,1,100,255,  10,DEFAULT_NUM_LEDS,       0, 1,254, 20,0,   0,     0,0,  3, DEFAULT_NUM_LEDS,   0},
+		{16,0,5,3,0,  5,14,3,85,85,  4,4,16,  6,6,16,  82,1,75, 255,  55,(DEFAULT_NUM_LEDS-1)/3, 2, 1,8,   1, 0,   1,     0,0,  4, DEFAULT_NUM_LEDS,   0},
+		{16,0,6,3,0,  5,14,3,42,44,  2,2,16,  4,4,16,  45,1,200,255,  0, DEFAULT_NUM_LEDS,       0, 1,0,   5, 1,   1,     1,0,  5, DEFAULT_NUM_LEDS,   0},
+		{32,0,6,3,0,  5,14,3,80,76,  0,0,16,  9,9,16,  45,1,100,255,  55,DEFAULT_NUM_LEDS-2,     0, 1,8,   1, 0,   1,     0,0,  6, DEFAULT_NUM_LEDS,   0},
+		{16,0,5,4,0,  0,37,3,42,44,  2,2,16,  4,4,16,  45,1,200,255,  15,DEFAULT_NUM_LEDS,       0, 1,255, 0, 0,   0,     0,0,  7, DEFAULT_NUM_LEDS,   0},
+		{32,0,6,3,0,  5,51,3,255,0,  3,3,16,  8,8,16,  45,1,100,255,  55,DEFAULT_NUM_LEDS-2,     0, 1,8,   0, 1,   1,     0,0,  8, DEFAULT_NUM_LEDS,   0},
+		{16,0,6,3,0,  5,14,3,42,44,  2,2,16,  4,4,16,  45,1,200,255,  15,DEFAULT_NUM_LEDS/2,     1, 1,0,   0, 0,   0,     0,0,  9, DEFAULT_NUM_LEDS,   0},
+		{16,0,6,3,0,  5,14,3,42,44,  2,2,16,  4,4,16,  45,1,200,255,  15,DEFAULT_NUM_LEDS/3,     2, 1,0,   0, 0,   0,     0,0,  10,DEFAULT_NUM_LEDS,   0},
+		{16,0,6,3,0,  5,14,3,42,44,  2,2,16,  4,4,16,  45,1,200,255,  15,DEFAULT_NUM_LEDS/4,     3, 1,0,   0, 0,   0,     0,0,  11,DEFAULT_NUM_LEDS,   0},
+		{64,0,6,3,0,  5,15,3,44,0,   2,2,96,  4,4,69,  45,1,100,255,  25,DEFAULT_NUM_LEDS,       0, 1,1,   0, 0,   0,     1,1,  12,DEFAULT_NUM_LEDS,   0},
+		{64,0,6,3,0,  5,15,3,44,0,   2,2,96,  4,4,69,  45,1,100,255,  25,DEFAULT_NUM_LEDS,       0, 1,8,   0, 0,   0,     1,1,  13,DEFAULT_NUM_LEDS,   0},
+		{64,0,6,3,0,  5,15,3,44,0,   2,2,96,  4,4,69,  45,1,100,255, 101,DEFAULT_NUM_LEDS/8,     0, 1,0,   1, 31,  1,     1,0,  14,DEFAULT_NUM_LEDS,   0},
+		{64,0,6,3,0,  5,15,3,44,0,   2,2,96,  4,4,69,  45,1,100,255, 102,DEFAULT_NUM_LEDS,       0, 1,0,   0, 0,   0,     1,1,  15,DEFAULT_NUM_LEDS,   0}
 	};
 
 uint8_t * gConfigurables[CONFIGURABLES]={ &CCS.gINITIAL_AMP, &CCS.gROOT_NOTE_OFFSET, &CCS.gDFTIIR, &CCS.gFUZZ_IIR_BITS,
 	&CCS.gEQUALIZER_SET,  &CCS.gFILTER_BLUR_PASSES, &CCS.gLOWER_CUTOFF, &CCS.gSEMIBITSPERBIN, &CCS.gMAX_JUMP_DISTANCE, &CCS.gMAX_COMBINE_DISTANCE,
 	&CCS.gAMP1_ATTACK_BITS, &CCS.gAMP1_DECAY_BITS, &CCS.gAMP_1_MULT, &CCS.gAMP2_ATTACK_BITS, &CCS.gAMP2_DECAY_BITS, &CCS.gAMP_2_MULT, &CCS.gMIN_AMP_FOR_NOTE,
 	&CCS.gMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR, &CCS.gNOTE_FINAL_AMP, &CCS.gNOTE_FINAL_SATURATION,
-	&CCS.gNERF_NOTE_PORP, &CCS.gUSE_NUM_LIN_LEDS, &CCS.gCOLORCHORD_ACTIVE, &CCS.gCOLORCHORD_OUTPUT_DRIVER, &CCS.gCOLORCHORD_SHIFT_INTERVAL,
-	&CCS.gCOLORCHORD_FLIP_ON_PEAK, &CCS.gCOLORCHORD_SHIFT_DISTANCE, &CCS.gCOLORCHORD_SORT_NOTES, &CCS.gCOLORCHORD_LIN_WRAPAROUND, &CCS.gCONFIG_NUMBER, 0 };
+	&CCS.gNERF_NOTE_PORP, &CCS.gUSE_NUM_LIN_LEDS, &CCS.gSYMMETRY_REPEAT, &CCS.gCOLORCHORD_ACTIVE, &CCS.gCOLORCHORD_OUTPUT_DRIVER, &CCS.gCOLORCHORD_SHIFT_INTERVAL,
+	&CCS.gCOLORCHORD_FLIP_ON_PEAK, &CCS.gCOLORCHORD_SHIFT_DISTANCE, &CCS.gCOLORCHORD_SORT_NOTES, &CCS.gCOLORCHORD_LIN_WRAPAROUND, &CCS.gCONFIG_NUMBER,
+	&CCS.gNUM_LIN_LEDS, 0 };
 
 char * gConfigurableNames[CONFIGURABLES] = { "gINITIAL_AMP", "gROOT_NOTE_OFFSET", "gDFTIIR", "gFUZZ_IIR_BITS", "gEQUALIZER_SET",
 	"gFILTER_BLUR_PASSES", "gLOWER_CUTOFF", "gSEMIBITSPERBIN", "gMAX_JUMP_DISTANCE", "gMAX_COMBINE_DISTANCE", "gAMP1_ATTACK_BITS", "gAMP1_DECAY_BITS",
 	"gAMP_1_MULT", "gAMP2_ATTACK_BITS", "gAMP2_DECAY_BITS", "gAMP_2_MULT", "gMIN_AMP_FOR_NOTE", "gMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR", "gNOTE_FINAL_AMP",
-	"gNOTE_FINAL_SATURATION", "gNERF_NOTE_PORP", "gUSE_NUM_LIN_LEDS", "gCOLORCHORD_ACTIVE", "gCOLORCHORD_OUTPUT_DRIVER", "gCOLORCHORD_SHIFT_INTERVAL",
-	"gCOLORCHORD_FLIP_ON_PEAK", "gCOLORCHORD_SHIFT_DISTANCE", "gCOLORCHORD_SORT_NOTES", "gCOLORCHORD_LIN_WRAPAROUND","gCONFIG_NUMBER", 0 };
+	"gNOTE_FINAL_SATURATION", "gNERF_NOTE_PORP", "gUSE_NUM_LIN_LEDS", "gSYMMETRY_REPEAT", "gCOLORCHORD_ACTIVE", "gCOLORCHORD_OUTPUT_DRIVER",
+	"gCOLORCHORD_SHIFT_INTERVAL","gCOLORCHORD_FLIP_ON_PEAK", "gCOLORCHORD_SHIFT_DISTANCE", "gCOLORCHORD_SORT_NOTES", "gCOLORCHORD_LIN_WRAPAROUND",
+	"gCONFIG_NUMBER", "gNUM_LIN_LEDS", 0 };
+
+void ICACHE_FLASH_ATTR SaveSettingsToFlash( )
+{
+	settings.SaveLoadKey = 0xAA;
+	EnterCritical();
+	ets_intr_lock();
+	spi_flash_erase_sector( 0x3D000/4096 );
+	spi_flash_write( 0x3D000, (uint32*)&settings, ((sizeof( settings )-1)&(~0xf))+0x10 );
+	ets_intr_unlock();
+	ExitCritical();
+}
+
 
 void ICACHE_FLASH_ATTR CustomStart( )
 {
 	int i,j;
 	spi_flash_read( 0x3D000, (uint32*)&settings, sizeof( settings ) );
-	if( settings.SaveLoadKey == 0xaa )
+	if( settings.SaveLoadKey != 0xaa ) // set settings to defaults and save to flash
 	{
+		settings.current_config = 0;
+		for( j = 0; j < NUMBER_STORED_CONFIGURABLES; j++)
 		for( i = 0; i < CONFIGURABLES; i++ )
 		{
-			if( gConfigurables[i] )
-			{
-				*gConfigurables[i] = settings.configs[0][i];
-			}
+			settings.configs[j][i] = gConfigDefaults[j][i];
 		}
 		for( i = 0; i < FIXBINS; i++ )
 		{
-			max_bins[i] = settings.saved_max_bins[i];
+			settings.saved_max_bins[i] = 1;
+		}
+		SaveSettingsToFlash();
+	}
+	// load settings
+	for( i = 0; i < CONFIGURABLES-1; i++ )
+	{
+		if( gConfigurables[i] )
+		{
+			*gConfigurables[i] = settings.configs[settings.current_config][i];
 		}
 	}
-	else
+	for( i = 0; i < FIXBINS; i++ )
 	{
-		for( i = 0; i < CONFIGURABLES; i++ )
-		{
-			if( gConfigurables[i] )
-			{
-				*gConfigurables[i] = gConfigDefaults[0][i];
-			}
-		}
-		for( i = 0; i < FIXBINS; i++ )
-		{
-			max_bins[i] = 1;
-		}
+		max_bins[i] = settings.saved_max_bins[i];
 	}
 }
 
@@ -258,6 +276,7 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 
 			if (CONFIG_NUMBER < NUMBER_STORED_CONFIGURABLES)
 			{
+				settings.current_config = CONFIG_NUMBER;
 				for( i = 0; i < CONFIGURABLES-1; i++ )
 				{
 					if( gConfigurables[i] )
@@ -269,13 +288,9 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 					settings.saved_max_bins[i] = max_bins[i];
 				}
 			}
-			settings.SaveLoadKey = 0xAA;
-			EnterCritical();
-			ets_intr_lock();
-			spi_flash_erase_sector( 0x3D000/4096 );
-			spi_flash_write( 0x3D000, (uint32*)&settings, ((sizeof( settings )-1)&(~0xf))+0x10 );
-			ets_intr_unlock();
-			ExitCritical();
+
+			SaveSettingsToFlash();
+
 
 			buffend += ets_sprintf( buffend, "CS" );
 			return buffend-buffer;
@@ -304,9 +319,7 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 
 			buffend += ets_sprintf( buffend, "rBASE_FREQ=%d\trDFREQ=%d\trOCTAVES=%d\trFIXBPERO=%d\trNOTERANGE=%d\t", 
 				(int)BASE_FREQ, (int)DFREQ, (int)OCTAVES, (int)FIXBPERO, (int)(NOTERANGE) );
-			buffend += ets_sprintf( buffend, "rMAXNOTES=%d\trNUM_LIN_LEDS=%d\t", 
-				(int)MAXNOTES, (int)NUM_LIN_LEDS );
-
+			buffend += ets_sprintf( buffend, "rMAXNOTES=%d\t",(int)MAXNOTES);
 			return buffend-buffer;
 		}
 		else if( pusrdata[2] == 'W' || pusrdata[2] == 'w' )
@@ -316,21 +329,34 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 			int val = ParamCaptureAndAdvanceInt();
 			int i = 0;
 
-			do
+			while( gConfigurableNames[i] )
 			{
-				while( gConfigurableNames[i] )
+				if( strcmp( name, gConfigurableNames[i] ) == 0 )
 				{
-					if( strcmp( name, gConfigurableNames[i] ) == 0 )
-					{
-						*gConfigurables[i] = val;
-						buffend += ets_sprintf( buffend, "CVW" );
-						return buffend-buffer;
-					}
-					i++;
+					*gConfigurables[i] = val;
+					buffend += ets_sprintf( buffend, "CVW" );
+					return buffend-buffer;
 				}
-			} while( 0 );
+				i++;
+			}
 
 			buffend += ets_sprintf( buffend, "!CV" );
+			return buffend-buffer;
+		}
+		else if( pusrdata[2] == 'G' || pusrdata[2] == 'g' )
+		{
+			parameters+=2;
+			int val = ParamCaptureAndAdvanceInt();
+			buffend += ets_sprintf( buffend, "CVG glitch_count_max changed from %d to %d", glitch_count_max, val );
+			glitch_count_max = val;
+			return buffend-buffer;
+		}
+		else if( pusrdata[2] == 'H' || pusrdata[2] == 'h' )
+		{
+			parameters+=2;
+			int val = ParamCaptureAndAdvanceInt();
+			buffend += ets_sprintf( buffend, "CVH glitch_drop changed from %d to %d", glitch_drop, val );
+			glitch_drop = val;
 			return buffend-buffer;
 		}
 		else if( pusrdata[2] == 'C' || pusrdata[2] == 'c' ) //dump stored configs

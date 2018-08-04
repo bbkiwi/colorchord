@@ -2,13 +2,14 @@
 #define _CCCONFIG_H
 
 #include <c_types.h>
+#include "esp82xxutil.h"
 
 #define HPABUFFSIZE 512
 
 #define CCEMBEDDED
-#ifndef NUM_LIN_LEDS
-#define NUM_LIN_LEDS 16
-#endif
+//#ifndef NUM_LIN_LEDS
+//#define NUM_LIN_LEDS 16
+//#endif
 #ifndef DFREQ
 #define DFREQ 8000
 #endif
@@ -39,6 +40,7 @@
 #define NOTE_FINAL_SATURATION	CCS.gNOTE_FINAL_SATURATION
 #define NERF_NOTE_PORP		CCS.gNERF_NOTE_PORP
 #define USE_NUM_LIN_LEDS	CCS.gUSE_NUM_LIN_LEDS
+#define SYMMETRY_REPEAT		CCS.gSYMMETRY_REPEAT
 #define COLORCHORD_OUTPUT_DRIVER	CCS.gCOLORCHORD_OUTPUT_DRIVER
 #define COLORCHORD_ACTIVE	CCS.gCOLORCHORD_ACTIVE
 #define COLORCHORD_SHIFT_INTERVAL	CCS.gCOLORCHORD_SHIFT_INTERVAL
@@ -47,6 +49,8 @@
 #define COLORCHORD_SORT_NOTES	CCS.gCOLORCHORD_SORT_NOTES
 #define COLORCHORD_LIN_WRAPAROUND	CCS.gCOLORCHORD_LIN_WRAPAROUND
 #define CONFIG_NUMBER		CCS.gCONFIG_NUMBER
+#define NUM_LIN_LEDS		CCS.gNUM_LIN_LEDS
+
 struct CCSettings
 {
 	uint8_t gSETTINGS_KEY;
@@ -72,13 +76,15 @@ struct CCSettings
 	uint8_t gNOTE_FINAL_SATURATION;             //=255
 	uint8_t gNERF_NOTE_PORP;                    //=15
 	uint8_t gUSE_NUM_LIN_LEDS;                  // = NUM_LIN_LEDS
-	uint8_t gCOLORCHORD_ACTIVE;			//=1
+	uint8_t gSYMMETRY_REPEAT;                   //=0
+	uint8_t gCOLORCHORD_ACTIVE;		    //=1
 	uint8_t gCOLORCHORD_OUTPUT_DRIVER;
 	uint8_t gCOLORCHORD_SHIFT_INTERVAL; // ==0 controls speed of shifting if 0 no shift
 	uint8_t gCOLORCHORD_FLIP_ON_PEAK; //==0 if non-zero gives flipping at peaks of shift direction, 0 no flip
 	int8_t gCOLORCHORD_SHIFT_DISTANCE; //==0 distance of shift
 	uint8_t gCOLORCHORD_SORT_NOTES; //==0  0 no sort, 1 inc freq, 2 dec amps, 3 dec amps2
 	uint8_t gCOLORCHORD_LIN_WRAPAROUND; //==0  0 no adjusting, else current led display has minimum deviation to prev
+	uint8_t gNUM_LIN_LEDS; // set at compile but can be any value from 1 to 255
 	uint8_t gCONFIG_NUMBER; //=0 from 0 ..NUMBER_STORED_CONFIGURABLES-1
 };
 

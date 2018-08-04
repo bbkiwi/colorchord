@@ -49,88 +49,26 @@ function init()
 {
 	if( did_init ) return;
 	did_init = true;
-	GPIOlines = '';
-	for(var i=0; i<16; ++i)
-		GPIOlines += "<td align=center>"+ i
-			+ "<input type=button id=ButtonGPIO"+ i +" value=0 onclick=\"TwiddleGPIO("+ i +");\">"
-			+ "<input type=button id=BGPIOIn"+ i +" value=In onclick=\"GPIOInput("+ i +");\" class=\"inbutton\">"
-			+ "</td>";
 
 	$('#MainMenu > tbody:first-child').before( "\
 		<tr><td width=1> \
 		<input type=submit onclick=\"ShowHideEvent( 'SystemStatus' ); SystemInfoTick();\" value='System Status' id=SystemStatusClicker></td><td> \
 		<div id=SystemStatus class='collapsible'> \
 		<table width=100% border=1><tr><td> \
-<div id=output></div><div id=systemsettings></div> \n		</td></tr></table></div></td></tr>"
+<div id=output></div><div id=systemsettings></div></td></tr></table></div></td></tr>"
 	);
-
-	$('#MainMenu > tbody:last-child').after( "\
-		<tr><td width=1> \
-		<input type=submit onclick=\"ShowHideEvent( 'WifiSettings' ); KickWifiTicker();\" value=\"Wifi Settings\"></td><td> \
-		<div id=WifiSettings class=\"collapsible\"> \
-		<table width=100% border=1><tr><td> \
-		Current Configuration: (May deviate from default configuration, reset here if in doubt)<form name=\"wifisection\" action=\"javascript:ChangeWifiConfig();\"> \
-		<table border=1 width=1%> \
-		<tr><td width=1>Type:</td><td><input type=\"radio\" name=\"wifitype\" value=1 onclick=\"ClickOpmode(1);\">Station (Connect to infrastructure)<br><input type=\"radio\" name=\"wifitype\" value=2 onclick=\"ClickOpmode(2);\">AP (Broadcast a new AP)</td></tr> \
-		<tr><td>SSID:</td><td><input type=\"text\" id=\"wificurname\"></td></tr> \
-		<tr><td>PASS:</td><td><input type=\"text\" id=\"wificurpassword\"></td></tr> \
-		<tr><td>MAC:</td><td><input type=\"text\" id=\"wifimac\"> (Ignored in softAP mode)</td></tr> \
-		<tr><td>Chan:</td><td><input type=\"text\" id=\"wificurchannel\"> (Ignored in Station mode)</td></tr></tr> \
-		<tr><td></td><td><input type=submit value=\"Change Settings\"> (Automatically saves to flash)</td></tr> \
-		</table></form> \
-		Scanned Stations: \
-		<div id=WifiStations></div> \
-		<input type=submit onclick=\"ScanForWifi();\" value=\"Scan For Stations (Will disconnect!)\"> \
-		</td></tr></table></div></td></tr> \
-		 \
-		<tr><td width=1> \
-		<input type=submit onclick=\"ShowHideEvent( 'CustomCommand' );\" value=\"Custom Command\"></td><td> \
-		<div id=CustomCommand class=\"collapsible\"> \
-		<table width=100% border=1><tr><td> \
-		Command: <input type=text id=custom_command> \
-		<input type=submit value=\"Submit\" onclick=\"IssueCustomCommand()\"><br> \
-		<textarea id=custom_command_response readonly rows=15 cols=80></textarea> \
-		</td></tr></table></td></tr> \
-		 \
-		<tr><td width=1> \
-		<input type=submit onclick=\"ShowHideEvent( 'GPIOs' ); GPIODataTicker();\" value=\"GPIOs\"></td><td> \
-		<div id=GPIOs class=\"collapsible\"> \
-		<table width=100% border=1><tr>" +
- 		GPIOlines
-		+ "</tr></table></div></td></tr>\
-\
-		<tr><td width=1>\
-		<input type=submit onclick=\"ShowHideEvent( 'SystemReflash' );\" value=\"System Reflash\"></td><td>\
-		<div id=SystemReflash class=\"collapsible\">\
-		<div id=InnerSystemReflash class=\"dragandrophandler\">\
-		<input id=\"dragndropersystem\" type=\"file\" multiple> <div id=innersystemflashtext>Drop or browse for 2 system (0x000.. 0x400...) or 1 web (.mpfs) reflash files.</div>\
-		</div></div></td></tr>"
-	);
-
-	MakeDragDrop( "InnerSystemReflash", DragDropSystemFiles );
-	$("#dragndropersystem").change(function() { DragDropSystemFiles(this.files ); });
 
 	$( ".collapsible" ).each(function( index ) {
 		if( localStorage["sh" + this.id] > 0.5 )
 		{
 			$( this ).show().toggleClass( 'opened' );
-//			console.log( "OPEN: " + this.id );
+			console.log( "OPEN: " + this.id );
 		}
 	});
 
 	$("#custom_command_response").val( "" );
 
-	//Preclude drag and drop on rest of document in event user misses firmware boxes.
-	donothing = function(e) {e.stopPropagation();e.preventDefault();};
-	$(document).on('drop', donothing );
-	$(document).on('dragover', donothing );
-	$(document).on('dragenter', donothing );
-
 	output = document.getElementById("output");
-
-	KickWifiTicker();
-	GPIODataTickerStart();
-	InitSystemTicker();
 
 	console.log( "Load complete.\n" );
 	Ticker();
@@ -183,7 +121,7 @@ function Ticker()
 		{
 			$('#SystemStatusClicker').css("color", "red" );
 			$('#SystemStatusClicker').prop( "value", "System Offline" );
-			if( commsup != 0 && !is_waiting_on_stations ) IssueSystemMessage( "Comms Lost." );
+			if( commsup != 0 ) IssueSystemMessage( "Comms Lost." );
 			commsup = 0;
 			StartWebSocket();
 		}
@@ -227,7 +165,7 @@ function onMessage(evt)
 		if( stringdata.length > 2 )
 		{
 			var wxresp = stringdata.substr(2).split("\t");
-			output.innerHTML = "<p>Messages: " + msg + "</p><p>RSSI: " + wxresp[0] + " / IP: " + ((wxresp.length>1)?HexToIP( wxresp[1] ):"") + "</p>";
+			output.innerHTML = "Messages: " + msg + "  RSSI: " + wxresp[0] + " / IP: " + ((wxresp.length>1)?HexToIP( wxresp[1] ):"") + "";
 		}
 	}
 
@@ -285,45 +223,6 @@ function IssueCustomCommand()
 
 
 
-
-
-
-
-
-
-function MakeDragDrop( divname, callback )
-{
-	var obj = $("#" + divname);
-	obj.on('dragenter', function (e)
-	{
-		e.stopPropagation();
-		e.preventDefault();
-		$(this).css('border', '2px solid #0B85A1');
-	});
-
-	obj.on('dragover', function (e)
-	{
-		e.stopPropagation();
-		e.preventDefault();
-	});
-
-	obj.on('dragend', function (e)
-	{
-		e.stopPropagation();
-		e.preventDefault();
-		$(this).css('border', '2px dotted #0B85A1');
-	});
-
-	obj.on('drop', function (e)
-	{
-		$(this).css('border', '2px dotted #0B85A1');
-		e.preventDefault();
-		var files = e.originalEvent.dataTransfer.files;
-
-		//We need to send dropped files to Server
-		callback(files);
-	});
-}
 
 
 
@@ -413,383 +312,6 @@ function SystemUncommittedChanges()
 	if( sdchanged || snchanged ) return true;
 	else return false;
 }
-
-function InitSystemTicker()
-{
-	sysset = document.getElementById( "systemsettings" );
-	SystemInfoTick();
-	sysset.innerHTML = "<TABLE style='width:150'><TR><TD>System Name:</TD><TD><INPUT TYPE=TEXT ID='SystemName' maxlength=10></TD><TD><INPUT TYPE=SUBMIT VALUE=Change ONCLICK='QueueOperation(\"IN\" + document.getElementById(\"SystemName\").value ); snchanged = false;'></TD></TR>\
-		<TR><TD NOWRAP>System Description:</TD><TD><INPUT TYPE=TEXT ID='SystemDescription' maxlength=16></TD><TD><INPUT TYPE=SUBMIT VALUE=Change ONCLICK='QueueOperation(\"ID\" + document.getElementById(\"SystemDescription\").value ); sdchanged = false;'></TD></TR><TR><TD>Service Name:</TD><TD><DIV ID=\"ServiceName\"></DIV></TD></TR><TR><TD>Free Heap:</TD><TD><DIV ID=\"FreeHeap\"></DIV></TD></TR></TABLE>\
-		<INPUT TYPE=SUBMIT VALUE=\"Reset To Current\" ONCLICK='SystemChangesReset();'>\
-		<INPUT TYPE=SUBMIT VALUE=Save ONCLICK='if( SystemUncommittedChanges() ) { IssueSystemMessage( \"Cannot save.  Uncommitted changes.\"); return; } QueueOperation(\"IS\", function() { IssueSystemMessage( \"Saving\" ); } ); SystemChangesReset(); '>\
-		<INPUT TYPE=SUBMIT VALUE=\"Revert From Saved\" ONCLICK='QueueOperation(\"IL\", function() { IssueSystemMessage( \"Reverting.\" ); } ); SystemChangesReset();'>\
-		<INPUT TYPE=SUBMIT VALUE=\"Revert To Factory\" ONCLICK='if( confirm( \"Are you sure you want to revert to factory settings?\" ) ) QueueOperation(\"IR\"); SystemChangesReset();'>\
-		<INPUT TYPE=SUBMIT VALUE=Reboot ONCLICK='QueueOperation(\"IB\");'>\
-		<P>Search for others:</P>\
-		<DIV id=peers></DIV>";
-	$("#SystemName").on("input propertychange paste",function(){snchanged = true; $("#SystemName").addClass( "unsaved-input"); });
-	$("#SystemDescription").on("input propertychange paste",function(){sdchanged = true;$("#SystemDescription").addClass( "unsaved-input"); });
-}
-
-
-
-did_wifi_get_config = false;
-is_data_ticker_running = false;
-is_waiting_on_stations = false;
-
-function ScanForWifi()
-{
-	QueueOperation('WS', null);
-	is_waiting_on_stations=true;
-	IssueSystemMessage( "Scanning for Wifi..." );
-}
-
-function KickWifiTicker()
-{
-	if( !is_data_ticker_running )
-		WifiDataTicker();
-}
-
-function BSSIDClick( i )
-{
-	var tlines = wifilines[i];
-	document.wifisection.wifitype.value = 1;
-	document.wifisection.wificurname.value = tlines[0].substr(1);
-	document.wifisection.wificurpassword.value = "";
-	document.wifisection.wifimac.value = tlines[1];
-	document.wifisection.wificurchannel.value = 0;
-
-	ClickOpmode( 1 );
-	return false;
-}
-
-function ClickOpmode( i )
-{
-	if( i == 1 )
-	{
-		document.wifisection.wificurname.disabled = false;
-		document.wifisection.wificurpassword.disabled = false;
-		document.wifisection.wifimac.disabled = false;
-		document.wifisection.wificurchannel.disabled = true;
-	}
-	else
-	{
-		document.wifisection.wificurname.disabled = false;
-		document.wifisection.wificurpassword.disabled = true;
-		document.wifisection.wificurpassword.value = "";
-		document.wifisection.wifimac.disabled = true;
-		document.wifisection.wificurchannel.disabled = false;
-	}
-}
-
-function WifiDataTicker()
-{
-	if( IsTabOpen('WifiSettings') )
-	{
-		is_data_ticker_running = true;
-
-		if( !did_wifi_get_config )
-		{
-			QueueOperation( "WI", function(req,data)
-			{
-				var params = data.split( "\t" );
-
-				var opmode = Number( params[0].substr(2) );
-				document.wifisection.wifitype.value = opmode;
-				document.wifisection.wificurname.value = params[1];
-				document.wifisection.wificurpassword.value = params[2];
-				document.wifisection.wifimac.value = params[3];
-				document.wifisection.wificurchannel.value = Number( params[4] );
-
-				ClickOpmode( opmode );
-				did_wifi_get_config = true;
-			} );
-		}
-
-		QueueOperation( "WR", function(req,data) {
-			var lines = data.split( "\n" );
-			var innerhtml;
-			if( data[0] == '!' ) return;  //If no APs, don't deal with list.
-
-			if( lines.length < 3 )
-			{
-				innerhtml = "No APs found.  Did you scan?";
-				if( is_waiting_on_stations )
-				{
-					IssueSystemMessage( "No APs found." );
-					is_waiting_on_stations = false;
-				}
-			}
-			else
-			{
-				if( is_waiting_on_stations )
-				{
-					IssueSystemMessage( "Scan Complete." );
-					is_waiting_on_stations = false;
-				}
-
-				innerhtml = "<TABLE border=1><TR><TH>SSID</TH><TH>MAC</TH><TH>RS</TH><TH>Ch</TH><TH>Enc</TH></TR>"
-				wifilines = [];
-				for( i = 1; i < lines.length-1; i++ )
-				{
-					tlines = lines[i].split( "\t" );
-					wifilines.push(tlines);
-					var bssidval = "<a href='javascript:void(0);' onclick='return BSSIDClick(" + (i -1 )+ ")'>" + tlines[1];
-					innerhtml += "<TR><TD>" + tlines[0].substr(1) + "</TD><TD>" + bssidval + "</TD><TD>" + tlines[2] + "</TD><TD>" + tlines[3] + "</TD><TD>" + tlines[4] + "</TD></TR>";
-				}
-			}
-			innerhtml += "</TABLE>";
-			document.getElementById("WifiStations").innerHTML = innerhtml;
-		} );
-		setTimeout( WifiDataTicker, 500 );
-	}
-	else
-	{
-		is_data_ticker_running = 0;
-	}
-}
-
-function ChangeWifiConfig()
-{
-
-	var st = "W";
-	st += document.wifisection.wifitype.value;
-	st += "\t" + document.wifisection.wificurname.value;
-	st += "\t" + document.wifisection.wificurpassword.value;
-	st += "\t" + document.wifisection.wifimac.value;
-	st += "\t" + document.wifisection.wificurchannel.value;
-	QueueOperation( st );
-	did_wifi_get_config = false;
-}
-
-
-
-
-function TwiddleGPIO( gp )
-{
-	var st = "GF";
-	st += gp;
-	QueueOperation( st );
-}
-
-function GPIOInput( gp )
-{
-	var st = "GI";
-	st += gp;
-	QueueOperation( st );
-}
-
-function GPIOUpdate(req,data) {
-	var secs = data.split( "\t" );
-	var op = 0;
-	var n = Number(secs[2]);
-	var m = Number(secs[1]);
-
-	for( op = 0; op < 16; op++ )
-	{
-		var b = $( "#ButtonGPIO" + op );
-		if( b )
-		{
-			if( 1<<op & n )
-			{
-				b.css("background-color","red" );
-				b.css("color","black" );
-				b.prop( "value", "1" );
-			}
-			else
-			{
-				b.css("background-color","black" );
-				b.css("color","white" );
-				b.prop( "value", "0" );
-			}
-		}
-
-		b = $( "#BGPIOIn" + op );
-		if( b )
-		{
-			if( 1<<op & m )
-			{
-				b.css("background-color","blue" );
-				b.css("color","white" );
-				b.attr( "value", "out" );
-			}
-			else
-			{
-				b.css("background-color","green" );
-				b.css("color","white" );
-				b.attr( "value", "in" );
-			}
-		}
-	}
-	if( IsTabOpen('GPIOs') )
-	{
-		QueueOperation( "GS", GPIOUpdate );
-	}
-}
-
-function GPIODataTicker()
-{
-	if( !IsTabOpen('GPIOs') ) return;
-	QueueOperation( "GS", GPIOUpdate );
-	setTimeout( GPIODataTicker, 500 );
-}
-
-
-function GPIODataTickerStart()
-{
-	if( IsTabOpen('GPIOs') )
-		GPIODataTicker();
-}
-
-
-
-
-
-
-function SystemPushImageProgress( is_ok, comment, pushop )
-{
-	if( !is_ok )
-	{
-		$("#innersystemflashtext").html( "Failed: " + comment );
-		return;
-	}
-
-	$("#innersystemflashtext").html( comment );
-
-	if( pushop.place == pushop.padlen )
-	{
-		if( pushop.ctx.current_state == 0 )		//File 1 is completing.
-		{
-			pushop.ctx.current_state = 1;
-			pushop.ctx.file1wassize = pushop.padlen;
-			pushop.ctx.file1md5 = faultylabs.MD5( pushop.paddata ).toLowerCase();
-			var reader = new FileReader();
-
-			reader.onload = function(e) {
-				$("#innersystemflashtext").html( "Pusing second half..." );
-				PushImageTo( e.target.result, flash_scratchpad_at + 0x40000, SystemPushImageProgress, pushop.ctx );
-			}
-
-			reader.readAsArrayBuffer( pushop.ctx.file2 );
-		}
-		else if( pushop.ctx.current_state == 1 )
-		{
-			var f1s = pushop.ctx.file1wassize;
-			var f1m = pushop.ctx.file1md5;
-			var f2s = pushop.padlen;
-			var f2m = faultylabs.MD5( pushop.paddata ).toLowerCase();
-
-			$("#innersystemflashtext").html( "Issuing reflash.  Do not expect a response." );
-
-			var stf = "FM" + flash_scratchpad_at + "\t0\t" + f1s + "\t" + f1m + "\t" + (flash_scratchpad_at+0x40000) + "\t" + 0x40000 + "\t" + f2s + "\t" + f2m + "\n";
-			var fun = function( fsrd, flashresponse ) { $("#innerflashtext").html( (flashresponse[0] == '!')?"Flashing failed.":"Flash success." ) };
-			QueueOperation( stf, fun);
-		}
-
-		return false;
-	}
-
-	return true;
-}
-
-
-function WebPagePushImageFunction( ok, comment, pushop )
-{
-	if( pushop.place == pushop.padlen )
-	{
-		$("#innersystemflashtext").html("Push complete. Reload page.");
-	}
-	else
-	{
-		$("#innersystemflashtext").html(comment);
-	}
-
-	return true;
-}
-
-function DragDropSystemFiles( file )
-{
-	if( file.length == 1 )
-	{
-		//webpage ".mpfs" file.
-		var fn = file[0].name;
-		if( fn.substr( fn.length - 5 ) != ".mpfs" )
-		{
-			$("#innersystemflashtext").html( "Web files are .mfps files." );
-			return;
-		}
-
-		$("#innersystemflashtext").html( "Opening " + fn );
-
-		var reader = new FileReader();
-
-		reader.onload = function(e) {
-			PushImageTo( e.target.result, mpfs_start_at, WebPagePushImageFunction );
-		}
-
-		reader.readAsArrayBuffer( file[0] );
-	}
-	else if( file.length == 2 )
-	{
-		var file1 = null;
-		var file2 = null;
-
-		for( var i = 0; i < file.length; i++ )
-		{
-			console.log( "Found: " + file[i].name );
-			if( file[i].name.substr( 0, 17 ) == "image.elf-0x00000" ) file1 = file[i];
-			if( file[i].name.substr( 0, 17 ) == "image.elf-0x40000" ) file2 = file[i];
-		}
-
-		if( !file1 )
-		{
-			$("#innersystemflashtext").html( "Could not find a image.elf-0x00000... file." ); return;
-		}
-
-		if( !file2 )
-		{
-			$("#innersystemflashtext").html( "Could not find a image.elf-0x40000... file." ); return;
-		}
-
-		if(  file1.size > 65536 )
-		{
-			$("#innersystemflashtext").html( "0x00000 needs to fit in IRAM.  Too big." ); return;
-		}
-
-		if(  file2.size > 262144 )
-		{
-			$("#innersystemflashtext").html( "0x40000 needs to fit in 256kB.  Too big." ); return;
-		}
-
-		//Files check out.  Start pushing.
-
-		$("#innersystemflashtext").html( "Starting." );
-
-		var reader = new FileReader();
-
-		reader.onload = function(e) {
-			var ctx = new Object();
-			ctx.file1 = file1;
-			ctx.file2 = file2;
-			ctx.current_state = 0;
-			PushImageTo( e.target.result, flash_scratchpad_at, SystemPushImageProgress, ctx );
-		}
-
-		reader.readAsArrayBuffer( file[0] );
-		return;
-	}
-	else
-	{
-		$("#innersystemflashtext").html( "Cannot accept anything other than 1 or 2 files." );
-	}
-}
-
-
-
-
-
-
-
 
 
 function tohex8( c )

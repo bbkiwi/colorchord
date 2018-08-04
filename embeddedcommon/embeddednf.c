@@ -15,7 +15,6 @@ int16_t  note_peak_freqs[MAXNOTES];
 uint16_t note_peak_amps[MAXNOTES];
 uint16_t note_peak_amps2[MAXNOTES];
 uint8_t  note_jumped_to[MAXNOTES];
-uint16_t bass, mid, treb;
 uint16_t octave_bins[OCTAVES];
 
 
@@ -184,9 +183,6 @@ void HandleFrameInfo()
 	printf( "\n" );
 #endif
 
-	bass = 0;
-	mid = 0;
-	treb = 0;
 
 	//Copy out the bins from the DFT to our fuzzed bins.
 	for( i = 0; i < FIXBINS; i++ )
@@ -202,9 +198,6 @@ void HandleFrameInfo()
 		{
 			if (strens[i] > LOWER_CUTOFF * 256) fuzzed_bins[i] += (strens[i]>>FUZZ_IIR_BITS);
 		}
-		if (i < FIXBINS/3) bass += fuzzed_bins[i];
-		else if (i < 2*FIXBINS/3) mid += fuzzed_bins[i];
-		else treb += fuzzed_bins[i];
 	}
 
 	if (EQUALIZER_SET || (equalize_count>0))
@@ -246,17 +239,6 @@ void HandleFrameInfo()
 	}
 */
 
-	//Equalize fuzzed_bins when not computing new max_bins
-/*
-	if (EQUALIZER_SET == 0)
-	{
-		for( i = 0; i < FIXBINS; i++ )
-		{
-			fuzzed_bins[i] = (maxallbins * fuzzed_bins[i]) / max_bins[i];
-		}
-	}
-*/
-
 	//Fold the bins from fuzzedbins into one octave.
 	//  and collect bins from each octave
 	for( i = 0; i < FIXBPERO; i++ ) folded_bins[i] = 0;
@@ -269,10 +251,6 @@ void HandleFrameInfo()
 			folded_bins[i] += fuzzed_bins[k];
 			octave_bins[j] += fuzzed_bins[k++];
 		}
-		//scale so in range 0..255
-		//for( i = 0; i < FIXBPERO; i++ ) folded_bins[i] /= 256*OCTAVES;
-		//for( i = 0; i < FIXBPERO; i++ ) folded_bins[i] /= 256;
-		//for( i = 0; i < FIXBPERO; i++ ) folded_bins[i] /= 20;
 	}
 
 	//Now, we must blur the folded bins to get a good result.
@@ -336,7 +314,8 @@ void HandleFrameInfo()
 			adjRight++; if( adjRight >= FIXBPERO ) adjRight = 0;
 			//folded_bins seem to range from 0 to 2^12 to get amp1 in 0..256 scale
 			// Need to adjust this so in range 0..255 so can be compared to MIN_AMP_FOR_NOTE
-			if( this < MIN_AMP_FOR_NOTE<<8) continue;
+			// remove test for too small, as even if too small may jump to an existing note
+//			if( this < MIN_AMP_FOR_NOTE<<8) continue;
 			if( prev > this || next > this ) continue;
 			if( prev == this && next == this ) continue;
 
@@ -344,23 +323,22 @@ void HandleFrameInfo()
 #if DEBUGPRINT
 			printf("peak at i = %5d of  %5d \n", i, this);
 #endif
-			int32_t totaldiff = (( this - prev ) + ( this - next ));
-			int32_t porpdiffP = ((this-prev)<<16) / totaldiff; //close to 0 =
-					//closer to this side, 32768 = in the middle, 65535 away.
-			int32_t porpdiffN = ((this-next)<<16) / totaldiff;
+//TODO needs rewrite finding peak. Really want to handle jump up, stay roughly level, ... , jump down
+//     NOT just one either side of this
 
-			if( porpdiffP < porpdiffN )
+			// Corrected way to linear adjust. If prev=next offset should be zero.
+			// When prev=this>next should offset left 1/2 (of 1<<SEMIBITSPERBIN) (toward prev)
+			//   and linearly to offset 0 at prev=next
+			// When prev<this=next should offset right by 1/2 (of 1<<SEMIBITSPERBIN) (toward next)
+			// note code this replaces was not linear
+			if( next < prev ) //Closer to prev.
 			{
-				//Closer to prev.
-				offset = -(32768 - porpdiffP);
-			}
-			else
-			{
-				//Closer to next
-				offset = (32768 - porpdiffN);
+				offset = -( ((prev-next)<<15)/(this-next));
+			} else {
+				offset = (((next-prev)<<15)/(this-prev));
 			}
 
-			//Need to round.  That's what that extra +(15.. is in the center.
+			//Round multiply by 1<<SEMIBITSPERBIN and shift back to correct range and adjust thisfreq
 			thisfreq += (offset+(1<<(15-SEMIBITSPERBIN)))>>(16-SEMIBITSPERBIN);
 
 			//In the event we went 'below zero' need to wrap to the top.
@@ -396,6 +374,10 @@ void HandleFrameInfo()
 					distance = NOTERANGE - distance;
 				}
 
+//TODO minor bug - if SEMIBITSPERBIN is lowered while music playing thus decreasing NOTERANGE
+//  distance can be computed as negative by above, thus the note will be marked as desired and
+//  absorb all other notes till it disappears
+
 				//If we find a note closer to where we are than any of the 
 				//others, we can mark it as our desired note.
 				if( distance < closest_note_distance )
@@ -406,14 +388,16 @@ void HandleFrameInfo()
 			}
 
 			int8_t marked_note = -1;
+			uint8_t is_a_new_note = 1;
 			//MAX_JUMP_DISTANCE is in range 0..255 while distance is in range 0..floor(NOTERANGE/2)
 			// so compare distance/floor(NOTERANGE/2) to MAX_JUMP_DISTANCE/255
-			//need to scale
 			if( closest_note_distance * 255 <= NOTERANGE / 2 * MAX_JUMP_DISTANCE )
 			{
 				//We found the note we need to augment.
-				note_peak_freqs[closest_note_id] = thisfreq;
+// do not change freq but keep the augmented notes freqence
+//				note_peak_freqs[closest_note_id] = thisfreq;
 				marked_note = closest_note_id;
+				is_a_new_note = 0;
 			}
 
 			//The note was not found.
@@ -429,26 +413,35 @@ void HandleFrameInfo()
 			if( marked_note != -1 )
 			{
 				hitnotes[marked_note] = 1;
-				int32_t newpeak = (this*AMP_1_MULT)>>4;
-				if (newpeak > note_peak_amps[marked_note]) {
+				int32_t newpeakamp1 = (this*AMP_1_MULT)>>4;
+				if (newpeakamp1 > 65535) newpeakamp1 = 65535;
+				if (newpeakamp1 > note_peak_amps[marked_note]) {
 					note_peak_amps[marked_note] -=
 					(note_peak_amps[marked_note]>>AMP1_ATTACK_BITS) -
-					(newpeak >> AMP1_ATTACK_BITS);
+					(newpeakamp1 >> AMP1_ATTACK_BITS);
 				} else {
 					note_peak_amps[marked_note] -=
-					(note_peak_amps[marked_note]>>AMP2_DECAY_BITS) -
-					(newpeak >> AMP2_DECAY_BITS);
+					(note_peak_amps[marked_note]>>AMP1_DECAY_BITS) -
+					(newpeakamp1 >> AMP1_DECAY_BITS);
 				}
 
-				newpeak = (this*AMP_2_MULT)>>4;
-				if (newpeak > note_peak_amps2[marked_note]) {
+				int32_t newpeakamp2 = (this*AMP_2_MULT)>>4;
+				if (newpeakamp2 > 65535) newpeakamp2 = 65535;
+				if (newpeakamp2 > note_peak_amps2[marked_note]) {
 					note_peak_amps2[marked_note] -=
 					(note_peak_amps2[marked_note]>>AMP2_ATTACK_BITS) -
-					(newpeak >> AMP2_ATTACK_BITS);
+					(newpeakamp2 >> AMP2_ATTACK_BITS);
 				} else {
 					note_peak_amps2[marked_note] -=
 					(note_peak_amps2[marked_note]>>AMP2_DECAY_BITS) -
-					(newpeak >> AMP2_DECAY_BITS);
+					(newpeakamp2 >> AMP2_DECAY_BITS);
+				}
+				if( is_a_new_note && (newpeakamp1 < MIN_AMP_FOR_NOTE<<8) ) //kill it
+				{
+					note_peak_freqs[marked_note] = -1;
+					note_peak_amps[marked_note] = 0;
+					note_peak_amps2[marked_note] = 0;
+					note_jumped_to[marked_note] = 0;
 				}
 
 
@@ -466,6 +459,8 @@ void HandleFrameInfo()
 #endif
 
 	//Now we need to handle combining notes.
+//TODO need major rethink here. As is highly depending on order. When two notes combine
+// They get an interpolated frequency which then might be 'close' to other notes etc.
 	for( i = 0; i < MAXNOTES; i++ )
 	for( j = 0; j < i; j++ )
 	{
@@ -518,7 +513,7 @@ void HandleFrameInfo()
 		note_peak_freqs[into] = newnote;
 		note_peak_freqs[from] = -1;
 		note_peak_amps[from] = 0;
-		note_jumped_to[from] = into + 1;
+		note_jumped_to[from] = into + 1; // using 0 to mean unassigned, so lable from 1,..., MAXNOTES
 	}
 
 	//For all of the notes that have not been hit, we have to allow them to
@@ -526,10 +521,12 @@ void HandleFrameInfo()
 	for( i = 0; i < MAXNOTES; i++ )
 	{
 		if( note_peak_freqs[i] < 0 || hitnotes[i] ) continue;
-
 		note_peak_amps[i] -= note_peak_amps[i]>>AMP1_DECAY_BITS;
 		note_peak_amps2[i] -= note_peak_amps2[i]>>AMP2_DECAY_BITS;
+	}
 
+	for( i = 0; i < MAXNOTES; i++ )
+	{
 		//In the event a note is not strong enough anymore, it is to be
 		//returned back into the great pool of unused notes.
 		if( note_peak_amps[i] < MINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR<<8 )
