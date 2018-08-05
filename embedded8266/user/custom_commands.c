@@ -26,6 +26,7 @@ struct SaveLoad
 
 struct CCSettings CCS;
 
+//NOTE third to last must be configuration number
 uint8_t gConfigDefaults[NUMBER_STORED_CONFIGURABLES][CONFIGURABLES] = {
 //               i  o d f e   f l  s j  c    a d m    a d m    m  m b   s     p  u                       s  a d    s  f    d      s w   c  n
 //               a  f i i q   b c  b m  o    1 1 1    2 2 2    a  a r   a     r  s                       y  c r    h  l    i      r r   f  l
@@ -249,7 +250,7 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 		{
 			int i;
 			if (CONFIG_NUMBER < NUMBER_STORED_CONFIGURABLES) {
-				if (settings.configs[CONFIG_NUMBER][CONFIGURABLES-2]==CONFIG_NUMBER) { // configuration ok
+				if (settings.configs[CONFIG_NUMBER][CONFIGURABLES-3]==CONFIG_NUMBER) { // configuration ok
 					for( i = 0; i < CONFIGURABLES-1; i++ ) {
 						if( gConfigurables[i] ) *gConfigurables[i] = settings.configs[CONFIG_NUMBER][i];
 					}
