@@ -13,7 +13,7 @@ extern uint8_t sounddatacopy[HPABUFFSIZE];
 extern uint8_t glitch_count_max;
 extern uint8_t glitch_drop;
 
-#define CONFIGURABLES 33 //(plus1)
+#define CONFIGURABLES 33 //(actual number plus 1)
 #define NUMBER_STORED_CONFIGURABLES 16
 
 struct SaveLoad
@@ -26,7 +26,6 @@ struct SaveLoad
 
 struct CCSettings CCS;
 
-//NOTE third to last must be configuration number
 uint8_t gConfigDefaults[NUMBER_STORED_CONFIGURABLES][CONFIGURABLES] = {
 //               i  o d f e   f l  s j  c    a d m    a d m    m  m b   s     p  u                       s  a d    s  f    d      s w   c  n
 //               a  f i i q   b c  b m  o    1 1 1    2 2 2    a  a r   a     r  s                       y  c r    h  l    i      r r   f  l
@@ -246,18 +245,12 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 			return buffend-buffer;
 		}
 
-		case 'r': case 'R': //Revert to CONFIG_NUMBER stored configuration or default if hasn't been stored
+		case 'r': case 'R': //Revert to CONFIG_NUMBER stored configuration
 		{
 			int i;
 			if (CONFIG_NUMBER < NUMBER_STORED_CONFIGURABLES) {
-				if (settings.configs[CONFIG_NUMBER][CONFIGURABLES-3]==CONFIG_NUMBER) { // configuration ok
-					for( i = 0; i < CONFIGURABLES-1; i++ ) {
-						if( gConfigurables[i] ) *gConfigurables[i] = settings.configs[CONFIG_NUMBER][i];
-					}
-				} else { //bailing out  and using default
-					for( i = 0; i < CONFIGURABLES-1; i++ ) {
-						if( gConfigurables[i] ) *gConfigurables[i] = gConfigDefaults[CONFIG_NUMBER][i];
-					}
+				for( i = 0; i < CONFIGURABLES-1; i++ ) {
+					if( gConfigurables[i] ) *gConfigurables[i] = settings.configs[CONFIG_NUMBER][i];
 				}
 			} else { //max_bins
 				maxallbins=1;
