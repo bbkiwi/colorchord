@@ -183,8 +183,13 @@ function onMessage(evt)
 		}
 	}
 
-	doSend('wx'); //Request RSSI. May make noise especially in station mode
-	//doSend('e'); //Alternate to keep socket alive if both commented out very flaky web gui
+	//This delay slows down the rate of this 'default' message which is only sent if
+	// no others pending. Too fast rate was causing interferance with ADC.
+	var i;
+	for (i=0; i<30000000;i++) {
+	}
+
+	doSend('wx'); //Request RSSI.
 }
 
 function onError(evt)
