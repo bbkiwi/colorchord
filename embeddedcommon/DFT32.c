@@ -220,6 +220,11 @@ static void HandleInt( int16_t sample )
 	Swhichoctaveplace ++;
 	Swhichoctaveplace &= BINCYCLE-1;
 
+	for( i = 0; i < OCTAVES;i++ )
+	{
+		Saccum_octavebins[i] += sample;
+	}
+
 	if( oct > 128 )
 	{
 		//Special: This is when we can update everything.
@@ -240,12 +245,6 @@ static void HandleInt( int16_t sample )
 			*(bins++) -= val>>DFTIIR;
 		}
 		return;
-	}
-
-
-	for( i = 0; i < OCTAVES;i++ )
-	{
-		Saccum_octavebins[i] += sample;
 	}
 
 	uint16_t * dsA = &Sdatspace32A[oct*FIXBPERO*2];
