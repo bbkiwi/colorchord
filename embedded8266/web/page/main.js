@@ -13,7 +13,6 @@ function mainticker()
 	KickLEDs();
 
 	QueueOperation( "CVR", ReceiveParameters );
-// lower time out of 100 may improve noise
 	setTimeout( mainticker, 1000 );
 }
 

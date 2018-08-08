@@ -138,6 +138,13 @@ function Ticker()
 
 function onMessage(evt)
 {
+	//This delay slows down the rate of all message responses to 50 Hz
+	//which seems to not cause much interferance
+	//Too fast rate was causing interferance with ADC.
+	var i;
+	for (i=0; i<0xffffff;i++) {
+	}
+
 	msg++;
 
 
@@ -183,14 +190,15 @@ function onMessage(evt)
 		}
 	}
 
-	//This delay slows down the rate of this 'default' message which is only sent if
-	// no others pending. Too fast rate was causing interferance with ADC.
-	var i;
-	for (i=0; i<30000000;i++) {
-	}
+// putting long delay loop here ONLY slows down when all other gui windows
+// close. Get Hz of 1 or 2 and very few glitches, but gui takes long time to
+// respond to push of button
+//	var i;
+//	for (i=0; i<0xffffffff;i++) {
+//	}
 
 	doSend('wx'); //Request RSSI.
-}
+} //end onMessage()
 
 function onError(evt)
 {
