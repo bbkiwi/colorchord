@@ -107,6 +107,9 @@ static uint8_t Swhichoctaveplace;
 uint16_t embeddedbins[FIXBINS]; 
 
 //From: http://stackoverflow.com/questions/1100090/looking-for-an-efficient-integer-square-root-algorithm-for-arm-thumb2
+//  for sqrt approx but also suggestion for quick norm approximation that would work in this DFT
+
+#if APPROXNORM != 1
 /**
  * \brief    Fast Square root algorithm, with rounding
  *
@@ -157,6 +160,7 @@ static uint16_t SquareRootRounded(uint32_t a_nInput)
 
     return res;
 }
+#endif
 
 void UpdateOutputBins32()
 {
@@ -176,24 +180,32 @@ void UpdateOutputBins32()
 		//If we are running DFT32 on regular ColorChord, then we will need to
 		//also update goutbins[]... But if we're on embedded systems, we only
 		//update embeddedbins32.
-		uint32_t mux = ( (isps) * (isps)) + ((ispc) * (ispc));
 #ifndef CCEMBEDDED
+		uint32_t mux = ( (isps) * (isps)) + ((ispc) * (ispc));
 		goutbins[i] = sqrtf( (float)mux );
 		//reasonable (but arbitrary attenuation)
 		goutbins[i] /= (78<<DFTIIR)*(1<<octave); 
 #endif
 
+#if APPROXNORM == 1
+		isps = isps<0? -isps : isps;
+		ispc = ispc<0? -ispc : ispc;
+		uint32_t rmux = isps>ispc? isps + (ispc>>1) : ispc + (isps>>1);
+#else
+		uint32_t rmux = ( (isps) * (isps)) + ((ispc) * (ispc));
+		rmux = SquareRootRounded( rmux );
+#endif
 		//bump up all outputs here, so when we nerf it by bit shifting by
 		//ctave we don't lose a lot of detail.
 		//mux = SquareRootRounded( mux ) << 1;
 		//embeddedbins32[i] = mux >> octave;
-		mux = SquareRootRounded( mux );
+
 		//empirical adjust embeddedbins32 via a logistic data so between 0 and 65536 
 #if ADJUST_DFT_WITH_OCTAVE
-		embeddedbins32[i] = (mux << (21-octave))/adjstrens[DFTIIR]; // use adjust 8
+		embeddedbins32[i] = (rmux << (21-octave))/adjstrens[DFTIIR]; // use adjust 8
 #else
 		//No adjustment using octave may be too noisy in high octaves
-		embeddedbins32[i] = (mux << 21)/adjstrens[DFTIIR]; // use adjust 8
+		embeddedbins32[i] = (rmux << 21)/adjstrens[DFTIIR]; // use adjust 8
 #endif
 	}
 }
@@ -265,7 +277,8 @@ int SetupDFTProgressive32()
 	for( i = 0; i < BINCYCLE; i++ )
 	{
 		// Sdo_this_octave = 
-		// 4 3 4 2 4 3 4 ... 255 (which is -1 as unsigned)
+		// 4 3 4 2 4 3 4 1 4 3 4 2 4 3 4 0 4 3 4 2 4 3 4 1 4 3 4 2 4 3 4 255 (which is -1 as unsigned)
+		// is case for 5 octaves. At step i do octave = Sdo_this_octave with avereraged samples from last update of that octave
 		//search for "first" zero
 
 		for( j = 0; j <= OCTAVES; j++ )
