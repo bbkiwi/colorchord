@@ -12,6 +12,7 @@
 #include <netinet/in.h>
 #include <stdio.h>
 #include "embeddedout.h"
+#include <math.h>
 
 struct sockaddr_in servaddr;
 int sock;
@@ -84,6 +85,7 @@ int main( int argc, char ** argv )
 
 	sock = socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
 
+
 	memset(&servaddr,0,sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_addr.s_addr = inet_addr(argv[1]);
@@ -114,9 +116,12 @@ int main( int argc, char ** argv )
 		break;
 	};
 
-	while( ( ci = getchar() ) != EOF )
+	for (i=0; i<160000; i++)
+//	while( ( ci = getchar() ) != EOF )
 	{
-		int cs = ci - 0x80;
+
+//		int cs = ci - 0x80;
+		int cs = 16.0 * sinf(2.0*3.14159*55.0*pow(2.0,(1.0*(float)i/160000.))*(float)i/8000.0);
 #ifdef USE_32DFT
 		PushSample32( ((int8_t)cs)*32 );
 #else

@@ -27,6 +27,9 @@ OUTIP:=192.168.1.56 # works for ubuntu guest in Virtual Machine
 runembedded : embeddedcc
 	parec  --format=u8 --rate=16000 --channels=1 $(SOUNDDEVICE) --latency=128 | ./embeddedcc $(OUTIP) 1 
 
+runembeddedfcn : embeddedcc
+	./embeddedcc $(OUTIP) 1 > dbout.txt
+
 runembeddedrecordeddbg : embeddedcc
 #	cat dbinput.txt | ./embeddedcc $(OUTIP) 1 > dbout.txt
 	cat dbinput.txt |pv --rate-limit 8000 | ./embeddedcc $(OUTIP) 1 > dbout.txt

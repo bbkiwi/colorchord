@@ -39,7 +39,7 @@ int gEQUALIZER_SET; //=0 from 0 ..NUMBER_STORED_CONFIGURABLES-1
 //You may increase this past 5 but if you do, the amplitude of your incoming
 //signal must decrease.  Increasing this value makes responses slower.  Lower
 //values are more responsive.
-#define DFTIIR 6
+#define DFTIIR 8
 //The higher the number the slackier your FFT will be come.
 #define FUZZ_IIR_BITS  3
 //Notes are the individually identifiable notes we receive from the sound.
