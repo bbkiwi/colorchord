@@ -68,13 +68,13 @@ int main( int argc, char ** argv )
 	int samplesPerFrame = 128;
 	int samplesPerHandleInfo = 1;
 	int ci;
+	int i;
 	// remember 1st argument is name of program
 	if( argc < 2 )
 	{
 		fprintf( stderr, "Error: usage: ./embeddedcc [ip address] [num to skip, default 0]\n" );
 		return -1;
 	}
-
 	printf( "%d\n", argc );
         for (int i = 0; i < argc; i++)
         {     printf( "%s\n", argv[i] );
@@ -93,6 +93,12 @@ int main( int argc, char ** argv )
 
 	InitColorChord(); // bb changed from Init() which does not seem to exist;
 
+	// set up these to default of 1 as not set up from saved settings as in embedded8266
+	for( i = 0; i < FIXBINS; i++ )
+	{
+		max_bins[i] = 1;
+	}
+	maxallbins = 1;
 
 	switch( COLORCHORD_OUTPUT_DRIVER )
 	{
@@ -117,6 +123,7 @@ int main( int argc, char ** argv )
 		Push8BitIntegerSkippy( (int8_t)cs );
 #endif
 		wh++;
+//fprintf(stderr,"wh = %d wf = %d ci = %d\n", wh, wf, ci);
 		if( wh >= samplesPerHandleInfo )
 		{
 			HandleFrameInfo();
