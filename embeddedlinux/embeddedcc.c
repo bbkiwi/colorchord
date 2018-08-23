@@ -116,12 +116,13 @@ int main( int argc, char ** argv )
 		break;
 	};
 
-	for (i=0; i<160000; i++)
+	for (i=0; i<32000; i++)
 //	while( ( ci = getchar() ) != EOF )
 	{
 
 //		int cs = ci - 0x80;
-		int cs = 16.0 * sinf(2.0*3.14159*55.0*pow(2.0,(1.0*(float)i/160000.))*(float)i/8000.0);
+		int cs = 16.0 * sinf(2.0*3.14159*55.0*fmin(2.0,pow(2.0,(1.0*(float)i/16000.)))*(float)i/8000.0);
+//		int cs = 16.0 * sinf(2.0*3.14159*2400.0*(float)i/8000.0);
 #ifdef USE_32DFT
 		PushSample32( ((int8_t)cs)*32 );
 #else
