@@ -5,18 +5,23 @@
 #define CCEMBEDDED
 #define DEBUGPRINT 0
 #define DFTHIST 1
+#define FOLDHIST 0
 #define DFTSAMPLE 0
+#define SHOWNOTES 0
 #define RING
 #define LEDS_PER_ROW 16
 #define NUM_LIN_LEDS 60
-#define USE_NUM_LIN_LEDS 20
-#define DFREQ 8000
+#define USE_NUM_LIN_LEDS 60
+#define DFREQ 12000 // Need to set in makefile too
 #define NOTE_FINAL_AMP  100		//Final brightness Number from 0...255
 #define NOTE_FINAL_SATURATION  255	//Final saturation Number from 0...255
 #define ROOT_NOTE_OFFSET 0
 #define SYMMETRY_REPEAT 0
 #define EQUALIZER_SET gEQUALIZER_SET
 #define LOWER_CUTOFF 21
+#define ADJUST_DFT_WITH_OCTAVE 1
+#define TIME_LIMIT 5
+#define DFT_UPDATE 4
 
 //#define printf( ... ) fprintf( stderr, __VA_ARGS__ )
 
@@ -27,7 +32,7 @@ int gEQUALIZER_SET; //=0 from 0 ..NUMBER_STORED_CONFIGURABLES-1
 //Controls, basically, the minimum size of the splotches.
 #define NERF_NOTE_PORP 103 //value from 0 to 255
 
-#define COLORCHORD_OUTPUT_DRIVER 0    // 0 UpdateLinearLEDs, 1 UpdateAllSameLEDs, 2 UpdateRotatingLEDs; 3 PureRotatingLEDs (not depend on sound);
+#define COLORCHORD_OUTPUT_DRIVER 15   // 0-15 UpdateLinearLEDs, 254 PureRotatingLEDs (depend on bass), 255 HistDFT;
 #define COLORCHORD_SHIFT_INTERVAL 0   // shift after this many frames, 0 no shifts
 #define COLORCHORD_FLIP_ON_PEAK 1      // non-zero will flip on peak total amp2
 #define COLORCHORD_SHIFT_DISTANCE 1    // distance of shift + anticlockwise, - clockwise, 0 no shift (if divisor of NUM_LIN_LEDS strobe effects)
@@ -39,9 +44,9 @@ int gEQUALIZER_SET; //=0 from 0 ..NUMBER_STORED_CONFIGURABLES-1
 //You may increase this past 5 but if you do, the amplitude of your incoming
 //signal must decrease.  Increasing this value makes responses slower.  Lower
 //values are more responsive.
-#define DFTIIR 6
+#define DFTIIR 3
 //The higher the number the slackier your FFT will be come.
-#define FUZZ_IIR_BITS  3
+#define FUZZ_IIR_BITS  1
 //Notes are the individually identifiable notes we receive from the sound.
 //We track up to this many at one time.  Just because a note may appear to
 //vaporize in one frame doesn't mean it is annihilated immediately.
@@ -66,8 +71,8 @@ int gEQUALIZER_SET; //=0 from 0 ..NUMBER_STORED_CONFIGURABLES-1
 #define AMP_2_ATTACK_BITS 4
 #define AMP_1_DECAY_BITS 2
 #define AMP_2_DECAY_BITS 4
-#define AMP_1_MULT 96
-#define AMP_2_MULT 159
+#define AMP_1_MULT 16
+#define AMP_2_MULT 16
 #define CONFIG_NUMBER 0
 
 //This is the amplitude, coming from folded_bins.  If the value is below this
@@ -75,8 +80,8 @@ int gEQUALIZER_SET; //=0 from 0 ..NUMBER_STORED_CONFIGURABLES-1
 #define MIN_AMP_FOR_NOTE 45
 //If the strength of a note falls below this, the note will disappear, and be
 //recycled back into the unused list of notes.
-#define MINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR 1
-#define MAX_AMP2_LOG2 13 // used to scale AMP2
+#define MINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR 10
+#define MAX_AMP2_LOG2 16 // used to scale AMP2
 
 #endif
 

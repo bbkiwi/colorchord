@@ -134,17 +134,13 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 	{
 		switch( COLORCHORD_OUTPUT_DRIVER )
 		{
-		case 0:
-		case 1:
-		case 2:
-		case 4:
-			samplesPerFrame = 128; // <= but if < required new def of max to respond to peaks
-			samplesPerHandleInfo = 128;
-			break;
-		case 3:
+		case 254:
 			samplesPerFrame = 32;
 			samplesPerHandleInfo = 128;
-			break;
+		break;
+		default:
+			samplesPerFrame = 128; // <= but if < required new def of max to respond to peaks
+			samplesPerHandleInfo = 128;
 		};
 
 		while( soundtail != soundhead )
@@ -210,7 +206,7 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 			samp_adjusted = samp_centered + samp_adjustment;
 
 
-
+//TODO samp_adjusted has 8 bits accuracy, why mult by 16 for PushSample?
 			samp_adjusted = (samp_adjusted * INITIAL_AMP /16); //amplified
 			PushSample32( samp_adjusted * 16 );
 

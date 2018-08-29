@@ -9,7 +9,7 @@
 #include <math.h>
 static float * goutbins;
 #endif
-
+#include <stdio.h>
 uint16_t embeddedbins32[FIXBINS]; 
 
 //NOTES to self:
@@ -102,6 +102,8 @@ static uint8_t Sdo_this_octave[BINCYCLE];
 
 static int32_t Saccum_octavebins[OCTAVES];
 static uint8_t Swhichoctaveplace;
+static uint8_t UpdateCount;
+
 
 //
 uint16_t embeddedbins[FIXBINS]; 
@@ -167,13 +169,21 @@ void UpdateOutputBins32()
 	int i;
 	int32_t * ipt = &Sdatspace32BOut[0];
 	//logistic data to adjust embeddedbins32 so between 0 and 65536 max uint16
+//        static const uint16_t adjstrens[17] = {
+//		217, 244, 319, 522, 1064, 2777, 5922,
+//		13110, 24200, 35291, 42479, 45924, 47337, 47879, 48082, 48157, 48184};
+// empirical multiplier to adjust
         static const uint16_t adjstrens[17] = {
-		217, 244, 319, 522, 1064, 2777, 5922,
-		13110, 24200, 35291, 42479, 45924, 47337, 47879, 48082, 48157, 48184};
+		642, 394, 248, 141, 76, 40, 23, 15, 11, 10, 9, 8, 8, 8, 8, 8, 8};
 	for( i = 0; i < FIXBINS; i++ )
 	{
+#if APPROXNORM == 1
+		int32_t isps = *(ipt++);
+		int32_t ispc = *(ipt++);
+#else
 		int16_t isps = *(ipt++)>>16;
 		int16_t ispc = *(ipt++)>>16;
+#endif
 
 		int octave = i / FIXBPERO;
 
@@ -191,6 +201,7 @@ void UpdateOutputBins32()
 		isps = isps<0? -isps : isps;
 		ispc = ispc<0? -ispc : ispc;
 		uint32_t rmux = isps>ispc? isps + (ispc>>1) : ispc + (isps>>1);
+		rmux = rmux>>16;
 #else
 		uint32_t rmux = ( (isps) * (isps)) + ((ispc) * (ispc));
 		rmux = SquareRootRounded( rmux );
@@ -201,11 +212,21 @@ void UpdateOutputBins32()
 		//embeddedbins32[i] = mux >> octave;
 
 		//empirical adjust embeddedbins32 via a logistic data so between 0 and 65536 
-#if ADJUST_DFT_WITH_OCTAVE
-		embeddedbins32[i] = (rmux << (21-octave))/adjstrens[DFTIIR]; // use adjust 8
+#if ADJUST_DFT_WITH_OCTAVE == 1
+//		if ((rmux<<1) > (adjstrens[DFTIIR]<<octave)) {
+//			embeddedbins32[i] = 0xffff;
+//		} else {
+//			embeddedbins32[i] = (rmux << (17-octave))/adjstrens[DFTIIR]; // use adjust 8
+//		}
+		embeddedbins32[i] = (rmux >> octave)*adjstrens[DFTIIR]; // use adjust 8
+		if ((rmux >> octave)*adjstrens[DFTIIR] > 65535) {
+			fprintf( stderr, "Overflow 224\n" );
+		}
+
 #else
 		//No adjustment using octave may be too noisy in high octaves
-		embeddedbins32[i] = (rmux << 21)/adjstrens[DFTIIR]; // use adjust 8
+		//embeddedbins32[i] = (rmux << 21)/adjstrens[DFTIIR]; // use adjust 8
+		embeddedbins32[i] = rmux*adjstrens[DFTIIR]; // use adjust 8
 #endif
 	}
 }
@@ -228,22 +249,26 @@ static void HandleInt( int16_t sample )
 	if( oct > 128 )
 	{
 		//Special: This is when we can update everything.
-		//This gets run once out of every (1<<OCTAVES) times.
+		//This gets run once out of every DFT_UPDATE*(1<<OCTAVES) times.
+		// which is half as many samples
 		//It handles updating part of the DFT.
 		//It should happen at the very first call to HandleInit
 		int32_t * bins = &Sdatspace32B[0];
 		int32_t * binsOut = &Sdatspace32BOut[0];
+		UpdateCount++;
+		if (UpdateCount >= DFT_UPDATE) {
+			UpdateCount=0;
+			for( i = 0; i < FIXBINS; i++ )
+			{
+				//First for the SIN then the COS.
+				int32_t val = *(bins);
+				*(binsOut++) = val;
+				*(bins++) -= val>>DFTIIR;
 
-		for( i = 0; i < FIXBINS; i++ )
-		{
-			//First for the SIN then the COS.
-			int32_t val = *(bins);
-			*(binsOut++) = val;
-			*(bins++) -= val>>DFTIIR;
-
-			val = *(bins);
-			*(binsOut++) = val;
-			*(bins++) -= val>>DFTIIR;
+				val = *(bins);
+				*(binsOut++) = val;
+				*(bins++) -= val>>DFTIIR;
+			}
 		}
 		return;
 	}
@@ -259,8 +284,13 @@ static void HandleInt( int16_t sample )
 		adv = *(dsA++);
 		localipl = *(dsA) >> 8;
 		*(dsA++) += adv;
-
-		*(dsB++) += (Ssinonlytable[localipl] * sample);
+//TODO check if overflow occurs below
+// orig		*(dsB++) += (Ssinonlytable[localipl] * sample);
+		*(dsB) += (Ssinonlytable[localipl] * sample);
+		if ((*(dsB)>>16) > 65535) {
+			fprintf( stderr, "Overflow\n" );
+		}
+		*(dsB++);
 		//Get the cosine (1/4 wavelength out-of-phase with sin)
 		localipl += 64;
 		*(dsB++) += (Ssinonlytable[localipl] * sample);

@@ -23,25 +23,25 @@ SOUNDDEVICE:= --device=alsa_output.pci-0000_00_05.0.analog-stereo.monitor # to u
 
 #OUTIP:=127.0.0.1 # works for ubuntu guest in Virtual Machine using ./dummy_leds (very slow compiz 90%)
 OUTIP:=192.168.1.56 # works for ubuntu guest in Virtual Machine
+SAMPLERATE:=12000
 
 runembedded : embeddedcc
-	parec  --format=u8 --rate=16000 --channels=1 $(SOUNDDEVICE) --latency=128 | ./embeddedcc $(OUTIP) 1 
+	parec  --format=u8 --rate=$(SAMPLERATE) --channels=1 $(SOUNDDEVICE) --latency=128 | ./embeddedcc $(OUTIP) 1
 
 runembeddedfcn : embeddedcc
 	./embeddedcc $(OUTIP) 1 > dbout.txt
 
 runembeddedrecordeddbg : embeddedcc
-#	cat dbinput.txt | ./embeddedcc $(OUTIP) 1 > dbout.txt
-	cat dbinput.txt |pv --rate-limit 8000 | ./embeddedcc $(OUTIP) 1 > dbout.txt
+	cat dbinput.txt |pv --rate-limit $(SAMPLERATE) | ./embeddedcc $(OUTIP) 1 > dbout.txt
 
 runembeddeddbg : embeddedcc
 	parec  --format=u8 --rate=16000 --channels=1 $(SOUNDDEVICE) --latency=128 | ./embeddedcc $(OUTIP) 1 > dbout.txt
 
 recordsound :
-	parec -v  --format=u8 --rate=16000 --channels=1 $(SOUNDDEVICE) --latency=128 > dbinput.txt
+	parec -v  --format=u8 --rate=$(SAMPLERATE) --channels=1 $(SOUNDDEVICE) --latency=128 > dbinput.txt
 
 playsound :
-	pacat --format=u8 --rate=8000 --channels=1 --latency=128 dbinput.txt
+	pacat --format=u8 --rate=$(SAMPLERATE) --channels=1 --latency=128 dbinput.txt
 
 
 clean :

@@ -357,6 +357,10 @@ TODO in anticipation of refactoring
 						(k<<1)<porpamps[i] ? ((uint32_t)NOTE_FINAL_AMP*(k<<17)/porpamps[i]/((1<<16)-local_peak_amps2[i]) ) :
 						((uint32_t)NOTE_FINAL_AMP*(((porpamps[i]-k)<<17))/porpamps[i]/((1<<16)-local_peak_amps2[i]) );
 					break;
+				case 14 :
+				case 15 :
+					ledAmpOut[j] = NOTE_FINAL_AMP;
+					break;
 				default :
 					ledAmpOut[j] = ((uint32_t)local_peak_amps2[i]*NOTE_FINAL_AMP)>>16; //(1)
 			}

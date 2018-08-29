@@ -33,18 +33,14 @@ void NewFrame()
 	//printf("MOD FRAME %d ******\n", gFRAMECOUNT_MOD_SHIFT_INTERVAL);
 	switch( COLORCHORD_OUTPUT_DRIVER )
 	{
-	case 0:
-		UpdateLinearLEDs();
-		break;
-	case 1:
-		UpdateAllSameLEDs();
-		break;
-	case 2:
-		UpdateRotatingLEDs();
-		break;
-	case 3:
+	case 254:
 		PureRotatingLEDs();
 		break;
+	case 255:
+		DFTInLights();
+		break;
+	default:
+		UpdateLinearLEDs(); // have variety of display options and uses COLORCHORD_OUTPUT_DRIVER to select them
 	};
 
 	buffer[0] = 0;
@@ -104,32 +100,36 @@ int main( int argc, char ** argv )
 
 	switch( COLORCHORD_OUTPUT_DRIVER )
 	{
-	case 0:
-	case 1:
-	case 2:
-		samplesPerFrame = 128; // <= but if < required new def of max to respond to peaks
-		samplesPerHandleInfo = 128;
+		case 254:
+			samplesPerFrame = 32;
+			samplesPerHandleInfo = 128;
 		break;
-	case 3:
-		samplesPerFrame = 1;
-		samplesPerHandleInfo = 1000;
-		break;
+		default:
+			samplesPerFrame = 128; // <= but if < required new def of max to respond to peaks
+			samplesPerHandleInfo = 128;
 	};
 
-	for (i=0; i<32000; i++)
-//	while( ( ci = getchar() ) != EOF )
+
+//	for (i=0; i<32000; i++)
+	i=0; // initial sample index
+	while( ( ci = getchar() ) != EOF ) // streaming input rates limits speed of loop
 	{
 
+// get sample from input
 //		int cs = ci - 0x80;
-		int cs = 16.0 * sinf(2.0*3.14159*55.0*fmin(2.0,pow(2.0,(1.0*(float)i/16000.)))*(float)i/8000.0);
-//		int cs = 16.0 * sinf(2.0*3.14159*2400.0*(float)i/8000.0);
+// generate sample from functional form
+		float octpersec = 1.0;
+		int cs = 127.0 * sinf(2.0/octpersec/log(2)*3.14159*55.0*pow(2.0,((float)i*octpersec/DFREQ))); //Chirp
+//		int cs = 127.0 * sinf(2.0*3.14159*110.0*(float)i/DFREQ);
+		i++;
+		if (i>TIME_LIMIT*DFREQ) return 0; // stop after TIME_LIMIT secs
 #ifdef USE_32DFT
-		PushSample32( ((int8_t)cs)*32 );
+		//PushSample32( ((int8_t)cs)*32 );
+		PushSample32( ((int8_t)cs)*8 );
 #else
 		Push8BitIntegerSkippy( (int8_t)cs );
 #endif
 		wh++;
-//fprintf(stderr,"wh = %d wf = %d ci = %d\n", wh, wf, ci);
 		if( wh >= samplesPerHandleInfo )
 		{
 			HandleFrameInfo();

@@ -167,6 +167,7 @@ void HandleFrameInfo()
 	uint8_t hitnotes[MAXNOTES];
 	memset( hitnotes, 0, sizeof( hitnotes ) );
 	static uint16_t equalize_count;
+	static uint16_t stmax;
 
 #ifdef USE_32DFT
 	uint16_t * strens;
@@ -180,17 +181,19 @@ void HandleFrameInfo()
 	printf( "\n" );
 #endif
 #if DEBUGPRINT
-	uint16_t stmin, stmax;
+//#if 1
+	uint16_t stmin;
 	stmin = 65535;
-	stmax = 0;
+//	stmax = 0;
 	for( i = 0; i < FIXBINS; i++ ) {
 		if(strens[i] > stmax) stmax=strens[i];
 		if(strens[i] < stmin) stmin=strens[i];
 	}
-	printf( "strens min: %d, max: %d\n ", stmin, stmax );
-	printf( "strens oct 1: " );
-	for( i = 0; i < FIXBPERO; i++ ) printf( " %5d /", strens[i]  );
-	printf( "\n" );
+	printf( "%f\n", 65535.0/stmax );
+//	printf( "strens min: %d, max: %d\n ", stmin, stmax );
+//	printf( "strens oct 1: " );
+//	for( i = 0; i < FIXBPERO; i++ ) printf( " %5d /", strens[i]  );
+//	printf( "\n" );
 #endif
 
 
@@ -300,8 +303,6 @@ void HandleFrameInfo()
 	for( i = 0; i < FIXBPERO; i++ ) printf( " %5d /", folded_bins[i]  );
 	printf( "\n" );
 #endif
-
-
 
 
 	//Next, we have to find the peaks, this is what "decompose" does in our
@@ -549,7 +550,7 @@ void HandleFrameInfo()
 	}
 
 	//We now have notes!!!
-#if 0
+#if SHOWNOTES == 1
 	for( i = 0; i < MAXNOTES; i++ )
 	{
 		if( note_peak_freqs[i] < 0 ) continue;
@@ -558,7 +559,7 @@ void HandleFrameInfo()
 	printf( "\n") ;
 #endif
 
-#if 0
+#if FOLDHIST == 1
 	for( i = 0; i < FIXBPERO; i++ )
 	{
 		printf( "%4d ", folded_bins[i] );
