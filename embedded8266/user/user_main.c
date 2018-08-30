@@ -206,9 +206,8 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 			samp_adjusted = samp_centered + samp_adjustment;
 
 
-//TODO samp_adjusted has 8 bits accuracy, why mult by 16 for PushSample?
-			samp_adjusted = (samp_adjusted * INITIAL_AMP /16); //amplified
-			PushSample32( samp_adjusted * 16 );
+			samp_adjusted = (samp_adjusted * INITIAL_AMP /16); //amplified or attenuated
+			PushSample32( samp_adjusted);
 
 //			sounddatacopy[soundtail] = median_filter(samp); //can't get to work
 			//WARNING samp_centered + samp_iir>>10 compiles as (samp_centered + samp_iir)>>10

@@ -102,7 +102,7 @@ static uint8_t Sdo_this_octave[BINCYCLE];
 
 static int32_t Saccum_octavebins[OCTAVES];
 static uint8_t Swhichoctaveplace;
-static uint8_t UpdateCount;
+static int8_t UpdateCount = -1;
 
 
 //
@@ -168,13 +168,20 @@ void UpdateOutputBins32()
 {
 	int i;
 	int32_t * ipt = &Sdatspace32BOut[0];
+#if SHOWSAMP
+	printf("--> Update Output Bins \n");
+#endif
 	//logistic data to adjust embeddedbins32 so between 0 and 65536 max uint16
 //        static const uint16_t adjstrens[17] = {
 //		217, 244, 319, 522, 1064, 2777, 5922,
 //		13110, 24200, 35291, 42479, 45924, 47337, 47879, 48082, 48157, 48184};
 // empirical multiplier to adjust
-        static const uint16_t adjstrens[17] = {
-		642, 394, 248, 141, 76, 40, 23, 15, 11, 10, 9, 8, 8, 8, 8, 8, 8};
+        static const uint16_t adjrmuxbits[17] = {
+		9, 8, 7, 7, 6, 5, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3};
+//       static const uint16_t adjstrens[17] = {
+//		642, 394, 248, 141, 76, 40, 23, 15, 11, 10, 9, 8, 8, 8, 8, 8, 8};
+//        static const uint16_t adjstrens[17] = {
+//		1.25, 1.54, 1.94, 1.1, 1.19, 1.25, 1.44, 1.88, 1.38, 1.25, 1.13, 1, 1, 1, 1, 1, 1};
 	for( i = 0; i < FIXBINS; i++ )
 	{
 #if APPROXNORM == 1
@@ -201,7 +208,6 @@ void UpdateOutputBins32()
 		isps = isps<0? -isps : isps;
 		ispc = ispc<0? -ispc : ispc;
 		uint32_t rmux = isps>ispc? isps + (ispc>>1) : ispc + (isps>>1);
-		rmux = rmux>>13;
 #else
 		uint32_t rmux = ( (isps) * (isps)) + ((ispc) * (ispc));
 		rmux = SquareRootRounded( rmux );
@@ -213,22 +219,24 @@ void UpdateOutputBins32()
 
 		//empirical adjust embeddedbins32 via a logistic data so between 0 and 65536 
 #if ADJUST_DFT_WITH_OCTAVE == 1
+		uint8_t rmuxshift = RMUXSHIFTSTART - adjrmuxbits[DFTIIR] + octave;
+		rmux = rmux>>rmuxshift; //*adjstrens[DFTIIR] // if had floating point
 //		if ((rmux<<1) > (adjstrens[DFTIIR]<<octave)) {
 //			embeddedbins32[i] = 0xffff;
 //		} else {
 //			embeddedbins32[i] = (rmux << (17-octave))/adjstrens[DFTIIR]; // use adjust 8
 //		}
-		embeddedbins32[i] = (rmux >> octave)*adjstrens[DFTIIR]; // use adjust 8
-		if ((rmux >> octave)*adjstrens[DFTIIR] > 65535) {
-			fprintf( stderr, "Overflow 224\n" );
-		}
-
+		embeddedbins32[i] = rmux;
 #else
 		//No adjustment using octave may be too noisy in high octaves
 		//embeddedbins32[i] = (rmux << 21)/adjstrens[DFTIIR]; // use adjust 8
-		embeddedbins32[i] = rmux*adjstrens[DFTIIR]; // use adjust 8
-		if (rmux*adjstrens[DFTIIR] > 65535) {
-			fprintf( stderr, "Overflow 231\n" );
+		uint8_t rmuxshift = RMUXSHIFTSTART - adjrmuxbits[DFTIIR];
+		rmux = rmux>>rmuxshift; //*adjstrens[DFTIIR] // if had floating point
+		embeddedbins32[i] = rmux; // use adjust 8
+#endif
+#if CHECKOVERFLOW
+		if (rmux > 65535) {
+			fprintf( stderr, "Overflow embeddedbins\n" );
 		}
 #endif
 	}
@@ -239,6 +247,7 @@ static void HandleInt( int16_t sample )
 	int i;
 	uint16_t adv;
 	uint8_t localipl;
+	int16_t filteredsample;
 
 	uint8_t oct = Sdo_this_octave[Swhichoctaveplace];
 	Swhichoctaveplace ++;
@@ -261,6 +270,9 @@ static void HandleInt( int16_t sample )
 		UpdateCount++;
 		if (UpdateCount >= DFT_UPDATE) {
 			UpdateCount=0;
+#if SHOWSAMP
+			printf(" update binsOut and lower bins\noct %d: ",SHOWSAMP-1 );
+#endif
 			for( i = 0; i < FIXBINS; i++ )
 			{
 				//First for the SIN then the COS.
@@ -272,31 +284,39 @@ static void HandleInt( int16_t sample )
 				*(binsOut++) = val;
 				*(bins++) -= val>>DFTIIR;
 			}
+#if SHOWSAMP
+		} else {
+			printf("\noct %d: ",SHOWSAMP-1);
+#endif
 		}
 		return;
 	}
 
+	// process a filtered sample for one of the octaves
 	uint16_t * dsA = &Sdatspace32A[oct*FIXBPERO*2];
 	int32_t * dsB = &Sdatspace32B[oct*FIXBPERO*2];
 
-	sample = Saccum_octavebins[oct]>>(OCTAVES-oct);
+	filteredsample = Saccum_octavebins[oct]>>(OCTAVES-oct);
 	Saccum_octavebins[oct] = 0;
-
+#if SHOWSAMP
+	if (oct == SHOWSAMP-1) printf("%d ", filteredsample);
+	//printf("%d (%d) ", filteredsample, oct);
+#endif
 	for( i = 0; i < FIXBPERO; i++ )
 	{
 		adv = *(dsA++);
 		localipl = *(dsA) >> 8;
 		*(dsA++) += adv;
-//TODO check if overflow occurs below
-// orig		*(dsB++) += (Ssinonlytable[localipl] * sample);
-		*(dsB) += (Ssinonlytable[localipl] * sample);
-		if ((*(dsB)>>16) > 65535) {
-			fprintf( stderr, "Overflow potential\n" );
-		}
+		*(dsB) += (Ssinonlytable[localipl] * filteredsample);
+//#if CHECKOVERFLOW
+//		if ((*(dsB)>>16) > 65535) {
+//			fprintf( stderr, "Overflow potential\n" );
+//		}
+//#endif
 		dsB++;
 		//Get the cosine (1/4 wavelength out-of-phase with sin)
 		localipl += 64;
-		*(dsB++) += (Ssinonlytable[localipl] * sample);
+		*(dsB++) += (Ssinonlytable[localipl] * filteredsample);
 	}
 }
 

@@ -3,11 +3,14 @@
 
 
 #define CCEMBEDDED
+#define CHECKOVERFLOW 1
+#define RMUXSHIFTSTART 12 // get too small will get overflow, too high loose accuracy of DFT
 #define DEBUGPRINT 0
 #define DFTHIST 0
-#define FUZZHIST 1
-#define FOLDHIST 0
+#define FUZZHIST 0
+#define FOLDHIST 1
 #define DFTSAMPLE 0
+#define SHOWSAMP 0     // > 0 shows filtered samples for octave SHOWSAMP-1
 #define SHOWNOTES 0
 #define RING
 #define LEDS_PER_ROW 16
@@ -19,12 +22,11 @@
 #define ROOT_NOTE_OFFSET 0
 #define SYMMETRY_REPEAT 0
 #define EQUALIZER_SET gEQUALIZER_SET
-#define LOWER_CUTOFF 21
 #define ADJUST_DFT_WITH_OCTAVE 1
 #define TIME_LIMIT 6
 #define TIME_SWEEP 3
 #define OCT_PER_SECOND 1.0
-#define DFT_UPDATE 3
+#define DFT_UPDATE 2
 
 //#define printf( ... ) fprintf( stderr, __VA_ARGS__ )
 
@@ -47,9 +49,11 @@ int gEQUALIZER_SET; //=0 from 0 ..NUMBER_STORED_CONFIGURABLES-1
 //You may increase this past 5 but if you do, the amplitude of your incoming
 //signal must decrease.  Increasing this value makes responses slower.  Lower
 //values are more responsive.
-#define DFTIIR 3
+#define DFTIIR 2
+//Cut off zero below when making fuzzed bins from dft bins
+#define LOWER_CUTOFF 0
 //The higher the number the slackier your FFT will be come.
-#define FUZZ_IIR_BITS  1
+#define FUZZ_IIR_BITS  0
 //Notes are the individually identifiable notes we receive from the sound.
 //We track up to this many at one time.  Just because a note may appear to
 //vaporize in one frame doesn't mean it is annihilated immediately.

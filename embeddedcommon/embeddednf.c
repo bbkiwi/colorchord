@@ -253,6 +253,7 @@ void HandleFrameInfo()
 */
 
 #if FUZZHIST
+	printf( "\n" );
 	for( i = 0; i < FIXBINS; i++ ) printf( "%5d ", fuzzed_bins[i]  );
 	printf( "\n" );
 #endif

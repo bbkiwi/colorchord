@@ -7,6 +7,9 @@
 #define HPABUFFSIZE 512
 
 #define CCEMBEDDED
+#define RMUXSHIFTSTART 12 // get too small will get overflow, too high loose accuracy of DFT
+#define DFT_UPDATE 2
+
 //#ifndef NUM_LIN_LEDS
 //#define NUM_LIN_LEDS 16
 //#endif

@@ -69,8 +69,8 @@ int main( int argc, char ** argv )
 	fprintf( stderr, "intmin = %x intmin - 1 =  %x intmin << 1 = %x intmin >> 1 = %x\n", imin, imin-1, imin<<1, imin>>1 );
 	return 0;
 */
-	int wf = 0;
-	int wh = 0;
+	int wf = -1;
+	int wh = -1;
 	int samplesPerFrame = 128;
 	int samplesPerHandleInfo = 1;
 	int ci;
@@ -120,8 +120,8 @@ int main( int argc, char ** argv )
 
 
 	int isamp=0; // initial sample index
-//	for (i=0; i<TIME_LIMIT*DFREQ; i++)
-	while( ( ci = getchar() ) != EOF ) // streaming input rates limits speed of loop
+	for (i=0; i<TIME_LIMIT*DFREQ; i++)
+//	while( ( ci = getchar() ) != EOF ) // streaming input rates limits speed of loop
 	{
 
 // get sample from input
@@ -155,6 +155,7 @@ int main( int argc, char ** argv )
 			NewFrame();
 			wf = 0;
 		}
+
 	}
 	return 0;
 }
