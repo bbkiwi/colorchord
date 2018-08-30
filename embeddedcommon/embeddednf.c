@@ -189,7 +189,7 @@ void HandleFrameInfo()
 		if(strens[i] > stmax) stmax=strens[i];
 		if(strens[i] < stmin) stmin=strens[i];
 	}
-	printf( "%f\n", 65535.0/stmax );
+	printf( "65535/maxbin = %f\n", 65535.0/stmax );
 //	printf( "strens min: %d, max: %d\n ", stmin, stmax );
 //	printf( "strens oct 1: " );
 //	for( i = 0; i < FIXBPERO; i++ ) printf( " %5d /", strens[i]  );
@@ -251,6 +251,11 @@ void HandleFrameInfo()
 		fuzzed_bins[newi] = (taperamt * fuzzed_bins[newi]) >> 16;
 	}
 */
+
+#if FUZZHIST
+	for( i = 0; i < FIXBINS; i++ ) printf( "%5d ", fuzzed_bins[i]  );
+	printf( "\n" );
+#endif
 
 	//Fold the bins from fuzzedbins into one octave.
 	//  and collect bins from each octave
@@ -551,12 +556,18 @@ void HandleFrameInfo()
 
 	//We now have notes!!!
 #if SHOWNOTES == 1
+	int hadnotes = 0;
 	for( i = 0; i < MAXNOTES; i++ )
 	{
 		if( note_peak_freqs[i] < 0 ) continue;
 		printf( "(%3d %4d %4d) ", note_peak_freqs[i], note_peak_amps[i], note_peak_amps2[i] );
+		hadnotes = 1;
 	}
-	printf( "\n") ;
+	if (hadnotes) {
+		printf( "\n");
+	} else {
+		printf("no notes\n");
+	}
 #endif
 
 #if FOLDHIST == 1

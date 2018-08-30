@@ -201,7 +201,7 @@ void UpdateOutputBins32()
 		isps = isps<0? -isps : isps;
 		ispc = ispc<0? -ispc : ispc;
 		uint32_t rmux = isps>ispc? isps + (ispc>>1) : ispc + (isps>>1);
-		rmux = rmux>>16;
+		rmux = rmux>>13;
 #else
 		uint32_t rmux = ( (isps) * (isps)) + ((ispc) * (ispc));
 		rmux = SquareRootRounded( rmux );
@@ -227,6 +227,9 @@ void UpdateOutputBins32()
 		//No adjustment using octave may be too noisy in high octaves
 		//embeddedbins32[i] = (rmux << 21)/adjstrens[DFTIIR]; // use adjust 8
 		embeddedbins32[i] = rmux*adjstrens[DFTIIR]; // use adjust 8
+		if (rmux*adjstrens[DFTIIR] > 65535) {
+			fprintf( stderr, "Overflow 231\n" );
+		}
 #endif
 	}
 }
@@ -288,9 +291,9 @@ static void HandleInt( int16_t sample )
 // orig		*(dsB++) += (Ssinonlytable[localipl] * sample);
 		*(dsB) += (Ssinonlytable[localipl] * sample);
 		if ((*(dsB)>>16) > 65535) {
-			fprintf( stderr, "Overflow\n" );
+			fprintf( stderr, "Overflow potential\n" );
 		}
-		*(dsB++);
+		dsB++;
 		//Get the cosine (1/4 wavelength out-of-phase with sin)
 		localipl += 64;
 		*(dsB++) += (Ssinonlytable[localipl] * sample);

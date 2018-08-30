@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include "embeddedout.h"
 #include <math.h>
-
+#include <limits.h>
 struct sockaddr_in servaddr;
 int sock;
 
@@ -60,6 +60,15 @@ void NewFrame()
 
 int main( int argc, char ** argv )
 {
+/*
+	int32_t imax = INT_MAX;
+	int32_t imin = INT_MIN;
+	fprintf( stderr, "intmax = %d intmax + 1 =  %d intmax << 1 = %d intmax >> 1 = %d \n",imax, imax+1, imax<<1, imax>>1 );
+	fprintf( stderr, "intmax = %x intmax + 1 =  %x intmax << 1 = %x intmax >> 1 = %x \n",imax, imax+1, imax<<1, imax>>1 );
+	fprintf( stderr, "intmin = %d intmin - 1 =  %d intmin << 1 = %d intmin >> 1 = %d\n", imin, imin-1, imin<<1, imin>>1 );
+	fprintf( stderr, "intmin = %x intmin - 1 =  %x intmin << 1 = %x intmin >> 1 = %x\n", imin, imin-1, imin<<1, imin>>1 );
+	return 0;
+*/
 	int wf = 0;
 	int wh = 0;
 	int samplesPerFrame = 128;
@@ -110,22 +119,27 @@ int main( int argc, char ** argv )
 	};
 
 
-//	for (i=0; i<32000; i++)
-	i=0; // initial sample index
+	int isamp=0; // initial sample index
+//	for (i=0; i<TIME_LIMIT*DFREQ; i++)
 	while( ( ci = getchar() ) != EOF ) // streaming input rates limits speed of loop
 	{
 
 // get sample from input
 //		int cs = ci - 0x80;
+		int cs;
 // generate sample from functional form
-		float octpersec = 1.0;
-		int cs = 127.0 * sinf(2.0/octpersec/log(2)*3.14159*55.0*pow(2.0,((float)i*octpersec/DFREQ))); //Chirp
+		float octpersec = OCT_PER_SECOND;
+		if (isamp < TIME_SWEEP*DFREQ) {
+			cs = 127.0 * sinf(2.0/octpersec/log(2)*3.14159*55.0*pow(2.0,((float)isamp*octpersec/DFREQ))); //Chirp start 55 Hz
+		} else {
+			cs = 127.0 * sinf(2.0*3.14159*55.0*(float)isamp/DFREQ*pow(2.0,(TIME_SWEEP*octpersec))); //stay at final freq of chirp
+		}
 //		int cs = 127.0 * sinf(2.0*3.14159*110.0*(float)i/DFREQ);
-		i++;
-		if (i>TIME_LIMIT*DFREQ) return 0; // stop after TIME_LIMIT secs
+		isamp++;
+		if (isamp>TIME_LIMIT*DFREQ) return 0; // stop after TIME_LIMIT secs
 #ifdef USE_32DFT
 		//PushSample32( ((int8_t)cs)*32 );
-		PushSample32( ((int8_t)cs)*8 );
+		PushSample32( ((int8_t)cs) );
 #else
 		Push8BitIntegerSkippy( (int8_t)cs );
 #endif

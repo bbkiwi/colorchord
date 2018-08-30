@@ -4,7 +4,8 @@
 
 #define CCEMBEDDED
 #define DEBUGPRINT 0
-#define DFTHIST 1
+#define DFTHIST 0
+#define FUZZHIST 1
 #define FOLDHIST 0
 #define DFTSAMPLE 0
 #define SHOWNOTES 0
@@ -20,8 +21,10 @@
 #define EQUALIZER_SET gEQUALIZER_SET
 #define LOWER_CUTOFF 21
 #define ADJUST_DFT_WITH_OCTAVE 1
-#define TIME_LIMIT 5
-#define DFT_UPDATE 4
+#define TIME_LIMIT 6
+#define TIME_SWEEP 3
+#define OCT_PER_SECOND 1.0
+#define DFT_UPDATE 3
 
 //#define printf( ... ) fprintf( stderr, __VA_ARGS__ )
 
@@ -32,7 +35,7 @@ int gEQUALIZER_SET; //=0 from 0 ..NUMBER_STORED_CONFIGURABLES-1
 //Controls, basically, the minimum size of the splotches.
 #define NERF_NOTE_PORP 103 //value from 0 to 255
 
-#define COLORCHORD_OUTPUT_DRIVER 15   // 0-15 UpdateLinearLEDs, 254 PureRotatingLEDs (depend on bass), 255 HistDFT;
+#define COLORCHORD_OUTPUT_DRIVER 14   // 0-15 UpdateLinearLEDs (even proportional, odd equal size), 254 PureRotatingLEDs (depend on bass), 255 HistDFT;
 #define COLORCHORD_SHIFT_INTERVAL 0   // shift after this many frames, 0 no shifts
 #define COLORCHORD_FLIP_ON_PEAK 1      // non-zero will flip on peak total amp2
 #define COLORCHORD_SHIFT_DISTANCE 1    // distance of shift + anticlockwise, - clockwise, 0 no shift (if divisor of NUM_LIN_LEDS strobe effects)
@@ -71,7 +74,7 @@ int gEQUALIZER_SET; //=0 from 0 ..NUMBER_STORED_CONFIGURABLES-1
 #define AMP_2_ATTACK_BITS 4
 #define AMP_1_DECAY_BITS 2
 #define AMP_2_DECAY_BITS 4
-#define AMP_1_MULT 16
+#define AMP_1_MULT 64
 #define AMP_2_MULT 16
 #define CONFIG_NUMBER 0
 
