@@ -205,12 +205,14 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 
 			samp_adjusted = samp_centered + samp_adjustment;
 
-
-			samp_adjusted = (samp_adjusted * INITIAL_AMP /16); //amplified or attenuated
-			PushSample32( samp_adjusted);
+			//amplifing won't loose significant bits but best signal should have come from
+			//full 8 bit sounddata. If sound was only in range 0-64 it only has 6 significant
+			// bit accuracy, INITIAL_AMP of 32 will make full range, but still steppy data
+			samp_adjusted = (samp_adjusted * INITIAL_AMP)>>3;
+			// amplifying by 2^A is equivalent to dropping RMUXSHIFTSTART in cconfig.h by A
+			PushSample32(samp_adjusted);
 
 //			sounddatacopy[soundtail] = median_filter(samp); //can't get to work
-			//WARNING samp_centered + samp_iir>>10 compiles as (samp_centered + samp_iir)>>10
 			int32_t samp_mean = (samp_iir>>10);
 			int32_t samp_oscope = samp_adjusted + samp_mean;
 

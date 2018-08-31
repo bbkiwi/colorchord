@@ -171,13 +171,9 @@ void UpdateOutputBins32()
 #if SHOWSAMP
 	printf("--> Update Output Bins \n");
 #endif
-	//logistic data to adjust embeddedbins32 so between 0 and 65536 max uint16
-//        static const uint16_t adjstrens[17] = {
-//		217, 244, 319, 522, 1064, 2777, 5922,
-//		13110, 24200, 35291, 42479, 45924, 47337, 47879, 48082, 48157, 48184};
-// empirical multiplier to adjust
+// empirical log_2 of multiplier to adjust
         static const uint16_t adjrmuxbits[17] = {
-		9, 8, 7, 7, 6, 5, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3};
+		6, 5, 4, 4, 3, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 //       static const uint16_t adjstrens[17] = {
 //		642, 394, 248, 141, 76, 40, 23, 15, 11, 10, 9, 8, 8, 8, 8, 8, 8};
 //        static const uint16_t adjstrens[17] = {
@@ -185,10 +181,10 @@ void UpdateOutputBins32()
 	for( i = 0; i < FIXBINS; i++ )
 	{
 #if APPROXNORM == 1
-		int32_t isps = *(ipt++);
+		int32_t isps = *(ipt++); //can keep 32 bits as no need to square
 		int32_t ispc = *(ipt++);
 #else
-		int16_t isps = *(ipt++)>>16;
+		int16_t isps = *(ipt++)>>16; //might loose some precsion with this
 		int16_t ispc = *(ipt++)>>16;
 #endif
 
@@ -212,28 +208,18 @@ void UpdateOutputBins32()
 		uint32_t rmux = ( (isps) * (isps)) + ((ispc) * (ispc));
 		rmux = SquareRootRounded( rmux );
 #endif
-		//bump up all outputs here, so when we nerf it by bit shifting by
-		//ctave we don't lose a lot of detail.
-		//mux = SquareRootRounded( mux ) << 1;
-		//embeddedbins32[i] = mux >> octave;
-
 		//empirical adjust embeddedbins32 via a logistic data so between 0 and 65536 
 #if ADJUST_DFT_WITH_OCTAVE == 1
 		uint8_t rmuxshift = RMUXSHIFTSTART - adjrmuxbits[DFTIIR] + octave;
-		rmux = rmux>>rmuxshift; //*adjstrens[DFTIIR] // if had floating point
-//		if ((rmux<<1) > (adjstrens[DFTIIR]<<octave)) {
-//			embeddedbins32[i] = 0xffff;
-//		} else {
-//			embeddedbins32[i] = (rmux << (17-octave))/adjstrens[DFTIIR]; // use adjust 8
-//		}
-		embeddedbins32[i] = rmux;
 #else
 		//No adjustment using octave may be too noisy in high octaves
-		//embeddedbins32[i] = (rmux << 21)/adjstrens[DFTIIR]; // use adjust 8
+		//   also get jumps at octave boundarys giving false peaks
 		uint8_t rmuxshift = RMUXSHIFTSTART - adjrmuxbits[DFTIIR];
-		rmux = rmux>>rmuxshift; //*adjstrens[DFTIIR] // if had floating point
-		embeddedbins32[i] = rmux; // use adjust 8
 #endif
+		rmux = rmux>>rmuxshift; //*adjstrens[DFTIIR] // if had floating point could refine further
+		embeddedbins32[i] = rmux;
+
+
 #if CHECKOVERFLOW
 		if (rmux > 65535) {
 			fprintf( stderr, "Overflow embeddedbins\n" );
