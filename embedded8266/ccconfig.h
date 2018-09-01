@@ -8,11 +8,7 @@
 
 #define CCEMBEDDED
 #define RMUXSHIFTSTART 8 // get too small will get overflow, too high loose accuracy of DFT
-#define DFT_UPDATE 2
 
-//#ifndef NUM_LIN_LEDS
-//#define NUM_LIN_LEDS 16
-//#endif
 #ifndef DFREQ
 #define DFREQ 8000
 #endif
@@ -23,6 +19,7 @@
 #define INITIAL_AMP		CCS.gINITIAL_AMP
 #define ROOT_NOTE_OFFSET	CCS.gROOT_NOTE_OFFSET
 #define DFTIIR			CCS.gDFTIIR
+#define DFT_UPDATE		CCS.gDFT_UPDATE
 #define FUZZ_IIR_BITS  		CCS.gFUZZ_IIR_BITS
 #define EQUALIZER_SET  		CCS.gEQUALIZER_SET
 #define MAXNOTES  12 //MAXNOTES cannot be changed dynamically.
@@ -60,6 +57,7 @@ struct CCSettings
 	uint8_t gINITIAL_AMP;                       //=16  pre-amp muliplier of ADC output
 	uint8_t gROOT_NOTE_OFFSET; //Set to define what the root note is.  0 = A.
 	uint8_t gDFTIIR;                            //=6
+	uint8_t gDFT_UPDATE;                        //=2 bins updated at this interval from HandleInt
 	uint8_t gFUZZ_IIR_BITS;                     //=3
 	uint8_t gEQUALIZER_SET;                     //=0 when one sweep over freq range to get mic responce
 	uint8_t gFILTER_BLUR_PASSES;                //=5

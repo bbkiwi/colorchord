@@ -13,7 +13,7 @@ extern uint8_t sounddatacopy[HPABUFFSIZE];
 extern uint8_t glitch_count_max;
 extern uint8_t glitch_drop;
 
-#define CONFIGURABLES 33 //(actual number plus 1)
+#define CONFIGURABLES 34 //(actual number plus 1)
 #define NUMBER_STORED_CONFIGURABLES 16
 
 struct SaveLoad
@@ -27,28 +27,28 @@ struct SaveLoad
 struct CCSettings CCS;
 
 uint8_t gConfigDefaults[NUMBER_STORED_CONFIGURABLES][CONFIGURABLES] = {
-//               i  o d f e   f l  s j  c    a d m    a d m    m  m b   s     p  u                       s  a d    s  f    d      s w   c  n
-//               a  f i i q   b c  b m  o    1 1 1    2 2 2    a  a r   a     r  s                       y  c r    h  l    i      r r   f  l
-//                  f r r u   p o  b p  m                      n  d i   t     o  e                       m  t v    f  p    s      t p   #  d
-		{64,0,6,3,0,  5,15,3,44,0,   2,2,96,  4,4,69,  45,1,100,255,  25,DEFAULT_NUM_LEDS,       0, 1,0,   0, 0,   0,     1,1,  0, DEFAULT_NUM_LEDS,   0},
-		{32,0,6,3,0,  5,14,3,80,76,  0,0,16,  0,0,16,  45,1,100,255,  55,DEFAULT_NUM_LEDS-2,     0, 1,8,   4, 255, 1,     0,0,  1, DEFAULT_NUM_LEDS,   0},
-		{32,0,5,3,0,  5,14,3,85,85,  4,4,16,  7,7,16,  82,1,255,255,  15,(DEFAULT_NUM_LEDS-1)/3, 2, 1,0,   1, 0,   2,     0,0,  2, DEFAULT_NUM_LEDS,   0},
-		{16,0,6,6,0,  5,21,3,42,44,  2,2,16,  4,4,16,  45,1,100,255,  10,DEFAULT_NUM_LEDS,       0, 1,254, 20,0,   0,     0,0,  3, DEFAULT_NUM_LEDS,   0},
-		{16,0,5,3,0,  5,14,3,85,85,  4,4,16,  6,6,16,  82,1,75, 255,  55,(DEFAULT_NUM_LEDS-1)/3, 2, 1,8,   1, 0,   1,     0,0,  4, DEFAULT_NUM_LEDS,   0},
-		{16,0,6,3,0,  5,14,3,42,44,  2,2,16,  4,4,16,  45,1,200,255,  0, DEFAULT_NUM_LEDS,       0, 1,0,   5, 1,   1,     1,0,  5, DEFAULT_NUM_LEDS,   0},
-		{32,0,6,3,0,  5,14,3,80,76,  0,0,16,  9,9,16,  45,1,100,255,  55,DEFAULT_NUM_LEDS-2,     0, 1,8,   1, 0,   1,     0,0,  6, DEFAULT_NUM_LEDS,   0},
-		{16,0,5,4,0,  0,37,3,42,44,  2,2,16,  4,4,16,  45,1,200,255,  15,DEFAULT_NUM_LEDS,       0, 1,255, 0, 0,   0,     0,0,  7, DEFAULT_NUM_LEDS,   0},
-		{32,0,6,3,0,  5,51,3,255,0,  3,3,16,  8,8,16,  45,1,100,255,  55,DEFAULT_NUM_LEDS-2,     0, 1,8,   0, 1,   1,     0,0,  8, DEFAULT_NUM_LEDS,   0},
-		{16,0,6,3,0,  5,14,3,42,44,  2,2,16,  4,4,16,  45,1,200,255,  15,DEFAULT_NUM_LEDS/2,     1, 1,0,   0, 0,   0,     0,0,  9, DEFAULT_NUM_LEDS,   0},
-		{16,0,6,3,0,  5,14,3,42,44,  2,2,16,  4,4,16,  45,1,200,255,  15,DEFAULT_NUM_LEDS/3,     2, 1,0,   0, 0,   0,     0,0,  10,DEFAULT_NUM_LEDS,   0},
-		{16,0,6,3,0,  5,14,3,42,44,  2,2,16,  4,4,16,  45,1,200,255,  15,DEFAULT_NUM_LEDS/4,     3, 1,0,   0, 0,   0,     0,0,  11,DEFAULT_NUM_LEDS,   0},
-		{64,0,6,3,0,  5,15,3,44,0,   2,2,96,  4,4,69,  45,1,100,255,  25,DEFAULT_NUM_LEDS,       0, 1,1,   0, 0,   0,     1,1,  12,DEFAULT_NUM_LEDS,   0},
-		{64,0,6,3,0,  5,15,3,44,0,   2,2,96,  4,4,69,  45,1,100,255,  25,DEFAULT_NUM_LEDS,       0, 1,8,   0, 0,   0,     1,1,  13,DEFAULT_NUM_LEDS,   0},
-		{64,0,6,3,0,  5,15,3,44,0,   2,2,96,  4,4,69,  45,1,100,255, 101,DEFAULT_NUM_LEDS/8,     0, 1,0,   1, 31,  1,     1,0,  14,DEFAULT_NUM_LEDS,   0},
-		{64,0,6,3,0,  5,15,3,44,0,   2,2,96,  4,4,69,  45,1,100,255, 102,DEFAULT_NUM_LEDS,       0, 1,0,   0, 0,   0,     1,1,  15,DEFAULT_NUM_LEDS,   0}
+//               i  o d d f e   f l  s j  c    a d m    a d m    m  m b   s     p  u                       s  a d    s  f    d      s w   c  n
+//               a  f i u i q   b c  b m  o    1 1 1    2 2 2    a  a r   a     r  s                       y  c r    h  l    i      r r   f  l
+//                  f r p r u   p o  b p  m                      n  d i   t     o  e                       m  t v    f  p    s      t p   #  d
+		{64,0,6,2,3,0,  5,15,3,44,0,   2,2,96,  4,4,69,  45,1,100,255,  25,DEFAULT_NUM_LEDS,       0, 1,0,   0, 0,   0,     1,1,  0, DEFAULT_NUM_LEDS,   0},
+		{32,0,6,2,3,0,  5,14,3,80,76,  0,0,16,  0,0,16,  45,1,100,255,  55,DEFAULT_NUM_LEDS-2,     0, 1,8,   4, 255, 1,     0,0,  1, DEFAULT_NUM_LEDS,   0},
+		{32,0,5,2,3,0,  5,14,3,85,85,  4,4,16,  7,7,16,  82,1,255,255,  15,(DEFAULT_NUM_LEDS-1)/3, 2, 1,0,   1, 0,   2,     0,0,  2, DEFAULT_NUM_LEDS,   0},
+		{16,0,6,2,6,0,  5,21,3,42,44,  2,2,16,  4,4,16,  45,1,100,255,  10,DEFAULT_NUM_LEDS,       0, 1,254, 20,0,   0,     0,0,  3, DEFAULT_NUM_LEDS,   0},
+		{16,0,5,2,3,0,  5,14,3,85,85,  4,4,16,  6,6,16,  82,1,75, 255,  55,(DEFAULT_NUM_LEDS-1)/3, 2, 1,8,   1, 0,   1,     0,0,  4, DEFAULT_NUM_LEDS,   0},
+		{16,0,6,2,3,0,  5,14,3,42,44,  2,2,16,  4,4,16,  45,1,200,255,  0, DEFAULT_NUM_LEDS,       0, 1,0,   5, 1,   1,     1,0,  5, DEFAULT_NUM_LEDS,   0},
+		{32,0,6,2,3,0,  5,14,3,80,76,  0,0,16,  9,9,16,  45,1,100,255,  55,DEFAULT_NUM_LEDS-2,     0, 1,8,   1, 0,   1,     0,0,  6, DEFAULT_NUM_LEDS,   0},
+		{16,0,5,2,4,0,  0,37,3,42,44,  2,2,16,  4,4,16,  45,1,200,255,  15,DEFAULT_NUM_LEDS,       0, 1,255, 0, 0,   0,     0,0,  7, DEFAULT_NUM_LEDS,   0},
+		{32,0,6,2,3,0,  5,51,3,255,0,  3,3,16,  8,8,16,  45,1,100,255,  55,DEFAULT_NUM_LEDS-2,     0, 1,8,   0, 1,   1,     0,0,  8, DEFAULT_NUM_LEDS,   0},
+		{16,0,6,2,3,0,  5,14,3,42,44,  2,2,16,  4,4,16,  45,1,200,255,  15,DEFAULT_NUM_LEDS/2,     1, 1,0,   0, 0,   0,     0,0,  9, DEFAULT_NUM_LEDS,   0},
+		{16,0,6,2,3,0,  5,14,3,42,44,  2,2,16,  4,4,16,  45,1,200,255,  15,DEFAULT_NUM_LEDS/3,     2, 1,0,   0, 0,   0,     0,0,  10,DEFAULT_NUM_LEDS,   0},
+		{16,0,6,2,3,0,  5,14,3,42,44,  2,2,16,  4,4,16,  45,1,200,255,  15,DEFAULT_NUM_LEDS/4,     3, 1,0,   0, 0,   0,     0,0,  11,DEFAULT_NUM_LEDS,   0},
+		{64,0,6,2,3,0,  5,15,3,44,0,   2,2,96,  4,4,69,  45,1,100,255,  25,DEFAULT_NUM_LEDS,       0, 1,1,   0, 0,   0,     1,1,  12,DEFAULT_NUM_LEDS,   0},
+		{64,0,6,2,3,0,  5,15,3,44,0,   2,2,96,  4,4,69,  45,1,100,255,  25,DEFAULT_NUM_LEDS,       0, 1,8,   0, 0,   0,     1,1,  13,DEFAULT_NUM_LEDS,   0},
+		{64,0,6,2,3,0,  5,15,3,44,0,   2,2,96,  4,4,69,  45,1,100,255, 101,DEFAULT_NUM_LEDS/8,     0, 1,0,   1, 31,  1,     1,0,  14,DEFAULT_NUM_LEDS,   0},
+		{64,0,6,2,3,0,  5,15,3,44,0,   2,2,96,  4,4,69,  45,1,100,255, 102,DEFAULT_NUM_LEDS,       0, 1,0,   0, 0,   0,     1,1,  15,DEFAULT_NUM_LEDS,   0}
 	};
 
-uint8_t * gConfigurables[CONFIGURABLES]={ &CCS.gINITIAL_AMP, &CCS.gROOT_NOTE_OFFSET, &CCS.gDFTIIR, &CCS.gFUZZ_IIR_BITS,
+uint8_t * gConfigurables[CONFIGURABLES]={ &CCS.gINITIAL_AMP, &CCS.gROOT_NOTE_OFFSET, &CCS.gDFTIIR, &CCS.gDFT_UPDATE, &CCS.gFUZZ_IIR_BITS,
 	&CCS.gEQUALIZER_SET,  &CCS.gFILTER_BLUR_PASSES, &CCS.gLOWER_CUTOFF, &CCS.gSEMIBITSPERBIN, &CCS.gMAX_JUMP_DISTANCE, &CCS.gMAX_COMBINE_DISTANCE,
 	&CCS.gAMP1_ATTACK_BITS, &CCS.gAMP1_DECAY_BITS, &CCS.gAMP_1_MULT, &CCS.gAMP2_ATTACK_BITS, &CCS.gAMP2_DECAY_BITS, &CCS.gAMP_2_MULT, &CCS.gMIN_AMP_FOR_NOTE,
 	&CCS.gMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR, &CCS.gNOTE_FINAL_AMP, &CCS.gNOTE_FINAL_SATURATION,
@@ -56,7 +56,7 @@ uint8_t * gConfigurables[CONFIGURABLES]={ &CCS.gINITIAL_AMP, &CCS.gROOT_NOTE_OFF
 	&CCS.gCOLORCHORD_FLIP_ON_PEAK, &CCS.gCOLORCHORD_SHIFT_DISTANCE, &CCS.gCOLORCHORD_SORT_NOTES, &CCS.gCOLORCHORD_LIN_WRAPAROUND, &CCS.gCONFIG_NUMBER,
 	&CCS.gNUM_LIN_LEDS, 0 };
 
-char * gConfigurableNames[CONFIGURABLES] = { "gINITIAL_AMP", "gROOT_NOTE_OFFSET", "gDFTIIR", "gFUZZ_IIR_BITS", "gEQUALIZER_SET",
+char * gConfigurableNames[CONFIGURABLES] = { "gINITIAL_AMP", "gROOT_NOTE_OFFSET", "gDFTIIR","gDFT_UPDATE", "gFUZZ_IIR_BITS", "gEQUALIZER_SET",
 	"gFILTER_BLUR_PASSES", "gLOWER_CUTOFF", "gSEMIBITSPERBIN", "gMAX_JUMP_DISTANCE", "gMAX_COMBINE_DISTANCE", "gAMP1_ATTACK_BITS", "gAMP1_DECAY_BITS",
 	"gAMP_1_MULT", "gAMP2_ATTACK_BITS", "gAMP2_DECAY_BITS", "gAMP_2_MULT", "gMIN_AMP_FOR_NOTE", "gMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR", "gNOTE_FINAL_AMP",
 	"gNOTE_FINAL_SATURATION", "gNERF_NOTE_PORP", "gUSE_NUM_LIN_LEDS", "gSYMMETRY_REPEAT", "gCOLORCHORD_ACTIVE", "gCOLORCHORD_OUTPUT_DRIVER",
