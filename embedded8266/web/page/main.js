@@ -110,6 +110,8 @@ function ToggleOScopePause()
 
 function GotOScope(req,data)
 {
+	var parmsgINITIAL_AMP = Number(document.getElementById('parmsgINITIAL_AMP').value);
+	document.getElementById('parmsgINITIAL_AMPOut').innerHTML = parmsgINITIAL_AMP;
 	var mult = Number(document.getElementById('OSCMultIn').value);
 	var zerolevel = Number(document.getElementById('OSCZeroIn').value);
 	var OSCOPE_ZERO = zerolevel/255;
@@ -209,6 +211,8 @@ function GotDFT(req,data)
 	document.getElementById('DFTMultOut').innerHTML = Math.floor(65535/ mult);
 	var parmsgDFTIIR = Number(document.getElementById('parmsgDFTIIR').value);
 	document.getElementById('parmsgDFTIIROut').innerHTML = parmsgDFTIIR;
+	var parmsgDFTIIR = Number(document.getElementById('parmsgDFT_UPDATE').value);
+	document.getElementById('parmsgDFT_UPDATEOut').innerHTML = parmsgDFTIIR;
 	var parmsgFUZZ_IIR_BITS = Number(document.getElementById('parmsgFUZZ_IIR_BITS').value);
 	document.getElementById('parmsgFUZZ_IIR_BITSOut').innerHTML = parmsgFUZZ_IIR_BITS;
 	var parmsgFILTER_BLUR_PASSES = Number(document.getElementById('parmsgFILTER_BLUR_PASSES').value);
