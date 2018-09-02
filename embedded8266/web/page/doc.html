@@ -1,60 +1,228 @@
-<html>
-<head>
-<title>Colorchord Documentation</title>
-<meta charset="UTF-8">
-</head>
-<body>
-<h2>Colorchord Documentation</h2>
-<h3>Note from music are selected and displayed via LEDs in various ways.</h3>
-<p>Sound is sampled by ADC at around 20KHz.(Still problems
-with running fast ADC and wifi. Output is slightly jittery
-and range which should be 0 to 255 is restricted.)
-</p>
-<p>A Discrete Fourier Transform (DFT) is adjusted via
- parameters gDFTIIR (time of peak decay about 2^DFTIIR * 2^OCTAVES / DFREQ ).<br>
- A fuzzed DFT is controlled by gFUZZ_IIR_BITS (forms an running  average between computed DFT bins each time HandleFrameInfo is called. High values gives slow transition) and gFILTER_BLUR_PASSES (0,1,2 best) controls averaging between adjacent bins. Small values (below 400) are clipped.<br>
-The fuzzed bin is folded to give rFIXBPERO bins representing amalgamated frequencies that are octaves apart.<br>
-</p>
-<p>2^SEMIBITSPERBIN * FIXBPERO determing the range of notes</p>
-<p>Two amplitudes amp1 and amp2 are used which decay at rates controlled by gAMP_1_IIR_BITS and gAMP_2_IIR_BITS. Higher values give slow decay. Peaks of the folded histogram with amp1 above gMIN_AMP_FOR_NOTE become notes. </p>
-<p>Notes last until amp1 decays below 	gMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR</p>
-<p>Notes persist if the frequency does not change too much but are considered new if change by more than
-gMAX_JUMP_DISTANCE and 	gMAX_COMBINE_DISTANCE control this.</p>
-<p>NOTE_FINAL_AMP and NOTE_FINAL_SATURATION determine overall LED display brightness and saturation.</p>
-<dl>
-  <dt>The selected notes can be displayed on a ring of gNUM_LIN_LEDS LEDs in various ways.<br>
-      A linear array of gUSE_NUM_LIN_LEDS LEDs is inserted in the rings depending on gCOLORCHORD_OUTPUT_DRIVER value</dt>
-  <dd>- 0 (see embeddedcommon/embeddedout.c UpdateLinearLEDs) - The note colors are displayed as bands with size proportional to amp1<br>
- Color them according to note_peak_freq with brightness related to amps2</dd>
-  <dd>- 1 - The dominant note colors the complete interval with brightness related to amp2</dd>
-  <dd>- 2 - The dominant note colors an arc whose length is proportional to amp2 and brightness is NOTE_FINAL_AMP. Rotation flips on peaks of bass.</dd>
-  <dd>- 3 - Pattern indepenent of sound</dd>
-</dl>
 
-<dl>
-  <dt>The linear array can be rotated optionally in the ring</dt>
-  <dd>- Every gCOLORCHORD_SHIFT_INTERVAL frames shift (0 no shift, 1 fast, higher values go slower</dd>
-  <dd>- by gCOLORCHORD_SHIFT_DISTANCE (larger values appear faster but also discrete effects if divisor of ring size.</dd>
-  <dd>- Change shift direction on peak of amp2 if gCOLORCHORD_FLIP_ON_PEAK = 1</dd>
-</dl>
 
-<dl>
-  <dt>Control of band order</dt>
-  <dd>- gCOLORCHORD_SORT_NOTES (0 no sort, 1 inc freq, 2 dec amps, 3 dec amps2)</dd>
-  <dd>- gCOLORCHORD_LIN_WRAPAROUND (0 no adjusting, else current led display has minimum deviation to prev)</dd>
-  <dd>- gROOT_NOTE_OFFSET (A produces peak at left side of DFT histogram. This is colored yellow if Offset is 0)<br>
-        .... NOTERANGE/12 gives offset for one semitone making G# have yellow. There are FIXBPERO colors per octave. Using offset 
-        of Color Number * NOTERANGE/FIXBPERO will start with this color. To set a given note to a specific color for example
-        with offset 0 B is red, to make C red use 11*NOTERANGE/12</dd>
-</dl>
+<!DOCTYPE html>
+<html lang="en"><head>
+        <meta charset="UTF-8">
+        <meta name="author" content="Bill Baritompa">
+        <link rel="stylesheet" type="text/css" href="main.css">
+        <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport">
+        <meta name="theme-color" content="#ccc">
+        <title>Colorchord for ESP8266 Documentation</title>
+<style>
+table { width: 100%; }
+td { vertical-align: top; }
+.collapsible { display:none; }
+.inbutton { background-color:blue; }
+input {position: relative;margin-left: 1em;width: 100px;}
+input:after, input:before {position: absolute;top: 1em;color: #aaa;}
+input:before {left:0em; content: attr(min);}
+input:after {right: 0em;content: attr(max);}
+</style>
 
- <dl>
-  <dt>Sound fed to ADC and monitored by Oscilloscope</dt>
-  <dd>- Bias of VCC/2.</dd>
-  <dd>- Scale (using nodemcu is 0 to 3.3 V, but needs adjusting</dd>
-  <dd>- Slider magnifies around VCC/2</dd>
-</dl>
-</body>
-</html>
+    </head>
+    <body>
+        <nav>
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 48 48" style="position:absolute;top:4px;right: 4px;">
+                    <path d="M0 0h48v48h-48z" fill="none"></path>
+                    <path d="M6 36h36v-4h-36v4zm0-10h36v-4h-36v4zm0-14v4h36v-4h-36z"></path>
+                </svg>
+                <h2>Index</h2>
+                <ol>
+<li><a href="#intro">Introduction</a></li>
+<li><a href="#acknow">Acknowlegements</a></li>
+<li><a href="#backgr">Background</a></li>
+<li><a href="#guicont">Gui Controls</a></li>
+<li><a href="#extragui">Extra Gui Controls</a></li>
 
+
+                </ol>
+            </div>
+        </nav>
+        <article>
+
+   <h1 style="font-size:40px;margin-bottom:0;">Colorchord for ESP8266<br>
+    </h1>
+<i style="font-size:0.9em;color:#888;margin-bottom:2em;display:block">Bill Baritompa 24 July, 2018</i>
+
+ <h3 id=intro>Introduction</h3>
+   <div>
+        Control a ring of LEDs with sound.
+   </div>
+   
+   <h3 id=acknow>Acknowlegements</h3>
+   <div>
+        Charles Lohr developed <a href="https://github.com/cnlohr/colorchord">Colorchord</a> in 2010. 
+		He describes its features in this <a href="https://cnlohr.blogspot.com/2010/11/colorchord-sound-lighting.html">blog article</a>.
+	
+	
+	
+   </div>
+   <div>
+        <br>
+   </div>
+   
+   
+   <h3 id=backgr>Background</h3>
+  <div>On branch <b>newfeatures</b> of <a href="https://github.com/bbkiwi/colorchord">my fork of colorchord</a> using branch <b>tmp</b> of <a href="https://github.com/bbkiwi/esp82xx">my fork of  esp82xx</a>  has extended the control gui and added many 
+	LED display features.
+	Parameters control behavior. The Gui allows adjustment of key 
+	parameters via sliders. Parameters are stored in FLASH (initally as defaults) so persist between restarts (if the number of LEDs is changed and code recompiled, the
+	stored configuration specifying how many LEDs to use will NOT change).
+</div>
+
+<div>
+        I used the complete development boards <a href="http://nodemcu.com/index_en.html">NodeMCU DevKit</a> 
+</div>
+
+   <h3 id=backgr>Mathematical Parameters</h3>
+  <div>Certain parameters specified at compile time determine the mathematical set up:  
+  BASE_FREQ gives the lowest frequency to be monitored, DFREQ the sample rate for the ADC, OCTAVES the number of octaves, and FIXBPERO the number of bins per octave. Their values can be seen in the parameter table.<br><br>
+</div>
+<div>Infinite Impulse Response filters: Output = Output + alpha*(Input - Output). Are used extensively and alpha of form 1/2^K implemented via K bit shifting.
+</div>
+   <h3 id=guicont>Gui Controls</h3>
+
+   <div>
+   <ul>
+   	<li>System
+		<ul style="list-style-type:circle">
+		<li>Show Websocket messages/sec. 
+		<li>Pushed: Gives total messages. Signal strength and IP number. 
+		</ul>
+	</li>
+
+	<li>Oscilloscope<br>
+	The microphone signal is biased at about 1.65V to generate an ADC reading of 127. Ideally audio input  should range from 0 to 3.3V to give full 8 bit resolution.  DC is filtered from the signal, glitches caused by web-socket interference partial removed, and digitally amplified.  This is passed to the Discrete Fourier Transform section of the code. This input with the DC offset restored (and clipped between 0 and 255)) is displayed by the oscilloscope.
+		<ul style="list-style-type:circle">
+		<li>Slider controls multiplier and center for display.
+		<li>The amplification faction is the displayed value divided by 8.
+
+		</ul>
+	</li>
+	<li>DFT - Bin Histograms and Controls<br>The bins for each octave are handled as follows. For the highest octave, N = 2<sup>(OCTAVES-1)</sup>*(DFT UPDATE) successive samples are used to compute FIXBPERO complex phasors. The phasors pass thru an IIR filter and their magnitudes give the output bin values. For the next lowest octave, samples are returned via a  FIR filter (at half the sample rate) and N/2 of these are used as above for the bins for that octave. The samples are: (x<sub>1</sub>+2x<sub>2</sub>+x<sub>3</sub>)/4, (x<sub>3</sub>+2x<sub>4</sub>+x<sub>5</sub>)/4, ... This pattern continues. N/4 filtered samples: (x<sub>2</sub>+2x<sub>3</sub>+2x<sub>4</sub>+2x<sub>5</sub>+x<sub>6</sub>)/8, (x<sub>6</sub>+2x<sub>7</sub>+...)/8, ... 
+		<ul style="list-style-type:circle">
+		<li>Menu: DFT, Fuzzed, Clipped, Folded, Octaves and Max.
+		<li>	DFT IIR controls via IIR filter reaction and delay time - 
+				0 very fast, 5 middle, 10 very slow
+		<li>	DFT UPDATE specifies how many sets of 2<sup>(OCTAVES-1)</sup> samples are used to update)
+		<li>DFT fuzzed, the raw bins are clipped below a cutoff, adjusted to compensate for unequal frequency response of the audio circuit,  and IIR filtered to produce fuzzed bins<br>
+		CUT slider moves blue cutoff level in the DFT display.<br> 
+				IIR slider gives reaction and delay time to DFT input
+		<li>DFT Folded: BLURS slider gives how many passes of running average.
+				0 no smoothing, 5 lots of smoothing
+				<li>Octaves histogram display total output in each octave
+				<li>Max bins default to 1, but can be set by sweeping an audio tone over the whole frequency range when in EQUALIZER_SET mode. See parameter section. 
+		</ul>
+	</li>
+	<li>LEDs
+		<ul style="list-style-type:circle">
+		<li>Estimates power assuming ESP8266 draws 100ma with no LED on.
+		</ul>
+	</li>
+	<li>Notes (discrete frequency tones dividing an octave into FIXBPERO parts)<br>
+			They are created from peak frequencies of a minimum adjusted amplitude and further than a minimum jump tolerance from any existing notes.
+		<ul style="list-style-type:circle">
+	 
+		</li><li>SEMIBITSPERBIN slider: log base 2 of granularity of tones.
+			0 keeps the FIXBPERO parts, 3 subdivides in 8 parts
+		</li><li>MAX Jump slider: in tenths of a semitone. Frequences within this 
+			tolerance of an existing note are combined to the existing note.
+		</li><li>MAX Combines: in tenths of semitone. NOT WORKING IN SENSIBLE WAY probably redundant.
+		</li><li>AMP 1 and 2 ATTACK, DELAY and MULT sliders:
+			MULT magnifies or attenuates amplitude which thru IIR filters
+				strengthens (via ATTACK value) or weakens (via DECAY value).
+		The resultant amp<sub>1</sub> is used for creation, destruction and computing proportions of display. Amp<sub>2</sub> is used for strength of display (either brightness or size)
+		</li>
+		</ul>
+	</li>
+	<li>Parameters - can all be specified directly but many are controlled by sliders as above. Only those not covered by sliders are described.
+		<ul style="list-style-type:circle">
+		
+		<li>ROOT_NOTE_OFFSET: Offset in tenths of semitone. Used for setting key of music being colored. A (440Hz) produces peak at left side of DFT folded
+			histogram. This is colored yellow if offset is 0. So offset of 10
+			will make G# yellow, offset of 110 will make A# yellow. C is
+			9 semitones below A, so 90 will make C yellow.
+		</li><li>EQUALIZER_SET: 0 normal use. If set to N, the next 256N samples will be used to 
+		find maximum of each DFT bin. Should play sweep of total frequency. This is used to adjust input frequency response when making fuzzed bins which then make the folded bins. These values can be seen in the MAX display in the DFT section. They can be saved - see CONFIG_NUMBER parameter.
+		</li><li>NOTE_FINAL_AMP: Used to scale output to LEDs and also sets absolute
+			maximum. Gamma correction is applied, so
+			127 is half a bright as 255 (but only about 1/5 the power). 
+		</li><li>NOTE_FINAL_SATURATION: 255 most intense colors. 200 pastel. 0 always
+			pure white.
+		</li><li>NERF_NOTE_PORP: Determines how notes are displayed as intervals. For length
+			proportional to amp, this is minimum percent that will show. So
+			above 50 will only show  the largest amplitude note. If value exceeds 100, the
+			excess determines how many of the top amplitude notes will show. When rainbow
+			(option 254) is displayed this parameters gives percent of rainbow
+			to show. 
+		</li><li>USE_NUM_LIN_LEDS: The number of consecutive leds in a display block.  The block is inserted into the LEDs in various ways.
+		</li><li>SYMMETRY_REPEAT: The LED block will be repeated as equally spaced 
+			as possible the given number of times. 
+		</li><li>COLORCHORD_ACTIVE: If non-zero will be active, otherwise only accepts 
+			over wifi from remote colorchord sending to IP address.
+		</li><li>COLORCHORD_OUTPUT_DRIVER: Specifies various ways notes get mapped to 
+			LEDs in the block. Each note gets an interval of LEDs.<br>
+			Even: The number of LEDs for the note is in proportion to its amp<sub>1</sub>.<br>
+			Odd: The number of LEDs is proportional to the number of notes. So
+				if 3 notes are selected, they each get one third of the number
+				of LEDs used.<br>
+			Their color relates to the notes frequency. The brightness and
+				arrangement on the interval depend on the value of this parameter. 
+			<ul style="list-style-type:none">
+				<li>0,1: brightness proportional to amplitude<sub>2</sub>
+				</li><li>2,3: brightness fixed at NOTE_FINAL_AMP
+					 length from start proportional to amplitude<sub>2</sub>
+				</li><li>4,5: brightness fixed at NOTE_FINAL_AMP at one end 
+					 fades over length from start proportional to amplitude<sub>2</sub>
+				</li><li>6,7: brightness fixed at NOTE_FINAL_AMP in middle 
+					 fadeS to brightness proportional to amplitude<sub>2</sub> at ends
+				</li><li>8,9: brightness proportional to amplitude<sub>2</sub> at middle
+					 fades by factor of 4 at ends
+				</li><li>10,11: brightness fixed at NOTE_FINAL_AMP
+					   width of middle interval proportional to amplitude<sub>2</sub>
+				</li><li>12,13: brightness fixed at NOTE_FINAL_AMP on middle interval of
+					   width proportional to to amplitude<sub>2</sub>, fades either side to 0			
+				</li>
+		</ul>
+		</li><li>COLORCHORD_SHIFT_INTERVAL: 0 no shifting; N every Nth frame a shift
+		</li><li>COLORCHORD_FLIP_ON_PEAK:
+		<ul style="list-style-type:none">
+			<li>0: no flipping; 
+			</li><li>1: flip on peaks of octave_bins[0]; 
+			</li><li>2: flip on peaks of octave_bins[1]; 
+			</li><li>3: flip on sum of previous two etc. 
+			</li><li>255 sum of total amplitude<sub>1</sub> of the notes. 
+			</li>
+			</ul>
+		</li><li>COLORCHORD_SHIFT_DISTANCE: the amount of shifting when done. 
+		</li><li>COLORCHORD_SORT_NOTES: 
+			0 none; 1 ascending freq, 2 descending amp 1; 3 descending amp 2  
+		</li><li>COLORCHORD_LIN_WRAPAROUND: 
+			1 minimizes freq deviation between frames. 
+		</li><li>CONFIG_NUMBER: 0 .. 15 gives the index of 16 default and 16 stored configurations (initially same as defaults) in FLASH. 
+			Specifying a CONFIG_NUMBER, changing parameters and pushing SAVE stores the configuration to flash. LOAD recalls the stored configuration. DEFAULT brings in the default (but does not erase saved configuration). When the Colorchord restarts the last configuration SAVEd will
+			be used. For CONFIG_NUMBER outside this range, SAVE will save the values found when EQUALIZER_SET was bigger than zero, DEFAULT will restore them to all 1, LOAD will bring back saved configuration.  
+		</li><li>The remaining values in the table starting with r can not be changed 
+			during run time and were specified at compile time in user.conf
+			</li>
+			</ul>
+</li>
+</ul>
+</div>
+   
+   
+   
+   
+    
+	<h3 id=extragui>Extra Gui Controls</h3>
+	<div>Glitch Removal and secret control cvg and cvh special commands. 
+	</div>
+
+<hr>
+           
+        </article>
+    
+
+</body></html>
 
