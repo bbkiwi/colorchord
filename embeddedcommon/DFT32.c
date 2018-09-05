@@ -210,15 +210,17 @@ void UpdateOutputBins32()
 #endif
 		//empirical adjust embeddedbins32 via a logistic data so between 0 and 65536 
 #if ADJUST_DFT_WITH_OCTAVE == 1
-		uint8_t rmuxshift = RMUXSHIFTSTART - adjrmuxbits[DFTIIR] + octave;
+		//uint8_t rmuxshift = RMUXSHIFTSTART - adjrmuxbits[DFTIIR] + octave;
+		uint8_t rmuxshift = DFTIIR + octave + 2;
 #else
 		//No adjustment using octave may be too noisy in high octaves
 		//   also get jumps at octave boundarys giving false peaks
-		uint8_t rmuxshift = RMUXSHIFTSTART - adjrmuxbits[DFTIIR];
+		//uint8_t rmuxshift = RMUXSHIFTSTART - adjrmuxbits[DFTIIR];
+		uint8_t rmuxshift = DFTIIR + octave + 2;
 #endif
 		rmux = rmux>>rmuxshift; //*adjstrens[DFTIIR] // if had floating point could refine further
+		rmux = rmux / DFT_UPDATE;
 		embeddedbins32[i] = rmux;
-
 
 #if CHECKOVERFLOW
 		if (rmux > 65535) {

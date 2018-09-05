@@ -69,11 +69,11 @@ void UpdateFreqs()
 	for( i = 0; i < FIXBPERO; i++ )
 	{
 		float frq = pow( 2, (float)i / (float)FIXBPERO) * BASE_FREQ;
-		fbins[i] = ( 65536.0 ) / ( DFREQ ) * frq * 16 + 0.5;
+		fbins[i] = ( 65536.0 ) / ( DFREQ ) * frq * (1<<(OCTAVES-1)) + 0.5;
 	}
 #else
 //TODO this only for FIXBPERO = 24 or 12 could add for 6, 8, 16, 36,48
-	#define PCOMP( f )  (uint16_t)((65536.0)/(DFREQ) * (f * BASE_FREQ) * 16 + 0.5)
+	#define PCOMP( f )  (uint16_t)((65536.0)/(DFREQ) * (f * BASE_FREQ) * (1<<(OCTAVES-1)) + 0.5)
 #if FIXBPERO == 24
 	static const uint16_t fbins[FIXBPERO] = { 
 		PCOMP( 1.000000 ), PCOMP( 1.029302 ), PCOMP( 1.059463 ), PCOMP( 1.090508 ), PCOMP( 1.122462 ), PCOMP( 1.155353 ), 
