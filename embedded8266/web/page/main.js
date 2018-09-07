@@ -112,6 +112,8 @@ function GotOScope(req,data)
 {
 	var parmsgINITIAL_AMP = Number(document.getElementById('parmsgINITIAL_AMP').value);
 	document.getElementById('parmsgINITIAL_AMPOut').innerHTML = parmsgINITIAL_AMP;
+	var parmsgRMUXSHIFT = Number(document.getElementById('parmsgRMUXSHIFT').value);
+	document.getElementById('parmsgRMUXSHIFTOut').innerHTML = parmsgRMUXSHIFT;
 	var mult = Number(document.getElementById('OSCMultIn').value);
 	var zerolevel = Number(document.getElementById('OSCZeroIn').value);
 	var OSCOPE_ZERO = zerolevel/255;

@@ -7,7 +7,6 @@
 #define HPABUFFSIZE 512
 
 #define CCEMBEDDED
-#define RMUXSHIFTSTART 8 // get too small will get overflow, too high loose accuracy of DFT
 
 #ifndef DFREQ
 #define DFREQ 8000
@@ -17,6 +16,7 @@
 #define memset ets_memset
 
 #define INITIAL_AMP		CCS.gINITIAL_AMP
+#define RMUXSHIFT		CCS.gRMUXSHIFT
 #define ROOT_NOTE_OFFSET	CCS.gROOT_NOTE_OFFSET
 #define DFTIIR			CCS.gDFTIIR
 #define DFT_UPDATE		CCS.gDFT_UPDATE
@@ -54,12 +54,12 @@
 struct CCSettings
 {
 	uint8_t gSETTINGS_KEY;
-	uint8_t gINITIAL_AMP;                       //=16  pre-amp muliplier of ADC output
+	uint8_t gINITIAL_AMP;                       // /8 gives pre-amp muliplier of ADC output
+	uint8_t gRMUXSHIFT;             	    // 1  shift adjust in DFT32.c
 	uint8_t gROOT_NOTE_OFFSET; //Set to define what the root note is.  0 = A.
 	uint8_t gDFTIIR;                            //=6
 	uint8_t gDFT_UPDATE;                        //=2 bins updated at this interval from HandleInt
 	uint8_t gFUZZ_IIR_BITS;                     //=3
-	uint8_t gEQUALIZER_SET;                     //=0 when one sweep over freq range to get mic responce
 	uint8_t gFILTER_BLUR_PASSES;                //=5
 	uint8_t gLOWER_CUTOFF;                      //=14 cut off at 256 times this
 	uint8_t gSEMIBITSPERBIN;                    //=3
@@ -85,8 +85,9 @@ struct CCSettings
 	int8_t gCOLORCHORD_SHIFT_DISTANCE; //==0 distance of shift
 	uint8_t gCOLORCHORD_SORT_NOTES; //==0  0 no sort, 1 inc freq, 2 dec amps, 3 dec amps2
 	uint8_t gCOLORCHORD_LIN_WRAPAROUND; //==0  0 no adjusting, else current led display has minimum deviation to prev
-	uint8_t gNUM_LIN_LEDS; // set at compile but can be any value from 1 to 255
 	uint8_t gCONFIG_NUMBER; //=0 from 0 ..NUMBER_STORED_CONFIGURABLES-1
+	uint8_t gNUM_LIN_LEDS; // set at compile but can be any value from 1 to 255
+	uint8_t gEQUALIZER_SET;                     //=0 when one sweep over freq range to get mic responce
 };
 
 extern struct CCSettings CCS;

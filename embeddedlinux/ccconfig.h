@@ -4,7 +4,7 @@
 
 #define CCEMBEDDED
 #define CHECKOVERFLOW 1
-#define RMUXSHIFTSTART 12 // get too small will get overflow, too high loose accuracy of DFT
+#define RMUXSHIFT 3 // get too small will get overflow, too high loose accuracy of DFT
 #define DEBUGPRINT 0
 #define DFTHIST 1
 #define FUZZHIST 0
@@ -25,7 +25,7 @@
 #define ADJUST_DFT_WITH_OCTAVE 1
 #define TIME_LIMIT 6
 #define TIME_SWEEP 3
-#define OCT_PER_SECOND 1.0
+#define OCT_PER_SECOND 1.6
 #define DFT_UPDATE 1 // bigger does not seem better
 
 //#define printf( ... ) fprintf( stderr, __VA_ARGS__ )
@@ -49,7 +49,7 @@ int gEQUALIZER_SET; //=0 from 0 ..NUMBER_STORED_CONFIGURABLES-1
 //You may increase this past 5 but if you do, the amplitude of your incoming
 //signal must decrease.  Increasing this value makes responses slower.  Lower
 //values are more responsive.
-#define DFTIIR 5
+#define DFTIIR 3
 //Cut off zero below when making fuzzed bins from dft bins
 #define LOWER_CUTOFF 0
 //The higher the number the slackier your FFT will be come.

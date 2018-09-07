@@ -172,8 +172,8 @@ void UpdateOutputBins32()
 	printf("--> Update Output Bins \n");
 #endif
 // empirical log_2 of multiplier to adjust
-        static const uint16_t adjrmuxbits[17] = {
-		6, 5, 4, 4, 3, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+//        static const uint16_t adjrmuxbits[17] = {
+//		6, 5, 4, 4, 3, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 //       static const uint16_t adjstrens[17] = {
 //		642, 394, 248, 141, 76, 40, 23, 15, 11, 10, 9, 8, 8, 8, 8, 8, 8};
 //        static const uint16_t adjstrens[17] = {
@@ -210,15 +210,16 @@ void UpdateOutputBins32()
 #endif
 		//empirical adjust embeddedbins32 via a logistic data so between 0 and 65536 
 #if ADJUST_DFT_WITH_OCTAVE == 1
-		//uint8_t rmuxshift = RMUXSHIFTSTART - adjrmuxbits[DFTIIR] + octave;
-		uint8_t rmuxshift = DFTIIR + octave + 2;
+		//uint8_t rmuxshift = RMUXSHIFT - adjrmuxbits[DFTIIR] + octave;
+		uint8_t rmuxshift = RMUXSHIFT + DFTIIR + octave;
 #else
 		//No adjustment using octave may be too noisy in high octaves
 		//   also get jumps at octave boundarys giving false peaks
 		//uint8_t rmuxshift = RMUXSHIFTSTART - adjrmuxbits[DFTIIR];
-		uint8_t rmuxshift = DFTIIR + octave + 2;
+		uint8_t rmuxshift = RMUXSHIFT + DFTIIR;
 #endif
-		rmux = rmux>>rmuxshift; //*adjstrens[DFTIIR] // if had floating point could refine further
+		rmux = rmux<<2; // make a bit bigger
+		rmux = rmux>>rmuxshift; // *adjstrens[DFTIIR] // if had floating point could refine further
 		rmux = rmux / DFT_UPDATE;
 		embeddedbins32[i] = rmux;
 
