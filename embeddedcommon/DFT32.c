@@ -87,10 +87,11 @@ int main()
 
 
 
-uint16_t Sdatspace32A[FIXBINS*2];  //(advances,places)
+uint16_t Sdatspace32A[FIXBINS*2];  //(advances,places) full revolution is 256. 8bits integer part 8bit fractional
 int32_t Sdatspace32B[FIXBINS*2];  //(isses,icses)
 
-//This is updated every time the DFT hits the octavecount, or 1/32 updates.
+//This is updated every time the DFT hits the octavecount, or 1 out of DFT_UPDATE*(1<<OCTAVES) times
+//               which is DFT_UPDATE*(1<<(OCTAVES-1)) samples
 int32_t Sdatspace32BOut[FIXBINS*2];  //(isses,icses)
 
 //Sdo_this_octave is a scheduling state for the running SIN/COS states for
