@@ -41,7 +41,7 @@ input:after {right: 0em;content: attr(max);}
 
    <h1 style="font-size:40px;margin-bottom:0;">Colorchord for ESP8266<br>
     </h1>
-<i style="font-size:0.9em;color:#888;margin-bottom:2em;display:block">Bill Baritompa 24 July, 2018</i>
+<i style="font-size:0.9em;color:#888;margin-bottom:2em;display:block">Bill Baritompa 10 September, 2018</i>
 
  <h3 id=intro>Introduction</h3>
    <div>
@@ -74,11 +74,11 @@ input:after {right: 0em;content: attr(max);}
   <div>Certain parameters specified at compile time determine the mathematical set up:
   BASE_FREQ gives the lowest frequency to be monitored, DFREQ the sample rate for the ADC, OCTAVES the number of octaves, and FIXBPERO the number of bins per octave. Their values can be seen in the parameter table.<br><br>
 </div>
-<div>Infinite Impulse Response filters:   infinite-impulse-response (IIR) single-pole low-pass filter equivalent to a simple RC low pass filter.
+<div>Infinite Impulse Response filters:   An infinite-impulse-response (IIR) single-pole low-pass filter equivalent to a simple RC low pass filter.
 y(n) = (1-&alpha;)y(n-1) + &alpha; x(n) = y(n-1) + &alpha;(x(n) - y(n-1)) where 0 &leq; &alpha; &lt; 1 is the smoothing factor. Let T denote the sampling period (1/DFREQ).
-Equivalent RC = T(1-&alpha;)/&alpha; which is approximately  T/&alpha;  for small &alpha;.
-The cutoff frequency is 1/(2&pi;RC) = &alpha;/(2&pi;T(1-&alpha;)) approximately &alpha;/(2&pi;T).
-Colorchord uses &alpha; of form 1/2<sup>K</sup> implemented via K bit shifting. So cutoff freq is approx 1/(2&pi;T2<sup>K</sup>).
+The equivalent RC = T(1-&alpha;)/&alpha;.
+The cutoff frequency is 1/(2&pi;RC) = &alpha;/(2&pi;T(1-&alpha;)).
+Colorchord uses &alpha; of form 1/2<sup>K</sup> implemented via K bit shifting. So the cutoff freq 1/(2&pi;T(2<sup>K</sup>-1)).
 
 For K = 0, the output is the same as the input.
 As K increases, and the output samples respond more slowly to a change in the input samples. The system has more inertia.
@@ -101,11 +101,13 @@ See <a href="https://en.wikipedia.org/wiki/Low-pass_filter">Low-pass filter</a> 
 	The microphone signal is biased at about 1.65V to generate an ADC reading of 127. Ideally audio input  should range from 0 to 3.3V to give full 8 bit resolution.  DC is filtered from the signal, glitches caused by web-socket interference partial removed, and digitally amplified.  This is passed to the Discrete Fourier Transform section of the code. This input with the DC offset restored (and clipped between 0 and 255)) is displayed by the oscilloscope.
 		<ul style="list-style-type:circle">
 		<li>Slider controls multiplier and center for display.
-		<li>The amplification faction is the displayed value divided by 8.
+		<li>The amplification faction is the displayed value divided by 8. This affects the display and input to DFT routines. 
+		<li>RMUXSHIFT , a multiplication by 2<sup>(2-RMUXSHIFT)</sup> is done in the DFT routine. Lowering RMUXSHIFT by 1 is equivalent to doubling the amplification factor above, but does not affect the display. 
 
 		</ul>
 	</li>
-	<li>DFT - Bin Histograms and Controls<br>The bins for each octave are handled as follows. For the highest octave, N = 2<sup>(OCTAVES-1)</sup>*(DFT UPDATE) successive samples are used to compute FIXBPERO complex phasors. The phasors pass thru an IIR filter and their magnitudes give the output bin values. For the next lowest octave, samples are returned via a  FIR filter (at half the sample rate) and N/2 of these are used as above for the bins for that octave. The samples are: (x<sub>1</sub>+2x<sub>2</sub>+x<sub>3</sub>)/4, (x<sub>3</sub>+2x<sub>4</sub>+x<sub>5</sub>)/4, ... This pattern continues. N/4 filtered samples: (x<sub>2</sub>+2x<sub>3</sub>+2x<sub>4</sub>+2x<sub>5</sub>+x<sub>6</sub>)/8, (x<sub>6</sub>+2x<sub>7</sub>+...)/8, ...
+	<li>DFT - Bin Histograms and Controls<br>The bins for each octave are handled as follows. For the highest octave, N = 
+	(DFT&nbsp;UPDATE)2<sup>(OCTAVES-1)</sup> successive samples are used to compute FIXBPERO complex phasors. The phasors pass thru an IIR filter and their magnitudes give the output bin values. For the next lowest octave, samples are returned via a  FIR filter (at half the sample rate) and N/2 of these are used as above for the bins for that octave. The samples are: (x<sub>1</sub>+2x<sub>2</sub>+x<sub>3</sub>)/4, (x<sub>3</sub>+2x<sub>4</sub>+x<sub>5</sub>)/4, ... This pattern continues. N/4 filtered samples: (x<sub>2</sub>+2x<sub>3</sub>+2x<sub>4</sub>+2x<sub>5</sub>+x<sub>6</sub>)/8, (x<sub>6</sub>+2x<sub>7</sub>+...)/8, ...
 		<ul style="list-style-type:circle">
 		<li>Menu: DFT, Fuzzed, Clipped, Folded, Octaves and Max.
 		<li>	DFT IIR controls via IIR filter reaction and delay time -
@@ -148,8 +150,6 @@ See <a href="https://en.wikipedia.org/wiki/Low-pass_filter">Low-pass filter</a> 
 			histogram. This is colored yellow if offset is 0. So offset of 10
 			will make G# yellow, offset of 110 will make A# yellow. C is
 			9 semitones below A, so 90 will make C yellow.
-		</li><li>EQUALIZER_SET: 0 normal use. If set to N, the next 256N samples will be used to
-		find maximum of each DFT bin. Should play sweep of total frequency. This is used to adjust input frequency response when making fuzzed bins which then make the folded bins. These values can be seen in the MAX display in the DFT section. They can be saved - see CONFIG_NUMBER parameter.
 		</li><li>NOTE_FINAL_AMP: Used to scale output to LEDs and also sets absolute
 			maximum. Gamma correction is applied, so
 			127 is half a bright as 255 (but only about 1/5 the power).
@@ -181,13 +181,15 @@ See <a href="https://en.wikipedia.org/wiki/Low-pass_filter">Low-pass filter</a> 
 				</li><li>4,5: brightness fixed at NOTE_FINAL_AMP at one end
 					 fades over length from start proportional to amplitude<sub>2</sub>
 				</li><li>6,7: brightness fixed at NOTE_FINAL_AMP in middle
-					 fadeS to brightness proportional to amplitude<sub>2</sub> at ends
+					 fades to brightness proportional to amplitude<sub>2</sub> at ends
 				</li><li>8,9: brightness proportional to amplitude<sub>2</sub> at middle
 					 fades by factor of 4 at ends
 				</li><li>10,11: brightness fixed at NOTE_FINAL_AMP
 					   width of middle interval proportional to amplitude<sub>2</sub>
 				</li><li>12,13: brightness fixed at NOTE_FINAL_AMP on middle interval of
 					   width proportional to to amplitude<sub>2</sub>, fades either side to 0
+				</li><li>254: Special rainbow sweep with brightness related to bass. NERF_NOTE_PORP is percent 
+				of rainbow to show. AMP 1 controls brightness. 
 				</li>
 		</ul>
 		</li><li>COLORCHORD_SHIFT_INTERVAL: 0 no shifting; N every Nth frame a shift
@@ -206,10 +208,33 @@ See <a href="https://en.wikipedia.org/wiki/Low-pass_filter">Low-pass filter</a> 
 		</li><li>COLORCHORD_LIN_WRAPAROUND:
 			1 minimizes freq deviation between frames.
 		</li><li>CONFIG_NUMBER: 0 .. 15 are the indices of 16 default and 16 stored configurations in FLASH (initially same as defaults).
-			Specifying a CONFIG_NUMBER, changing parameters and pushing SAVE stores the new configuration to flash. LOAD recalls the stored configuration. DEFAULT brings in the default but does not erase saved configuration. For CONFIG_NUMBER outside this range, SAVE will save the values found when EQUALIZER_SET was bigger than zero, DEFAULT will restore them to all 1, LOAD will bring back saved configuration. When Colorchord restarts the last configuration and last equilizer values SAVEd will be used.
+			Specifying a CONFIG_NUMBER, changing parameters and pushing SAVE stores the new configuration to flash. LOAD recalls the stored configuration. DEFAULT brings in the default but does not erase saved configuration. 
+			<!--<ul style="list-style-type:none">-->
+			<ol start="0">
+			<li>Top Three Amplitude as Proportional Arcs
+			</li><li>Top Amplitude arc length proportional to amplitude, fade, slow spin and flip on total amplitude peaks
+			</li><li>Amplitudes at least 15% as Proportional Arcs on 1/3 of LEDs, fast spin and flip on bass
+			</li><li>Rainbow hues 10% and sweeping and rotating slowly. Bass pulsing brightness
+			</li><li>Top Amplitude arc length proportional to amplitude, fade one side, three fold symmetry slow spin. 
+			</li><li>Top Amplitude arc length proportional to amplitude from middle, three fold symmetry.. 
+			</li><li>Top Three Amplitude as Proportional Arcs, length proportional to amplitude 2.
+			</li><li>Top Three Amplitude as Equal Arcs, length proportional to amplitude 2.
+			</li><li>Folded histogram on LEDs
+			</li><li>When goes quiet gets new not and shows arc proportional to amp. Moves slowly.
+			</li><li>Same as 0 but 2-fold symmetry
+			</li><li>Same as 0 but 3-fold symmetry
+			</li><li>Same as 0 but 4-fold symmetry
+			</li><li>Same as 0 but 5-fold symmetry
+			</li><li>Same as 0 but use equal arcs and slower decay
+			</li><li>Top Amplitude note spins and flips on octave sum
+			</li>
+			</ol>
 		</li><li>The remaining values in the table starting with r can not be changed
 			during run time and were specified at compile time in user.conf
-			</li>
+		</li><li>NUM_LIN_LEDS: The total number of LEDs (1 to 255). 
+		</li><li>EQUALIZER_SET: 0 normal use. If set to N, the next 256N samples (roughly N seconds) will be used to
+		find the maximum of each DFT bin. During this time an equal amplitude sine wave source should play, sweeping through the total frequency range. This is used to compensate for an unequal input frequency response. With this adjustment the fuzzed bins will have a flat response to the same sweeping source. These values can be seen in the MAX display in the DFT section. By setting CONFIG_NUMBER to 16 (or more), SAVE will save these values, DEFAULT will restore them to all 1, LOAD will bring back the saved configuration. When Colorchord restarts the last equalizer values SAVEd will be used.
+		</li>
 			</ul>
 </li>
 </ul>
@@ -231,15 +256,20 @@ See <a href="https://en.wikipedia.org/wiki/Low-pass_filter">Low-pass filter</a> 
 	</li>
 	<li>Wifi Settings can switch to named AP or new Station
 	</li>
-  	<li>Custom Commands<br> Commands are sent via websockets by the gui and also can be sent directly via port 7878 see <a href="https://github.com/bbkiwi/esp82xx/blob/tmp/README.md">Commands</a> section of esp82xx documentation.
+  	<li>Custom Commands<br> Commands are sent via websockets by the gui and also can be sent directly via port 7878 see <a href="https://github.com/bbkiwi/esp82xx/blob/tmp/README.md"><u>Commands</u></a> section of esp82xx documentation. Enter command and press Submit
 		<ul style="list-style-type:circle">
-		<li>Show all important commands</li>
-		<li>Glitch Removal and secret control -DGLITCH_DROP=30 -DGLITCH_COUNT_MAX=255  cvh ddd and cvg xxx change these resp. to ddd and xxx</li>
+		<li>cb0, cb1, ..., cb4 outputs bins (resp. raw, fuzzed, folded, octave and max).</li>
+		<li>cl, cm and cn outputs LEDs, oscilloscope values, notes.</li>
+		<li>csd, csr, css equivalent to DEFAULT, LOAD and SAVE</li>
+		<li>cvr gives all parameters<br>cvw[space][name][tab][value] sets given parameter.(note entering a tab character in a text field is operating system and browser dependent)</li>
+		<li>Glitch Removal set at compile time in user.cfg by -DGLITCH_DROP=30 -DGLITCH_COUNT_MAX=255 can be changed<br>
+		cvh ddd and cvg xxx change these resp. to ddd and xxx</li>
+		<li>cvc dumps all stored configurations from FLASH</li>
 		</ul>
 	</li>
 	<li>GPIOs
 		<ul style="list-style-type:circle">
-		<li>Show WARN GPIO 0 will Restore and Reboot back to AP</li>
+		<li>Note setting GPIO 0 will Restore and Reboot back to AP</li>
 		<li>GPIO 2 has LED on nodemcu</li>
 		</ul>
   	</li>

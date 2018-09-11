@@ -332,6 +332,7 @@ TODO in anticipation of refactoring
 					ledAmpOut[j] = (k<<16) < ((uint32_t)local_peak_amps2[i]*porpamps[i]) ?
 							NOTE_FINAL_AMP - (uint32_t)NOTE_FINAL_AMP*(k<<16)/ local_peak_amps2[i] / porpamps[i] : 0;
 					break;
+//TODO FIX 6,7,8,9 not fading nicely from middle like 4 does from end
 				case 6 :
 				case 7 :
 					ledAmpOut[j] = (k<<1)<porpamps[i] ?
