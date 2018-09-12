@@ -1,4 +1,8 @@
-#ESP8266 ColorChord
+#ESP8266 ColorChord for Bryn's birthday
+
+Connect to Gui via AP
+If connect to station Gui at eps_2c8167.local
+  or eps_2c8167.local/index2.html
 
 ## WARNING THIS IS UNDER CONSTRUCTION
 
