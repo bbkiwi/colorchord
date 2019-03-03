@@ -120,21 +120,28 @@ int main( int argc, char ** argv )
 
 
 	int isamp=0; // initial sample index
+#if INPUT_TYPE == 1
 	for (i=0; i<TIME_LIMIT*DFREQ; i++)
-//	while( ( ci = getchar() ) != EOF ) // streaming input rates limits speed of loop
+#else
+	while( ( ci = getchar() ) != EOF ) // streaming input rates limits speed of loop
+#endif
 	{
 
+#if INPUT_TYPE == 0
 // get sample from input
-//		int cs = ci - 0x80;
+		int cs = ci - 0x80;
+#else
 		int cs;
 // generate sample from functional form
 		float octpersec = OCT_PER_SECOND;
-		if (isamp < TIME_SWEEP*DFREQ) {
-			cs = 127.0 * sinf(2.0/octpersec/log(2)*3.14159*55.0*pow(2.0,((float)isamp*octpersec/DFREQ))); //Chirp start 55 Hz
+		if ((isamp < TIME_SWEEP*DFREQ) & (octpersec != 0)) {
+			cs = 127.0 * sinf(2.0/octpersec/log(2)*3.14159*CHIRP_START*pow(2.0,((float)isamp*octpersec/DFREQ)));
 		} else {
-			cs = 127.0 * sinf(2.0*3.14159*55.0*(float)isamp/DFREQ*pow(2.0,(TIME_SWEEP*octpersec))); //stay at final freq of chirp
+			cs = 127.0 * sinf(2.0*3.14159*CHIRP_START*(float)isamp/DFREQ*pow(2.0,(TIME_SWEEP*octpersec))); //stay at final freq of chirp
 		}
-//		int cs = 127.0 * sinf(2.0*3.14159*110.0*(float)i/DFREQ);
+//		int cs = 127.0 * sinf(2.0*3.14159*750.0*(float)i/DFREQ);
+#endif
+
 		isamp++;
 		if (isamp>TIME_LIMIT*DFREQ) return 0; // stop after TIME_LIMIT secs
 #ifdef USE_32DFT
