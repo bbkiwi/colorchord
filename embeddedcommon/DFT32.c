@@ -232,6 +232,7 @@ void UpdateOutputBins32()
 	}
 }
 
+#if PROGRESSIVE_DFT
 static void HandleInt( int16_t sample )
 {
 	int i;
@@ -298,11 +299,11 @@ static void HandleInt( int16_t sample )
 		localipl = *(dsA) >> 8;
 		*(dsA++) += adv;
 		*(dsB) += (Ssinonlytable[localipl] * filteredsample);
-//#if CHECKOVERFLOW
-//		if ((*(dsB)>>16) > 65535) {
-//			fprintf( stderr, "Overflow potential\n" );
-//		}
-//#endif
+#if CHECKOVERFLOW
+		if ((*(dsB)>>16) > 65535) {
+			fprintf( stderr, "Overflow potential\n" );
+		}
+#endif
 		dsB++;
 		//Get the cosine (1/4 wavelength out-of-phase with sin)
 		localipl += 64;
@@ -341,8 +342,71 @@ int SetupDFTProgressive32()
 	return 0;
 }
 
+#else
+// Here is simple DFT on all bins
+static void HandleInt( int16_t sample )
+{
+	int i;
+	uint16_t adv;
+	uint8_t localipl;
 
+	UpdateCount++;
+	if (UpdateCount >= DFT_UPDATE)
+	{
+		//Special: This is when we can update everything.
+		//This gets run once out of every DFT_UPDATE times.
+		//It handles updating part of the DFT.
+		int32_t * bins = &Sdatspace32B[0];
+		int32_t * binsOut = &Sdatspace32BOut[0];
+		UpdateCount=0;
+#if SHOWSAMP
+		printf(" update binsOut and lower bins\noct %d: ",SHOWSAMP-1 );
+#endif
+		for( i = 0; i < FIXBINS; i++ )
+		{
+			//First for the SIN then the COS.
+			int32_t val = *(bins);
+			*(binsOut++) = val;
+			*(bins++) -= val>>DFTIIR;
+			val = *(bins);
+			*(binsOut++) = val;
+			*(bins++) -= val>>DFTIIR;
+		}
+	}
 
+	// process sample for all octaves
+	uint16_t * dsA = &Sdatspace32A[0];
+	int32_t * dsB = &Sdatspace32B[0];
+
+#if SHOWSAMP
+	printf("%d ", sample);
+#endif
+	for( i = 0; i < FIXBINS; i++ )
+	{
+		adv = *(dsA++);
+		localipl = *(dsA) >> 8;
+		*(dsA++) += adv;
+		*(dsB) += (Ssinonlytable[localipl] * sample);
+#if CHECKOVERFLOW
+		if ((*(dsB)>>16) > 65535) {
+			fprintf( stderr, "Overflow potential\n" );
+		}
+#endif
+		dsB++;
+		//Get the cosine (1/4 wavelength out-of-phase with sin)
+		localipl += 64;
+		*(dsB++) += (Ssinonlytable[localipl] * sample);
+	}
+}
+
+int SetupDFTProgressive32()
+{
+	return 0;
+}
+
+#endif
+
+#if PROGRESSIVE_DFT
 void UpdateBins32( const uint16_t * frequencies )
 {
 	int i;
@@ -351,9 +415,28 @@ void UpdateBins32( const uint16_t * frequencies )
 	{
 		if (imod >= FIXBPERO) imod=0;
 		uint16_t freq = frequencies[imod];
-		Sdatspace32A[i*2] = freq;// / oneoveroctave;
+		Sdatspace32A[i*2] = freq;
 	}
 }
+#else
+void UpdateBins32( const uint16_t * frequencies )
+{
+	int i;
+	int imod = 0;
+	int oct = 0;
+	for( i = 0; i < FIXBINS; i++, imod++ )
+	{
+		if (imod >= FIXBPERO)
+		{
+			imod=0;
+			oct += 1;
+		}
+		uint16_t freq = frequencies[imod];
+		Sdatspace32A[i*2] = freq >> (OCTAVES-1-oct);
+	}
+}
+#endif
+
 
 void PushSample32( int16_t dat )
 {
@@ -377,7 +460,9 @@ void PushSample32( int16_t dat )
 	olddat = dat;
 #endif
 	HandleInt( dat );
+#if PROGRESSIVE_DFT
 	HandleInt( dat );
+#endif
 }
 
 

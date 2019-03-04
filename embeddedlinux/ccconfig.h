@@ -1,7 +1,7 @@
 #ifndef _CCCONFIG_H
 #define _CCCONFIG_H
 
-
+#define PROGRESSIVE_DFT 0
 #define CCEMBEDDED
 #define CHECKOVERFLOW 1
 #define RMUXSHIFT 3 // get too small will get overflow, too high loose accuracy of DFT
@@ -23,12 +23,12 @@
 #define ROOT_NOTE_OFFSET 0
 #define SYMMETRY_REPEAT 0
 #define EQUALIZER_SET gEQUALIZER_SET
-#define ADJUST_DFT_WITH_OCTAVE 1
+#define ADJUST_DFT_WITH_OCTAVE 0
 #define TIME_LIMIT 6
 #define TIME_SWEEP 3
-#define CHIRP_START 7500 //frequency chirp starts
+#define CHIRP_START 750 //frequency chirp starts
 #define OCT_PER_SECOND 0 // 1.6 (if 0 will have constant sin wave of freq CHIRP_START
-#define DFT_UPDATE 1 // bigger does not seem better
+#define DFT_UPDATE 16 // bigger does not seem better
 
 //#define printf( ... ) fprintf( stderr, __VA_ARGS__ )
 

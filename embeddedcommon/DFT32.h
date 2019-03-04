@@ -21,6 +21,10 @@
 
 //You can # define these to be other things elsewhere.
 
+#ifndef PROGRESSIVE_DFT
+#define PROGRESSIVE_DFT 1
+#endif
+
 // Will used simple approximation of norm rather than
 //   sum squares and approx sqrt
 #ifndef APPROXNORM
