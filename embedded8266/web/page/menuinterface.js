@@ -88,7 +88,7 @@ function StartWebSocket()
 	websocket.binaryType = 'arraybuffer';
 	websocket.onopen = function(evt) { onOpen(evt) };
 	websocket.onclose = function(evt) { onClose(evt) };
-	websocket.onmessage = function(evt) { onMessage(evt) };
+	websocket.onmessage = function(evt) { startDelayedonMessage(evt) };
 	websocket.onerror = function(evt) { onError(evt) };
 }
 
@@ -135,15 +135,19 @@ function Ticker()
 	}
 }
 
+function startDelayedonMessage(evt)
+{
+  setTimeout(onMessage, 10, evt) //wait  before calling onMessage
+}
 
 function onMessage(evt)
 {
 	//This delay slows down the rate of all message responses to 50 Hz
 	//which seems to not cause much interferance
 	//Too fast rate was causing interferance with ADC.
-	var i;
-	for (i=0; i<0xffffff;i++) {
-	}
+	//var i;
+	//for (i=0; i<0xffffff;i++) {
+	//}
 
 	msg++;
 
