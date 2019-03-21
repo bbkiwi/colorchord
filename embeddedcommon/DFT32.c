@@ -103,7 +103,7 @@ static uint8_t Sdo_this_octave[BINCYCLE];
 
 static int32_t Saccum_octavebins[OCTAVES];
 static uint8_t Swhichoctaveplace;
-static int8_t UpdateCount = -1;
+static uint8_t UpdateCount = 0;
 
 
 //
@@ -349,35 +349,22 @@ static void HandleInt( int16_t sample )
 	int i;
 	uint16_t adv;
 	uint8_t localipl;
+	int32_t val;
+	uint16_t * dsA;
+	int32_t * bins;
+	int32_t * binsOut;
 
+	// process sample for all bins
+        //  and every DFT_UPDATE times update binsOut and attenuate bins via DFTIIR
 	UpdateCount++;
+	dsA = &Sdatspace32A[0];
+	bins = &Sdatspace32B[0];
+
+
 	if (UpdateCount >= DFT_UPDATE)
 	{
-		//Special: This is when we can update everything.
-		//This gets run once out of every DFT_UPDATE times.
-		//It handles updating part of the DFT.
-		int32_t * bins = &Sdatspace32B[0];
-		int32_t * binsOut = &Sdatspace32BOut[0];
-		UpdateCount=0;
-#if SHOWSAMP
-		printf(" update binsOut and lower bins\noct %d: ",SHOWSAMP-1 );
-#endif
-		for( i = 0; i < FIXBINS; i++ )
-		{
-			//First for the SIN then the COS.
-			int32_t val = *(bins);
-			*(binsOut++) = val;
-			*(bins++) -= val>>DFTIIR;
-			val = *(bins);
-			*(binsOut++) = val;
-			*(bins++) -= val>>DFTIIR;
-		}
+		binsOut = &Sdatspace32BOut[0];
 	}
-
-	// process sample for all octaves
-	uint16_t * dsA = &Sdatspace32A[0];
-	int32_t * dsB = &Sdatspace32B[0];
-
 #if SHOWSAMP
 	printf("%d ", sample);
 #endif
@@ -386,16 +373,34 @@ static void HandleInt( int16_t sample )
 		adv = *(dsA++);
 		localipl = *(dsA) >> 8;
 		*(dsA++) += adv;
-		*(dsB) += (Ssinonlytable[localipl] * sample);
+		val = *(bins);
+		if (UpdateCount >= DFT_UPDATE)
+		{
+			*(binsOut++) = val;
+			val -= val>>DFTIIR;
+		}
 #if CHECKOVERFLOW
-		if ((*(dsB)>>16) > 65535) {
+		*(bins) = val + (Ssinonlytable[localipl] * sample);
+		if ((*(bins)>>16) > 65535) {
 			fprintf( stderr, "Overflow potential\n" );
 		}
+		bins++;
+#else
+		*(bins++) = val + (Ssinonlytable[localipl] * sample);
 #endif
-		dsB++;
 		//Get the cosine (1/4 wavelength out-of-phase with sin)
 		localipl += 64;
-		*(dsB++) += (Ssinonlytable[localipl] * sample);
+		val = *(bins);
+		if (UpdateCount >= DFT_UPDATE)
+		{
+			*(binsOut++) = val;
+			val -= val>>DFTIIR;
+		}
+		*(bins++) = val + (Ssinonlytable[localipl] * sample);
+	}
+	if (UpdateCount >= DFT_UPDATE)
+	{
+		UpdateCount = 0;
 	}
 }
 
