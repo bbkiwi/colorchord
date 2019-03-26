@@ -14,6 +14,13 @@
 #include "embeddedout.h"
 #include <math.h>
 #include <limits.h>
+
+#if SHOWTIME
+#include <time.h>
+struct timespec start, stop;
+int timecount = 0;
+#endif
+
 struct sockaddr_in servaddr;
 int sock;
 
@@ -99,6 +106,7 @@ int main( int argc, char ** argv )
 	connect( sock, (struct sockaddr *)&servaddr, sizeof(servaddr) );
 
 	InitColorChord(); // bb changed from Init() which does not seem to exist;
+	printf("%i\n", FIXBINS);
 
 	// set up these to default of 1 as not set up from saved settings as in embedded8266
 	for( i = 0; i < FIXBINS; i++ )
@@ -144,11 +152,33 @@ int main( int argc, char ** argv )
 
 		isamp++;
 		if (isamp>TIME_LIMIT*DFREQ) return 0; // stop after TIME_LIMIT secs
+
+#if SHOWTIME
+		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &start);
+#endif
+
 #ifdef USE_32DFT
 		//PushSample32( ((int8_t)cs)*32 );
 		PushSample32( ((int8_t)cs) );
 #else
 		Push8BitIntegerSkippy( (int8_t)cs );
+#endif
+
+#if SHOWTIME
+		clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &stop);
+		double result = (stop.tv_sec - start.tv_sec) * 1e6 + (stop.tv_nsec - start.tv_nsec) / 1e3;    // in microseconds
+		// Some much larger times but probably artifact of measuring or virtual machine
+		//if (result > 0.8)
+		//{
+		//	printf("%i %i %f\n", isamp, cs, result);
+		//}
+		// Can run ./showlivehist to see animation of times.
+		printf("%f ", result - 0.443); // .443 was time if nothing between start and stop clock so overheads for getting time
+		if (timecount++ == 128)
+		{
+			printf("\n");
+			timecount = 0;
+		}
 #endif
 		wh++;
 		if( wh >= samplesPerHandleInfo )

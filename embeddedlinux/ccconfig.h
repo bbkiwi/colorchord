@@ -1,34 +1,35 @@
 #ifndef _CCCONFIG_H
 #define _CCCONFIG_H
 
-#define PROGRESSIVE_DFT 0
+#define PROGRESSIVE_DFT 0 //  if 1 should have DFT_UPDATE 1 or so, and ADJUST_DFT_WITH_OCTAVE 1. If 0 DFT_UPDATE 16 - 255, and ADJUST_DFT_WITH_OCTAVE 0
 #define CCEMBEDDED
-#define CHECKOVERFLOW 1
+#define CHECKOVERFLOW 0
 #define RMUXSHIFT 3 // get too small will get overflow, too high loose accuracy of DFT
 #define INPUT_TYPE 1 // 1 generate input from function, 0 input from read
 #define DEBUGPRINT 0
-#define DFTHIST 1
+#define DFTHIST 0
 #define FUZZHIST 0
 #define FOLDHIST 0
 #define DFTSAMPLE 0
 #define SHOWSAMP 0     // > 0 shows filtered samples for octave SHOWSAMP-1
 #define SHOWNOTES 0
+#define SHOWTIME 1 //Gives time to process each sample for profiling
 #define RING
 #define LEDS_PER_ROW 16
 #define NUM_LIN_LEDS 60
 #define USE_NUM_LIN_LEDS 60
-#define DFREQ 4000 // Need to set in makefile too
+#define DFREQ 8000 // Need to set in makefile too if actually sampling sound, if generation fcn no need
 #define NOTE_FINAL_AMP  100		//Final brightness Number from 0...255
 #define NOTE_FINAL_SATURATION  255	//Final saturation Number from 0...255
 #define ROOT_NOTE_OFFSET 0
 #define SYMMETRY_REPEAT 0
 #define EQUALIZER_SET gEQUALIZER_SET
-#define ADJUST_DFT_WITH_OCTAVE 0
+#define ADJUST_DFT_WITH_OCTAVE 1 // 1 when PROGRESSIVE_DFT 1, else 0 when PROGRESSIVE_DFT 0
 #define TIME_LIMIT 6
 #define TIME_SWEEP 3
-#define CHIRP_START 750 //frequency chirp starts
+#define CHIRP_START 1580 //frequency chirp starts
 #define OCT_PER_SECOND 0 // 1.6 (if 0 will have constant sin wave of freq CHIRP_START
-#define DFT_UPDATE 16 // bigger does not seem better
+#define DFT_UPDATE 16  //1 when PROGRESSIVE_DFT 1 bigger does not seem better, 16 times this for PROGRESSIVE_DFT 0
 
 //#define printf( ... ) fprintf( stderr, __VA_ARGS__ )
 
@@ -47,7 +48,7 @@ int gEQUALIZER_SET; //=0 from 0 ..NUMBER_STORED_CONFIGURABLES-1
 #define COLORCHORD_LIN_WRAPAROUND 0    // 0 no adjusting, else current led display has minimum deviation to prev
 
 #define OCTAVES  5
-#define FIXBPERO 24
+#define FIXBPERO 48
 //You may increase this past 5 but if you do, the amplitude of your incoming
 //signal must decrease.  Increasing this value makes responses slower.  Lower
 //values are more responsive.
