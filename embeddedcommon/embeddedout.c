@@ -13,6 +13,7 @@ int16_t ledFreqOutOld[MAX_NUM_LIN_LEDS];
 uint32_t flip_amount_prev = 0;
 int diff_flip_amount_prev = 0;
 int rot_dir = 1; // initial rotation direction 1
+int move_on_peak = 0;
 int16_t ColorCycle =0;
 #define DECREASING 2
 #define INCREASING 1
@@ -173,6 +174,7 @@ TODO in anticipation of refactoring
 
 	// Options here of what to use for flipping
 	// 255 total amplitude of notes, 1 octave_bin[0], 2 octave_bin[1], 3 octave_bin[0]+ocatave_bin[1] etc.
+	// possible BUG if OCTAVES is 8 or more
 	flip_amount = 0;
 	if (COLORCHORD_FLIP_ON_PEAK == 0) {
 	} else if (COLORCHORD_FLIP_ON_PEAK == 255) {
@@ -410,6 +412,9 @@ TODO in anticipation of refactoring
 	if (COLORCHORD_FLIP_ON_PEAK ) {
 		if (diff_flip_amount_prev <= 0 && diff_flip_amount > 0) {
 			rot_dir *= -1;
+			move_on_peak = 1;
+		} else {
+			move_on_peak = 0;
 		}
 	} else rot_dir = 1;
 
@@ -417,8 +422,12 @@ TODO in anticipation of refactoring
 	// now every COLORCHORD_SHIFT_INTERVAL th frame
 	if (COLORCHORD_SHIFT_INTERVAL != 0 ) {
 		if ( gFRAMECOUNT_MOD_SHIFT_INTERVAL == 0 ) {
-			gROTATIONSHIFT += rot_dir * COLORCHORD_SHIFT_DISTANCE;
-		        //printf("tna %d dfap dfa %d %d rot_dir %d, j shift %d\n", total_note_a, diff_flip_amount_prev,  diff_flip_amount, rot_dir, j);
+			if (COLORCHORD_FLIP_ON_PEAK & (1<<5) ) {
+				gROTATIONSHIFT += move_on_peak * COLORCHORD_SHIFT_DISTANCE;
+				//printf("tna %d dfap dfa %d %d rot_dir %d, j shift %d\n", total_note_a, diff_flip_amount_prev,  diff_flip_amount, rot_dir, j);
+			} else {
+				gROTATIONSHIFT += rot_dir * COLORCHORD_SHIFT_DISTANCE;
+			}
 		}
 	} else {
 		gROTATIONSHIFT = 0; // reset

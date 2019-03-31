@@ -199,12 +199,12 @@ See <a href="https://en.wikipedia.org/wiki/Low-pass_filter">Low-pass filter</a> 
 				</li>
 		</ul>
 		</li><li>COLORCHORD_SHIFT_INTERVAL: 0 no shifting; N every Nth frame a shift
-		</li><li>COLORCHORD_FLIP_ON_PEAK:
+		</li><li>COLORCHORD_FLIP_ON_PEAK: Flips or shifts on peak (NOTE: shift encoding only works for 5 octaves)
 		<ul style="list-style-type:none">
 			<li>0: no flipping;
-			</li><li>1: flip on peaks of octave_bins[0];
-			</li><li>2: flip on peaks of octave_bins[1];
-			</li><li>3: flip on sum of previous two etc.
+			</li><li>1: flip (33: shift) on peaks of octave_bins[0];
+			</li><li>2: flip (34: shift) on peaks of octave_bins[1];
+			</li><li>3: flip (35: shift) on sum of previous two etc.
 			</li><li>255 sum of total amplitude<sub>1</sub> of the notes.
 			</li>
 			</ul>
