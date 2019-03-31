@@ -59,7 +59,7 @@ RMUX SHIFT  <input id="parmsgRMUXSHIFT" type="range" value="3" max="8" min="0" s
 <output id="DFTMultOut"></output> is top value<br>
 DFT IIR  <input id="parmsgDFTIIR" type="range" value="6" max="16" min="0" step="1" onchange="ChangeParam(this)">
 <output id="parmsgDFTIIROut"></output><br>
-DFT UPDATE  <input id="parmsgDFT_UPDATE" type="range" value="2" max="16" min="1" step="1" onchange="ChangeParam(this)">
+DFT UPDATE  <input id="parmsgDFT_UPDATE" type="range" value="2" max="{{PAGE_DUP_MAX}}" min="1" step="1" onchange="ChangeParam(this)">
 <output id="parmsgDFT_UPDATEOut"></output><br>
 FUZZ CUT  <input id="parmsgLOWER_CUTOFF" type="range" value="10" max="255" min="0" step="1" onchange="ChangeParam(this)">
 <output id="parmsgLOWER_CUTOFFOut"></output><br>

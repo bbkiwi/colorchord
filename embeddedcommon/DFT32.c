@@ -210,7 +210,7 @@ void UpdateOutputBins32()
 		rmux = SquareRootRounded( rmux );
 #endif
 		//empirical adjust embeddedbins32 via a logistic data so between 0 and 65536 
-#if ADJUST_DFT_WITH_OCTAVE == 1
+#if ADJUST_DFT_WITH_OCTAVE == 1 && PROGRESSIVE_DFT == 1
 		//uint8_t rmuxshift = RMUXSHIFT - adjrmuxbits[DFTIIR] + octave;
 		uint8_t rmuxshift = RMUXSHIFT + DFTIIR + octave;
 #else

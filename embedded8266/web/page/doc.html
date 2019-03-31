@@ -41,7 +41,7 @@ input:after {right: 0em;content: attr(max);}
 
    <h1 style="font-size:40px;margin-bottom:0;">Colorchord for ESP8266<br>
     </h1>
-<i style="font-size:0.9em;color:#888;margin-bottom:2em;display:block">Bill Baritompa 10 September, 2018</i>
+<i style="font-size:0.9em;color:#888;margin-bottom:2em;display:block">Bill Baritompa 31 March, 2019</i>
 
  <h3 id=intro>Introduction</h3>
    <div>
@@ -85,6 +85,13 @@ As K increases, and the output samples respond more slowly to a change in the in
 
 See <a href="https://en.wikipedia.org/wiki/Low-pass_filter">Low-pass filter</a> and
 <a href="https://en.wikipedia.org/wiki/RC_circuit">RC circuit</a> on wikipedia.
+
+<h3 id=backgr>DFT Implementation</h3>
+  <div>With compile option PROGRESSIVE_DFT==1 (as in original CC), the highest octave is processed using N =
+	(DFT&nbsp;UPDATE)2<sup>(OCTAVES-1)</sup> successive samples to compute FIXBPERO complex phasors. The phasors pass thru an IIR filter and their magnitudes give the output bin values. For the next lowest octave, samples are returned via a  FIR filter (at half the sample rate) and N/2 of these are used as above for the bins for that octave. The samples are: (x<sub>1</sub>+2x<sub>2</sub>+x<sub>3</sub>)/4, (x<sub>3</sub>+2x<sub>4</sub>+x<sub>5</sub>)/4, ... This pattern continues. N/4 filtered samples: (x<sub>2</sub>+2x<sub>3</sub>+2x<sub>4</sub>+2x<sub>5</sub>+x<sub>6</sub>)/8, (x<sub>6</sub>+2x<sub>7</sub>+...)/8, ...<br><br>
+	With PROGRESSIVE_DFT==0, all (OCTAVES)(FIXBPERO) bins are processed using N =(DFT&nbsp;UPDATE) unfiltered audio samples at the full sample rate.<br><br>
+</div>
+
 </div>
    <h3 id=guicont>Gui Controls</h3>
 
@@ -106,13 +113,12 @@ See <a href="https://en.wikipedia.org/wiki/Low-pass_filter">Low-pass filter</a> 
 
 		</ul>
 	</li>
-	<li>DFT - Bin Histograms and Controls<br>The bins for each octave are handled as follows. For the highest octave, N = 
-	(DFT&nbsp;UPDATE)2<sup>(OCTAVES-1)</sup> successive samples are used to compute FIXBPERO complex phasors. The phasors pass thru an IIR filter and their magnitudes give the output bin values. For the next lowest octave, samples are returned via a  FIR filter (at half the sample rate) and N/2 of these are used as above for the bins for that octave. The samples are: (x<sub>1</sub>+2x<sub>2</sub>+x<sub>3</sub>)/4, (x<sub>3</sub>+2x<sub>4</sub>+x<sub>5</sub>)/4, ... This pattern continues. N/4 filtered samples: (x<sub>2</sub>+2x<sub>3</sub>+2x<sub>4</sub>+2x<sub>5</sub>+x<sub>6</sub>)/8, (x<sub>6</sub>+2x<sub>7</sub>+...)/8, ...
+	<li>DFT - Bin Histograms and Controls<br>The bins for each octave are handled as follows:<br><br>
 		<ul style="list-style-type:circle">
 		<li>Menu: DFT, Fuzzed, Clipped, Folded, Octaves and Max.
 		<li>	DFT IIR controls via IIR filter reaction and delay time -
 				0 very fast, 5 middle, 10 very slow
-		<li>	DFT UPDATE specifies how many sets of 2<sup>(OCTAVES-1)</sup> samples are used to update)
+		<li>	DFT UPDATE in the case of PROGRESSIVE_DFT==1, specifies how many sets of 2<sup>(OCTAVES-1)</sup> samples are used to update. While for PROGRESSIVE_DFT==0 specifies how many samples.
 		<li>DFT fuzzed, the raw bins are clipped below a cutoff, adjusted to compensate for unequal frequency response of the audio circuit,  and IIR filtered to produce fuzzed bins<br>
 		CUT slider moves blue cutoff level in the DFT display.<br>
 				IIR slider gives reaction and delay time to DFT input

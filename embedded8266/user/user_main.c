@@ -190,7 +190,7 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 			// Can get stuck if somehow get very large samp_prior, then samp_centered get quiet.
 			// So have counter to prevent this
 
-			if (samp_prior - samp_centered > glitch_drop) //drop happened
+			if (samp_prior - samp_centered >= glitch_drop) //drop happened
 			{
 				samp_adjustment += samp_prior - samp_centered;
 				glitch_count = 0;
@@ -201,7 +201,7 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 			}
 			samp_prior = samp_centered;
 			glitch_count++;
-			if (glitch_count > glitch_count_max) samp_adjustment = 0;
+			if (glitch_count >= glitch_count_max) samp_adjustment = 0;
 
 			samp_adjusted = samp_centered + samp_adjustment;
 
