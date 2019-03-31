@@ -12,6 +12,10 @@
 #define DFREQ 8000
 #endif
 
+#ifndef START_INACTIVE
+#define START_INACTIVE 0
+#endif
+
 #define memcpy ets_memcpy
 #define memset ets_memset
 
