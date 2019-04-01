@@ -210,12 +210,12 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 			// bit accuracy, INITIAL_AMP of 32 will make full range, but still steppy data
 			samp_adjusted = (samp_adjusted * INITIAL_AMP)>>3;
 			// amplifying by 2^A is equivalent to dropping RMUXSHIFTSTART in cconfig.h by A
-			PushSample32(samp_adjusted);
+
 
 //			sounddatacopy[soundtail] = median_filter(samp); //can't get to work
 			int32_t samp_mean = (samp_iir>>10);
-			int32_t samp_oscope = samp_adjusted + samp_mean;
 
+			int32_t samp_oscope = samp_adjusted + samp_mean;
 			// clip for oscope
 			if (samp_oscope < 0)
 			{
@@ -232,6 +232,9 @@ static void ICACHE_FLASH_ATTR procTask(os_event_t *events)
 
 			soundtail = (soundtail+1)&(HPABUFFSIZE-1);
 
+			if ( COLORCHORD_OUTPUT_DRIVER == 253) return;
+
+			PushSample32(samp_adjusted);
 			wh++;
 			if( wh >= samplesPerHandleInfo )
 			{

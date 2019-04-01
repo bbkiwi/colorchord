@@ -473,8 +473,8 @@ function GotNotes(req,data)
 
 		// use complementary color for text
 		ctx.fillStyle = CCColorDetail( peak + globalParams["rNOTERANGE"]/2 );
-		// in gui display note as tenths of semitone, so octave is 0 to 119
-		ctx.fillText( Math.floor(peak/NOTERANGE*119), 80, i*25 + 20 );
+		// in gui display note as tenths of semitone, so octave is 0 to 120
+		ctx.fillText( Math.floor(peak/NOTERANGE*120), 80, i*25 + 20 );
 		ctx.fillText( amped, 171, i*25 + 20 );
 		ctx.fillText( amped2, 430, i*25 + 20 );
 	}

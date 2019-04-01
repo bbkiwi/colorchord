@@ -475,63 +475,65 @@ void HandleFrameInfo()
 	printf( "\n" );
 #endif
 
-	//Now we need to handle combining notes.
+//Now we need to handle combining notes.
 //TODO need major rethink here. As is highly depending on order. When two notes combine
 // They get an interpolated frequency which then might be 'close' to other notes etc.
-	for( i = 0; i < MAXNOTES; i++ )
-	for( j = 0; j < i; j++ )
-	{
-		//We'd be combining nf2 (j) into nf1 (i) if they're close enough.
-		int16_t nf1 = note_peak_freqs[i];
-		int16_t nf2 = note_peak_freqs[j];
-		int16_t distance = nf1 - nf2;
-
-		if( nf1 < 0 || nf2 < 0 ) continue;
-
-		if( distance < 0 ) distance = -distance;
-
-		//If it wraps around above the halfway point, then we're closer to it
-		//on the other side. 
-		if( distance<<1 > NOTERANGE )
+	if (MAX_COMBINE_DISTANCE > 0) { // Only do this looping if potential to combine!
+		for( i = 0; i < MAXNOTES; i++ )
+		for( j = 0; j < i; j++ )
 		{
-			distance = NOTERANGE - distance;
-		}
+			//We'd be combining nf2 (j) into nf1 (i) if they're close enough.
+			int16_t nf1 = note_peak_freqs[i];
+			int16_t nf2 = note_peak_freqs[j];
+			int16_t distance = nf1 - nf2;
 
-		if( distance * 255 > NOTERANGE / 2 * MAX_COMBINE_DISTANCE )
-		{
-			continue;
-		}
+			if( nf1 < 0 || nf2 < 0 ) continue;
 
-		int into;
-		int from;
+			if( distance < 0 ) distance = -distance;
 
-		if( note_peak_amps[i] > note_peak_amps[j] )
-		{
-			into = i;
-			from = j;
-		}
-		else
-		{
-			into = j;
-			from = i;
-		}
+			//If it wraps around above the halfway point, then we're closer to it
+			//on the other side.
+			if( distance<<1 > NOTERANGE )
+			{
+				distance = NOTERANGE - distance;
+			}
 
-		//We need to combine the notes.  We need to move the new note freq
-		//towards the stronger of the two notes.  
-		int16_t amp1 = note_peak_amps[into];
-		int16_t amp2 = note_peak_amps[from];
+			if( distance * 255 > NOTERANGE / 2 * MAX_COMBINE_DISTANCE )
+			{
+				continue;
+			}
 
-		//0 to 32768 porportional to how much of amp1 we want.
-		uint32_t porp = (amp1<<15) / (amp1+amp2);  
-		int16_t newnote = (nf1 * porp + nf2 * (32768-porp))>>15;
+			int into;
+			int from;
 
-		//When combining notes, we have to use the amplitudes of into which has strongest amps
-		//trying to average or combine the power of the notes looks awful.
-		note_peak_freqs[into] = newnote;
-		note_peak_freqs[from] = -1;
-		note_peak_amps[from] = 0;
-		note_jumped_to[from] = into + 1; // using 0 to mean unassigned, so lable from 1,..., MAXNOTES
-	}
+			if( note_peak_amps[i] > note_peak_amps[j] )
+			{
+				into = i;
+				from = j;
+			}
+			else
+			{
+				into = j;
+				from = i;
+			}
+
+			//We need to combine the notes.  We need to move the new note freq
+			//towards the stronger of the two notes.
+			int16_t amp1 = note_peak_amps[into];
+			int16_t amp2 = note_peak_amps[from];
+
+			//0 to 32768 porportional to how much of amp1 we want.
+			uint32_t porp = (amp1<<15) / (amp1+amp2);
+			int16_t newnote = (nf1 * porp + nf2 * (32768-porp))>>15;
+
+			//When combining notes, we have to use the amplitudes of into which has strongest amps
+			//trying to average or combine the power of the notes looks awful.
+			note_peak_freqs[into] = newnote;
+			note_peak_freqs[from] = -1;
+			note_peak_amps[from] = 0;
+			note_jumped_to[from] = into + 1; // using 0 to mean unassigned, so lable from 1,..., MAXNOTES
+		} // end combine notes
+	} // end if testing if should combine
 
 	//For all of the notes that have not been hit, we have to allow them to
 	//to decay.  We only do this for notes that have not found a peak.
