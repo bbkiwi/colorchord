@@ -481,23 +481,49 @@ void DFTInLights()
 	int16_t fbind;
 	int16_t freq;
 	uint16_t amp;
+	uint16_t  * bins;
+	uint8_t nbins;
+
+	switch( NERF_NOTE_PORP )
+		{
+		case 1:
+#ifdef USE_32DFT
+			bins = embeddedbins32;
+#else
+			bins = embeddedbins;
+#endif
+			nbins = FIXBINS;
+			break;
+		case 2:
+			bins = fuzzed_bins;
+			nbins = FIXBINS;
+			break;
+		case 3:
+			bins = octave_bins;
+			nbins = OCTAVES;
+			break;
+		default:
+			bins = folded_bins;
+			nbins = FIXBPERO;
+		};
+
 	memset( ledOut, 0, sizeof( ledOut ) );
 	for( i = 0; i < USE_NUM_LIN_LEDS; i++ )
 	{
-//		fbind = i*(FIXBPERO-1)/(USE_NUM_LIN_LEDS-1); // exact tranformation but then need check divide by zero
-		fbind = i*FIXBPERO/USE_NUM_LIN_LEDS; // this is good enough and still will not exceed FIXBPERO-1
-		freq = fbind*(1<<SEMIBITSPERBIN);
+//		fbind = i*(nbins-1)/(USE_NUM_LIN_LEDS-1); // exact tranformation but then need check divide by zero
+		fbind = i*nbins/USE_NUM_LIN_LEDS; // this is good enough and still will not exceed nbins-1
 
-// 		assign colors (0, 1, ... FIXBPERO-1 ) * 2^SEMIBITSPERBIN
+// 		assign colors (0, 1, ... NOTERANGE-1 )
 // 		brightness is value of bins.
-		amp = folded_bins[fbind];
-		amp = (((uint32_t)(amp))*NOTE_FINAL_AMP)>>MAX_AMP2_LOG2; // for PC 14;
+		amp = bins[fbind];
+		amp = (((uint32_t)(amp))*NOTE_FINAL_AMP * AMP_1_MULT)>>MAX_AMP2_LOG2; // for PC 14;
 		if( amp > NOTE_FINAL_AMP ) amp = NOTE_FINAL_AMP;
-		freq = fbind*(1<<SEMIBITSPERBIN);
+		//freq = fbind*(NOTERANGE-1)/(nbins - 1);
+		freq = (fbind%FIXBPERO)*(1<<SEMIBITSPERBIN);
 
 /*
 //		each leds color depends on value in bin. If want green lowest to yellow hightest use ROOT_NOTE_OFFSET = 110
-		freq = folded_bins[fbind];
+		freq = bins[fbind];
 		freq = (((int32_t)(freq))*NOTE_FINAL_AMP)>>MAX_AMP2_LOG2; // for PC 14;
 		if( freq > NOTERANGE ) freq = NOTERANGE;
 		freq = NOTERANGE - freq;
