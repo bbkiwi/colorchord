@@ -50,13 +50,16 @@ void Sort(uint8_t orderType, uint16_t values[], uint16_t *map, uint8_t num)
 	}
 }
 
-void AssignColorledOut(uint32_t color, int16_t jshift, uint8_t repeats )
+// Routine to inject the USE_NUM_LIN_LEDS into the NUM_LIN_LEDS with symmetry repeates and gaps
+void AssignColorledOut(uint32_t color, int16_t jshift, uint8_t repeats, uint8_t led_spacing_gap )
 {
 	int16_t i,indled;
 	uint16_t rmult = (NUM_LIN_LEDS<<8)/(repeats+1);
 	for (i=0;i<=repeats;i++) {
-		indled = jshift + ((i*rmult)>>8);
-		if( indled >= NUM_LIN_LEDS ) indled -= NUM_LIN_LEDS;
+		indled = jshift *(1 + led_spacing_gap); // produce gaps
+		indled += ((i*rmult)>>8); // produce symmetry repeats
+		//if( indled >= NUM_LIN_LEDS ) indled -= NUM_LIN_LEDS; // this ok if no gaps
+		indled %= NUM_LIN_LEDS; // needed if putting in gaps as could exceed 2*NUM_LIN_LEDS
 		ledOut[indled*3+0] = ( color >> 0 ) & 0xff;
 		ledOut[indled*3+1] = ( color >> 8 ) & 0xff;
 		ledOut[indled*3+2] = ( color >>16 ) & 0xff;
@@ -113,7 +116,9 @@ TODO in anticipation of refactoring
 	uint32_t total_note_a = 0;
 	uint32_t flip_amount = 0;
 	int diff_flip_amount = 0;
-	int8_t shift_dist = 0;
+//TODO these next two should be different gui parameters
+	uint8_t shift_dist = COLORCHORD_SHIFT_DISTANCE &0x3f;
+	uint8_t led_spacing_gap = COLORCHORD_SHIFT_DISTANCE>>6;
 	int16_t jshift; // int8_t jshift; caused instability especially for large no of LEDS
 
 
@@ -172,7 +177,7 @@ TODO in anticipation of refactoring
 	}
 
 
-	// Options here of what to use for flipping
+	// Options here of what to use for flipping or shifting on peaks
 	// 255 total amplitude of notes, 1 octave_bin[0], 2 octave_bin[1], 3 octave_bin[0]+ocatave_bin[1] etc.
 	// possible BUG if OCTAVES is 8 or more
 	flip_amount = 0;
@@ -389,7 +394,7 @@ TODO in anticipation of refactoring
 			localj = j;
 			for( l = 0; l < USE_NUM_LIN_LEDS; l++ )
 			{
-//TODO  d might be better is used both freq and amp, now only using freq
+//TODO  d might be better if used both freq and amp, now only using freq
 				int32_t d = (int32_t)ledFreqOut[localj] - (int32_t)ledFreqOutOld[l];
 				if( d < 0 ) d *= -1;
 				if( d > (NOTERANGE>>1) ) { d = NOTERANGE - d + 1; }
@@ -408,7 +413,7 @@ TODO in anticipation of refactoring
 	} else {
 		minimizingShift = 0;
 	}
-	// if option change direction on max peaks of total amplitude
+	// if option change direction and set to move on max peaks of total amplitude
 	if (COLORCHORD_FLIP_ON_PEAK ) {
 		if (diff_flip_amount_prev <= 0 && diff_flip_amount > 0) {
 			rot_dir *= -1;
@@ -422,11 +427,11 @@ TODO in anticipation of refactoring
 	// now every COLORCHORD_SHIFT_INTERVAL th frame
 	if (COLORCHORD_SHIFT_INTERVAL != 0 ) {
 		if ( gFRAMECOUNT_MOD_SHIFT_INTERVAL == 0 ) {
-			if (COLORCHORD_FLIP_ON_PEAK & (1<<5) ) {
-				gROTATIONSHIFT += move_on_peak * COLORCHORD_SHIFT_DISTANCE;
+			if (COLORCHORD_FLIP_ON_PEAK & (1<<5) ) { // shift on peak
+				gROTATIONSHIFT += move_on_peak * shift_dist;
 				//printf("tna %d dfap dfa %d %d rot_dir %d, j shift %d\n", total_note_a, diff_flip_amount_prev,  diff_flip_amount, rot_dir, j);
-			} else {
-				gROTATIONSHIFT += rot_dir * COLORCHORD_SHIFT_DISTANCE;
+			} else { // shift
+				gROTATIONSHIFT += rot_dir * shift_dist;
 			}
 		}
 	} else {
@@ -459,7 +464,7 @@ TODO in anticipation of refactoring
 		if( amp > NOTE_FINAL_AMP ) amp = NOTE_FINAL_AMP;
 		uint32_t color = ECCtoAdjustedHEX( ledFreqOut[minimizingShift], NOTE_FINAL_SATURATION, amp );
 
-		AssignColorledOut(color, jshift, SYMMETRY_REPEAT );
+		AssignColorledOut(color, jshift, SYMMETRY_REPEAT, led_spacing_gap );
 	}
 
 
@@ -476,7 +481,7 @@ TODO in anticipation of refactoring
 
 void DFTInLights()
 {
-// used folded_bins having FIXBPERO and map to USE_NUM_LIN_LEDS
+// Display DFT, Fuzzed, Octaves or Folded histogram by mapping to USE_NUM_LIN_LEDS
 	int16_t i;
 	int16_t fbind;
 	int16_t freq;
@@ -530,7 +535,7 @@ void DFTInLights()
 		amp = NOTE_FINAL_AMP;
 */
 		uint32_t color = ECCtoAdjustedHEX( freq, NOTE_FINAL_SATURATION, amp );
-		AssignColorledOut(color, i, SYMMETRY_REPEAT );
+		AssignColorledOut(color, i, SYMMETRY_REPEAT, 0x01 );
 	}
 } // end DFTInLights()
 
@@ -542,6 +547,10 @@ void PureRotatingLEDs()
 	int32_t led_arc_len;
 	int16_t freq;
 	uint32_t amp;
+//TODO These next two should be differnet gui parameters
+	uint8_t shift_dist = COLORCHORD_SHIFT_DISTANCE &0x3f;
+	uint8_t led_spacing_gap = COLORCHORD_SHIFT_DISTANCE>>6;
+
 	freq = ColorCycle;
 //	uint32_t color = ECCtoAdjustedHEX( freq, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
 
@@ -554,7 +563,7 @@ void PureRotatingLEDs()
 	// now every COLORCHORD_SHIFT_INTERVAL th frame
 	if (COLORCHORD_SHIFT_INTERVAL != 0 ) {
 		if ( gFRAMECOUNT_MOD_SHIFT_INTERVAL == 0 ) {
-			gROTATIONSHIFT += rot_dir * COLORCHORD_SHIFT_DISTANCE;
+			gROTATIONSHIFT += rot_dir * shift_dist;
 		        //printf("tna %d dfap dfa %d %d rot_dir %d, j shift %d\n",total_note_a, diff_flip_amount_prev,  diff_flip_amount, rot_dir, j);
 			ColorCycle++;
 			if (ColorCycle >= NOTERANGE) ColorCycle = 0;
@@ -572,7 +581,7 @@ void PureRotatingLEDs()
 	{
 //		uint32_t color = ECCtoAdjustedHEX( (freq + i*NOTERANGE*NERF_NOTE_PORP/led_arc_len/100)%NOTERANGE, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
 		uint32_t color = ECCtoAdjustedHEX( (freq + i*NOTERANGE*NERF_NOTE_PORP/led_arc_len/100)%NOTERANGE, NOTE_FINAL_SATURATION, amp );
-		AssignColorledOut(color, jshift, SYMMETRY_REPEAT );
+		AssignColorledOut(color, jshift, SYMMETRY_REPEAT, led_spacing_gap );
 	}
 } // end PureRotatingLEDs()
 
