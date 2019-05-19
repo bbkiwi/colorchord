@@ -50,13 +50,13 @@ void Sort(uint8_t orderType, uint16_t values[], uint16_t *map, uint8_t num)
 	}
 }
 
-// Routine to inject the USE_NUM_LIN_LEDS into the NUM_LIN_LEDS with symmetry repeates and gaps
-void AssignColorledOut(uint32_t color, int16_t jshift, uint8_t repeats, uint8_t led_spacing_gap )
+// Routine to inject ledpos LED from USE_NUM_LIN_LEDS into the NUM_LIN_LEDS with shift, symmetry repeats and gaps
+void AssignColorledOut(uint32_t color, int16_t ledpos, int16_t jshift, uint8_t repeats, uint8_t led_spacing_gap )
 {
 	int16_t i,indled;
 	uint16_t rmult = (NUM_LIN_LEDS<<8)/(repeats+1);
 	for (i=0;i<=repeats;i++) {
-		indled = jshift *(1 + led_spacing_gap); // produce gaps
+		indled = jshift + ledpos*(1 + led_spacing_gap); // produce gaps
 		indled += ((i*rmult)>>8); // produce symmetry repeats
 		//if( indled >= NUM_LIN_LEDS ) indled -= NUM_LIN_LEDS; // this ok if no gaps
 		indled %= NUM_LIN_LEDS; // needed if putting in gaps as could exceed 2*NUM_LIN_LEDS
@@ -449,9 +449,8 @@ DONE in anticipation of refactoring
 #endif
 
 	// put linear pattern of USE_NUM_LIN_LEDS on earlier cleared ring NUM_LIN_LEDs
-	for( l = 0; l < USE_NUM_LIN_LEDS; l++, jshift++, minimizingShift++ )
+	for( l = 0; l < USE_NUM_LIN_LEDS; l++, minimizingShift++ )
 	{
-		if( jshift >= NUM_LIN_LEDS ) jshift = 0;
 		//lefFreqOutOld and adjusting minimizingShift needed only if wraparound
 		if ( COLORCHORD_LIN_WRAPAROUND ) {
 			if( minimizingShift >= USE_NUM_LIN_LEDS ) minimizingShift = 0;
@@ -464,7 +463,7 @@ DONE in anticipation of refactoring
 		if( amp > NOTE_FINAL_AMP ) amp = NOTE_FINAL_AMP;
 		uint32_t color = ECCtoAdjustedHEX( ledFreqOut[minimizingShift], NOTE_FINAL_SATURATION, amp );
 
-		AssignColorledOut(color, jshift, SYMMETRY_REPEAT, led_spacing_gap );
+		AssignColorledOut(color, l, jshift, SYMMETRY_REPEAT, led_spacing_gap );
 	}
 
 
@@ -535,7 +534,7 @@ void DFTInLights()
 		amp = NOTE_FINAL_AMP;
 */
 		uint32_t color = ECCtoAdjustedHEX( freq, NOTE_FINAL_SATURATION, amp );
-		AssignColorledOut(color, i, SYMMETRY_REPEAT, 0x01 );
+		AssignColorledOut(color, i, 0x00, SYMMETRY_REPEAT, 0x01 );
 	}
 } // end DFTInLights()
 
@@ -581,7 +580,7 @@ void PureRotatingLEDs()
 	{
 //		uint32_t color = ECCtoAdjustedHEX( (freq + i*NOTERANGE*NERF_NOTE_PORP/led_arc_len/100)%NOTERANGE, NOTE_FINAL_SATURATION, NOTE_FINAL_AMP );
 		uint32_t color = ECCtoAdjustedHEX( (freq + i*NOTERANGE*NERF_NOTE_PORP/led_arc_len/100)%NOTERANGE, NOTE_FINAL_SATURATION, amp );
-		AssignColorledOut(color, jshift, SYMMETRY_REPEAT, led_spacing_gap );
+		AssignColorledOut(color, jshift, 0x00, SYMMETRY_REPEAT, led_spacing_gap );
 	}
 } // end PureRotatingLEDs()
 
