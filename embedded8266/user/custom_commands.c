@@ -38,7 +38,7 @@ uint8_t gConfigDefaults[NUMBER_STORED_CONFIGURABLES][CONFIGURABLES] = {
 //       a  m f i u   i     b c  b m  o    1 1 1    2 2 2    a  a r   a     r  s                       y  c r    h  l    i      r r   f  l                 q
 //          s f r p   r     p o  b p  m                      n  d i   t     o  e                       m  t v    f  p    s      t p   #  d                 u
 	{32,1,0,6,DUP,3,    5,15,3,44,0,   2,2,96,  4,4,69,  45,1,100,255, 103,DEFAULT_NUM_LEDS,       0, 1,0,   0, 0,   0,     1,1,  0, DEFAULT_NUM_LEDS, 0, 0},
-	{16,1,0,6,DUP,3,    5,14,3,85,0,   0,3,208, 0,3,102, 45,8,100,255,  55,DEFAULT_NUM_LEDS-2,     0, 1,8,   4, 255, 1,     0,0,  1, DEFAULT_NUM_LEDS, 0, 0},
+	{16,1,0,6,DUP,3,    5,14,3,85,0,   0,3,208, 0,3,102, 45,8,100,255,  55,DEFAULT_NUM_LEDS-2,     0, 1,8,   4, 32 , 1,     0,0,  1, DEFAULT_NUM_LEDS, 0, 0},
 	{16,1,0,5,DUP,3,    5,14,3,85,0,   4,4,152, 7,7,145, 82,1,255,255,  15,DEFAULT_NUM_LEDS/3,     0, 1,0,   1, 1,   2,     0,0,  2, DEFAULT_NUM_LEDS, 0, 0},
 	{ 8,0,0,6,DUP,6,    5,21,3,42,0,   2,2,124, 4,4,16,  45,1,100,255,  10,DEFAULT_NUM_LEDS,       0, 1,254, 20,0,   0,     0,0,  3, DEFAULT_NUM_LEDS, 0, 0},
 	{16,0,0,2,DUP,1,    5,14,3,85,0,   0,4,32,  0,6,16,  82,1,100,255,  55,DEFAULT_NUM_LEDS/3-2,   2, 1,4, 100, 0, 255,     0,0,  4, DEFAULT_NUM_LEDS, 0, 0},

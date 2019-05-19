@@ -83,11 +83,11 @@ void UpdateLinearLEDs()
 		extern int gFRAMECOUNT_MOD_SHIFT_INTERVAL; // modular count of calls to NewFrame() in user_main.c
 		(from ccconfig.h or defaults defined in embeddedout.h
 		COLORCHORD_SHIFT_INTERVAL; // controls speed of shifting if 0 no shift
-		COLORCHORD_FLIP_ON_PEAK; //if non-zero gives flipping at peaks of shift direction, 0 no flip
-		COLORCHORD_SHIFT_DISTANCE; //distance of shift
+		COLORCHORD_FLIP_ON_PEAK; //if non-zero determines flipping of shift direction or shifting at peaks , 0 no flip
+		COLORCHORD_SHIFT_DISTANCE; //low order 6 bits is distance of shift, top 2 bits gives gap for inserting USE_NUM_LIN_LEDS in NUN_LIN_LEDS
 		COLORCHORD_SORT_NOTES; // 0 no sort, 1 inc freq, 2 dec amps, 3 dec amps2
 		COLORCHORD_LIN_WRAPAROUND; // 0 no adjusting, else current led display has minimum deviation to prev
-TODO in anticipation of refactoring
+DONE in anticipation of refactoring
 1. Which notes to display? all, all non-zero amp, top N of non-zero, top with amp above min proportion of total
 2. What order to display?
 3. Max leds (from USE_NUM_LIN_LEDS leds) to use each displayed note?  equal amounts, proportional to note's amp,
@@ -177,12 +177,12 @@ TODO in anticipation of refactoring
 	}
 
 
-	// Options here of what to use for flipping or shifting on peaks
-	// 255 total amplitude of notes, 1 octave_bin[0], 2 octave_bin[1], 3 octave_bin[0]+ocatave_bin[1] etc.
-	// possible BUG if OCTAVES is 8 or more
+	// Options here of what to use for flipping (0 in bit 6) or shifting (1 in bit 6) on peaks
+	// 1 in bit 5 means total amplitude of notes, 1 octave_bin[0], 2 octave_bin[1], 3 octave_bin[0]+ocatave_bin[1] etc.
+	// only for 5 or fewer octaves possible BUG if OCTAVES is 8 or more
 	flip_amount = 0;
 	if (COLORCHORD_FLIP_ON_PEAK == 0) {
-	} else if (COLORCHORD_FLIP_ON_PEAK == 255) {
+	} else if (COLORCHORD_FLIP_ON_PEAK & (1<<5)) {
 		flip_amount = total_note_a;
 	} else {
 		for (j = 0; j < OCTAVES; j++) {
@@ -427,7 +427,7 @@ TODO in anticipation of refactoring
 	// now every COLORCHORD_SHIFT_INTERVAL th frame
 	if (COLORCHORD_SHIFT_INTERVAL != 0 ) {
 		if ( gFRAMECOUNT_MOD_SHIFT_INTERVAL == 0 ) {
-			if (COLORCHORD_FLIP_ON_PEAK & (1<<5) ) { // shift on peak
+			if (COLORCHORD_FLIP_ON_PEAK & (1<<6) ) { // shift on peak
 				gROTATIONSHIFT += move_on_peak * shift_dist;
 				//printf("tna %d dfap dfa %d %d rot_dir %d, j shift %d\n", total_note_a, diff_flip_amount_prev,  diff_flip_amount, rot_dir, j);
 			} else { // shift
