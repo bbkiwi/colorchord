@@ -8,7 +8,7 @@
 #define CCEMBEDDED
 #define NUM_LIN_LEDS 16
 #define DFREQ 16000
-
+#define LUXETRON 0
 #define memcpy ets_memcpy
 #define memset ets_memset
 
