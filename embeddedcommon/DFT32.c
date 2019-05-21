@@ -208,6 +208,7 @@ void UpdateOutputBins32()
 #else
 		uint32_t rmux = ( (isps) * (isps)) + ((ispc) * (ispc));
 		rmux = SquareRootRounded( rmux );
+		rmux = rmux << 16;
 #endif
 		//empirical adjust embeddedbins32 via a logistic data so between 0 and 65536 
 #if ADJUST_DFT_WITH_OCTAVE == 1 && PROGRESSIVE_DFT == 1
