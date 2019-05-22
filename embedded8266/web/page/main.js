@@ -78,6 +78,14 @@ function ReceiveParameters(req,data) {
 		if( !p.is(":focus" ) )
 			p.val(vp);
 	}
+// Needed twice??
+	for( var v in globalParams )
+	{
+		var vp = globalParams[v];
+		var p = $("#parms"+v);
+		if( !p.is(":focus" ) )
+			p.val(vp);
+	}
 
 }
 
@@ -102,8 +110,16 @@ function ToggleOScopePause()
 
 function GotOScope(req,data)
 {
+	var parmsgINITIAL_AMP = Number(document.getElementById('parmsgINITIAL_AMP').value);
+	document.getElementById('parmsgINITIAL_AMPOut').innerHTML = parmsgINITIAL_AMP;
+	var parmsgRMUXSHIFT = Number(document.getElementById('parmsgRMUXSHIFT').value);
+	document.getElementById('parmsgRMUXSHIFTOut').innerHTML = parmsgRMUXSHIFT;
 	var mult = Number(document.getElementById('OSCMultIn').value);
-	document.getElementById('OSCMultOut').innerHTML = mult;
+	var zerolevel = Number(document.getElementById('OSCZeroIn').value);
+	var OSCOPE_ZERO = zerolevel/255;
+	document.getElementById('OSCMultOut').innerHTML = "mult: " + mult + " from " +
+                      Math.floor(255 * (-0.5/mult + OSCOPE_ZERO)) + " to " + Math.floor(255 * (0.5/mult + OSCOPE_ZERO)) +
+                      " with center at " + zerolevel;
 	var canvas = document.getElementById('OScopeCanvas');
 	var ctx = canvas.getContext('2d');
 	var h = canvas.height;
@@ -117,25 +133,32 @@ function GotOScope(req,data)
 
 	var samps = Number( secs[1] );
 	var data = secs[2];
-	var lastsamp = parseInt( data.substr(0,2),16 );
 	ctx.clearRect( 0, 0, canvas.width, canvas.height );
 	ctx.beginPath();
 	for( var i = 0; i < samps; i++ )
 	{
 		var x2 = (i+1) * canvas.clientWidth / samps;
 		var samp = parseInt( data.substr(i*2+2,2),16 );
-		var y2 = ( 1.-mult*samp / 255 ) * canvas.clientHeight;
+		// set OSCOPE_ZERO between 0 and 1. Corresponds to samp/255 when no sound in mic
+		//    depends on circuit, then oscope in gui will be flat line half way and mult
+		//    will scale. (0.225 using MAX9812 board with 3.3v on VCC, OUT 500Kohm to 3.3 and out to A0)
+		var y2 = ( 0.5 - mult* (samp / 255 - OSCOPE_ZERO) ) * canvas.clientHeight;
+		// if want samp 0 to be at bottom and samp 255 at top use
+		//var y2 = ( 1.0 - mult * samp / 255 ) * canvas.clientHeight;
+                // after use make init3v3 and disconnect A0 to see if noise in power
+		// 3.3v gives 255, 0v gives 0
 		
 		if( i == 0 )
 		{
-			var x1 = i * canvas.clientWidth / samps;
-			var y1 = ( 1.-mult*lastsamp / 255 ) * canvas.clientHeight;
-			ctx.moveTo( x1, y1 );
+			samp = parseInt( data.substr(0,2),16 );
+			var y1 =  ( 0.5 - mult* (samp / 255 - OSCOPE_ZERO) ) * canvas.clientHeight;
+			// if want samp 0 to be at bottom and samp 255 at top use
+			//var y1 =  (1.0 - mult * samp / 255 ) * canvas.clientHeight;
+			ctx.moveTo(0, y1 );
 		}
 
 		ctx.lineTo( x2, y2 );
 
-		lastsamp = samp;
 	}
 	ctx.stroke();
 
@@ -187,7 +210,17 @@ function ToggleDFTPause()
 function GotDFT(req,data)
 {
 	var mult = Number(document.getElementById('DFTMultIn').value);
-	document.getElementById('DFTMultOut').innerHTML = mult;
+	document.getElementById('DFTMultOut').innerHTML = Math.floor(2047/ mult);
+	var parmsgDFTIIR = Number(document.getElementById('parmsgDFTIIR').value);
+	document.getElementById('parmsgDFTIIROut').innerHTML = parmsgDFTIIR;
+	var parmsgDFTIIR = Number(document.getElementById('parmsgDFT_UPDATE').value);
+	document.getElementById('parmsgDFT_UPDATEOut').innerHTML = parmsgDFTIIR;
+	var parmsgFUZZ_IIR_BITS = Number(document.getElementById('parmsgFUZZ_IIR_BITS').value);
+	document.getElementById('parmsgFUZZ_IIR_BITSOut').innerHTML = parmsgFUZZ_IIR_BITS;
+	var parmsgFILTER_BLUR_PASSES = Number(document.getElementById('parmsgFILTER_BLUR_PASSES').value);
+	document.getElementById('parmsgFILTER_BLUR_PASSESOut').innerHTML = parmsgFILTER_BLUR_PASSES;
+	var parmsgLOWER_CUTOFF = Number(document.getElementById('parmsgLOWER_CUTOFF').value);
+	document.getElementById('parmsgLOWER_CUTOFFOut').innerHTML = parmsgLOWER_CUTOFF + "* 256 = " + parmsgLOWER_CUTOFF*256;
 	var canvas = document.getElementById('DFTCanvas');
 	var ctx = canvas.getContext('2d');
 	var h = canvas.height;
@@ -201,8 +234,15 @@ function GotDFT(req,data)
 
 	var samps = Number( secs[1] );
 	var data = secs[2];
-	var lastsamp = parseInt( data.substr(0,4),16 );
 	ctx.clearRect( 0, 0, canvas.width, canvas.height );
+	if( $("#WhichCanvas").val() == 0) {
+		ctx.beginPath();
+		var ycut = canvas.clientHeight - canvas.clientHeight * mult * parmsgLOWER_CUTOFF/255;
+		ctx.strokeStyle = "#0000ff";
+		ctx.moveTo(0, ycut);
+		ctx.lineTo(canvas.clientWidth, ycut);
+		ctx.stroke();
+	}
 	ctx.beginPath();
 
 	for( var i = 0; i < samps; i++ )
@@ -220,7 +260,6 @@ function GotDFT(req,data)
 	ctx.stroke();
 
 	var samp = parseInt( data.substr(i*2,2),16 );
-
 	DFTDataTicker();
 } 
 
@@ -250,7 +289,6 @@ var pause_led = false;
 function KickLEDs()
 {
 	$( "#LEDPauseButton" ).css( "background-color", (is_leds_running&&!pause_led)?"green":"red" );
-
 	if( !pause_led )
 		LEDDataTicker();
 }
@@ -261,9 +299,23 @@ function ToggleLEDPause()
 	KickLEDs();
 }
 
+// undoes gamma =2.2 correction and NOTE_FINAL_AMP. Looks closer to actual LEDs
+function brighten(color, note_final_amp) {
+	var r=parseInt(color.substr(1,2),16);
+	var g=parseInt(color.substr(3,2),16);
+	var b=parseInt(color.substr(5,2),16);
+	var scale = 2047/note_final_amp; // 255*255 = 65025
+	return '#'+
+		("0" + Math.floor(Math.pow(r/255,1/2.2)*scale).toString(16)).slice(-2)+
+		("0" + Math.floor(Math.pow(g/255,1/2.2)*scale).toString(16)).slice(-2)+
+		("0" + Math.floor(Math.pow(b/255,1/2.2)*scale).toString(16)).slice(-2);
+}
 
+var totalpower = 0; //
+var totalGotLEDcount = 0;
 function GotLED(req,data)
 {
+	totalGotLEDcount++;
 	var ls = document.getElementById('LEDCanvasHolder');
 	var canvas = document.getElementById('LEDCanvas');
 	var ctx = canvas.getContext('2d');
@@ -277,21 +329,25 @@ function GotLED(req,data)
 	$( "#LEDPauseButton" ).css( "background-color", "green" );
 
 	var samps = Number( secs[1] );
+	var ledpowerest = 0;
 	var data = secs[2];
-	var lastsamp = parseInt( data.substr(0,4),16 );
 	ctx.clearRect( 0, 0, canvas.width, canvas.height );
-
+	var gNOTE_FINAL_AMP = globalParams["gNOTE_FINAL_AMP"];
 	for( var i = 0; i < samps; i++ )
 	{
 		var x2 = i * canvas.clientWidth / samps;
 		var samp = data.substr(i*6,6);
-		var y2 = ( 1.-samp / 2047 ) * canvas.clientHeight;
-
-		ctx.fillStyle = "#" + samp.substr( 2, 2 ) + samp.substr( 0, 2 ) + samp.substr( 4, 2 );
+		ledpowerest += parseInt(samp.substr( 0, 2 ),16) + parseInt(samp.substr( 2, 2 ),16) + parseInt(samp.substr( 4, 2 ),16);
+		ctx.fillStyle = brighten("#" + samp.substr( 2, 2 ) + samp.substr( 0, 2 ) + samp.substr( 4, 2 ), gNOTE_FINAL_AMP);
 		ctx.lineWidth = 0;
 		ctx.fillRect( x2, 0, canvas.clientWidth / samps+1, canvas.clientHeight );
 	}
-
+	var maxpowerest = document.getElementById('maxpowerest').innerHTML;
+	var powerest = 100+Math.floor(ledpowerest*20/255); // add 100ma for current without LEDs
+	totalpower += powerest;
+	document.getElementById('powerest').innerHTML =  powerest;
+	document.getElementById('maxpowerest').innerHTML = Math.max(powerest, maxpowerest);
+	document.getElementById('avgpowerest').innerHTML = Math.floor(totalpower/totalGotLEDcount);
 	var samp = parseInt( data.substr(i*2,2),16 );
 
 	LEDDataTicker();
@@ -307,6 +363,11 @@ function LEDDataTicker()
 	else
 	{
 		is_leds_running = 0;
+		document.getElementById('powerest').innerHTML =  0;
+		document.getElementById('avgpowerest').innerHTML = 0;
+		document.getElementById('maxpowerest').innerHTML = 0;
+		totalGotLEDcount=0;
+		totalpower=0;
 	}
 	$( "#LEDPauseButton" ).css( "background-color", (is_leds_running&&!pause_led)?"green":"red" );
 
@@ -342,6 +403,30 @@ function ToggleNotesPause()
 
 function GotNotes(req,data)
 {
+	var parmsgSEMIBITSPERBIN = Number(document.getElementById('parmsgSEMIBITSPERBIN').value);
+	document.getElementById('parmsgSEMIBITSPERBINOut').innerHTML = parmsgSEMIBITSPERBIN;
+	var parmsgMAX_JUMP_DISTANCE = Number(document.getElementById('parmsgMAX_JUMP_DISTANCE').value);
+	document.getElementById('parmsgMAX_JUMP_DISTANCEOut').innerHTML = Math.floor(parmsgMAX_JUMP_DISTANCE/255*60) + " tenths of semitone";
+	var parmsgMAX_COMBINE_DISTANCE = Number(document.getElementById('parmsgMAX_COMBINE_DISTANCE').value);
+	document.getElementById('parmsgMAX_COMBINE_DISTANCEOut').innerHTML = Math.floor(parmsgMAX_COMBINE_DISTANCE/255*60) + " tenths of semitone";
+	var parmsgAMP1_ATTACK_BITS = Number(document.getElementById('parmsgAMP1_ATTACK_BITS').value);
+	document.getElementById('parmsgAMP1_ATTACK_BITSOut').innerHTML = parmsgAMP1_ATTACK_BITS;
+	var parmsgAMP2_ATTACK_BITS = Number(document.getElementById('parmsgAMP2_ATTACK_BITS').value);
+	document.getElementById('parmsgAMP2_ATTACK_BITSOut').innerHTML = parmsgAMP2_ATTACK_BITS;
+	var parmsgAMP1_DECAY_BITS = Number(document.getElementById('parmsgAMP1_DECAY_BITS').value);
+	document.getElementById('parmsgAMP1_DECAY_BITSOut').innerHTML = parmsgAMP1_DECAY_BITS;
+	var parmsgAMP2_DECAY_BITS = Number(document.getElementById('parmsgAMP2_DECAY_BITS').value);
+	document.getElementById('parmsgAMP2_DECAY_BITSOut').innerHTML = parmsgAMP2_DECAY_BITS;
+	var parmsgAMP_1_MULT = Number(document.getElementById('parmsgAMP_1_MULT').value);
+	document.getElementById('parmsgAMP_1_MULTOut').innerHTML = parmsgAMP_1_MULT;
+	var parmsgAMP_2_MULT = Number(document.getElementById('parmsgAMP_2_MULT').value);
+	document.getElementById('parmsgAMP_2_MULTOut').innerHTML = parmsgAMP_2_MULT;
+	var parmsgMIN_AMP_FOR_NOTE = Number(document.getElementById('parmsgMIN_AMP_FOR_NOTE').value);
+	document.getElementById('parmsgMIN_AMP_FOR_NOTEOut').innerHTML = 256*parmsgMIN_AMP_FOR_NOTE;
+	var parmsgMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR = Number(document.getElementById('parmsgMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR').value);
+	document.getElementById('parmsgMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAROut').innerHTML = 256*parmsgMINIMUM_AMP_FOR_NOTE_TO_DISAPPEAR;
+	var NOTERANGE = 0;
+	if (hasCreateParams) NOTERANGE = Number(document.getElementById('paramrNOTERANGE').value);
 	var canvas = document.getElementById('NotesCanvas');
 	var ctx = canvas.getContext('2d');
 
@@ -349,7 +434,7 @@ function GotNotes(req,data)
 
 	var elems = Number(secs[1] );
 
-	ctx.canvas.width =  400;
+	ctx.canvas.width =  600;
 	ctx.canvas.height = elems*25;
 
 
@@ -367,28 +452,32 @@ function GotNotes(req,data)
 		var amped2 = parseInt( data.substr(i*12+6,4),16 );
 		var jump   = parseInt( data.substr(i*12+10,2),16 );
 
-		if( peak == 255 )
+
+		ctx.fillStyle = "#ffffff";
+		ctx.fillText( i+1, 0, i*25 + 20 );
+
+		if( peak == 255  )
 		{
-			ctx.fillStyle = "#ffffff";
-			ctx.fillText( jump, 10, i*25 + 20 );
+			ctx.fillStyle = "#00ff00";
+			ctx.fillText( jump, 30, i*25 + 20 );
 			continue;
 		}
 
 		ctx.fillStyle = CCColorDetail( peak );
 		ctx.lineWidth = 0;
-		ctx.fillRect( 0, i*25, 100,25);
-		ctx.fillRect( 101, i*25, amped/200,25);
-		ctx.fillRect( 229, i*25, amped2/200,25);
+		ctx.fillRect( 70, i*25, 40,25);
+		ctx.fillRect( 151, i*25, amped/50,25);
+		ctx.fillRect( 419, i*25, amped2/50,25);
 
-		ctx.fillStyle = "#000000";
-		ctx.fillText( peak, 10, i*25 + 20 );
-		ctx.fillStyle = "#ffffff";
-		ctx.fillText( amped, 121, i*25 + 20 );
-		ctx.fillText( amped2, 240, i*25 + 20 );
+		// use complementary color for text
+		ctx.fillStyle = CCColorDetail( peak + globalParams["rNOTERANGE"]/2 );
+		// in gui display note as tenths of semitone, so octave is 0 to 120
+		ctx.fillText( Math.floor(peak/NOTERANGE*120), 80, i*25 + 20 );
+		ctx.fillText( amped, 171, i*25 + 20 );
+		ctx.fillText( amped2, 430, i*25 + 20 );
 	}
 
 	var samp = parseInt( data.substr(i*2,2),16 );
-
 	NotesTicker();
 } 
 
@@ -411,44 +500,57 @@ function NotesTicker()
 
 function CCColor( note )
 {
-	return ECCtoHEX( (note * globalParams["rNOTERANGE"] / globalParams["rFIXBPERO"] + globalParams["gROOT_NOTE_OFFSET"] + globalParams["rNOTERANGE"] )%globalParams["rNOTERANGE"], 255, 255 );
+//	return ECCtoHEX( (note * globalParams["rNOTERANGE"] / globalParams["rFIXBPERO"] + globalParams["gROOT_NOTE_OFFSET"] + globalParams["rNOTERANGE"] )%globalParams["rNOTERANGE"], 255, 255 );
+	return ECCtoHEX( (note * globalParams["rNOTERANGE"] / globalParams["rFIXBPERO"] + Math.floor(globalParams["gROOT_NOTE_OFFSET"]*globalParams["rNOTERANGE"]/120) )%globalParams["rNOTERANGE"], 255, 255 );
 }
 
 function CCColorDetail( note )
 {
-	return ECCtoHEX( (note + globalParams["gROOT_NOTE_OFFSET"] + globalParams["rNOTERANGE"] )%globalParams["rNOTERANGE"], 255, 255 );
+//	return ECCtoHEX( (note + globalParams["gROOT_NOTE_OFFSET"] + globalParams["rNOTERANGE"] )%globalParams["rNOTERANGE"], 255, 255 );
+	return ECCtoHEX( (note + Math.floor(globalParams["gROOT_NOTE_OFFSET"]*globalParams["rNOTERANGE"]/120) )%globalParams["rNOTERANGE"], 255, 255 );
 }
+
+//function ECCtoHEX( note, sat, val )
+//{
+//	var hue = 0;
+//	var renote = note * 65536 / globalParams["rNOTERANGE"];
+//
+//	//Note is expected to be a vale from 0..(NOTERANGE-1)
+//	//renote goes from 0 to the next one under 65536.
+//	hue = renote;
+//	hue >>= 8;
+//	hue = -hue; //reverse rainbow order
+//	hue += 43; //start yellow
+//	return EHSVtoHEX( hue, sat, val );
+//}
 
 function ECCtoHEX( note, sat, val )
 {
 	var hue = 0;
-	var third = 65535/3;
-	var scalednote = note;
 	var renote = note * 65536 / globalParams["rNOTERANGE"];
-
-	//Note is expected to be a vale from 0..(NOTERANGE-1)
-	//renote goes from 0 to the next one under 65536.
-
-
-	if( renote < third )
-	{
-		//Yellow to Red.
-		hue = (third - renote) >> 1;
+	var rn0 = 0;
+	var hn0 = 7*255/6;
+	var rn1 = 65536/3;
+	var hn1 = 255;
+	var rn2 = 2 * rn1;
+	var hn2 = 2*255/3;
+	var rn3 = 65536;
+	var hn3 = 255/6;
+	if( renote < rn1 )
+	{	hue = hn0 + (renote - rn0) * (hn1 - hn0) / (rn1 - rn0);
 	}
-	else if( renote < (third<<1) )
-	{
-		//Red to Blue
-		hue = (third-renote);
+	else if( renote < rn2 )
+	{	hue = hn1 + (renote - rn1) * (hn2 - hn1) / (rn2 - rn1);
 	}
 	else
-	{
-		//hue = ((((65535-renote)>>8) * (uint32_t)(third>>8)) >> 1) + (third<<1);
-		hue = (((65536-renote)<<16) / (third<<1)) + (third>>1); // ((((65535-renote)>>8) * (uint32_t)(third>>8)) >> 1) + (third<<1);
+	{	hue = hn2 + (renote - rn2) * (hn3 - hn2) / (rn3 - rn2);
 	}
-	hue >>= 8;
-
+//	hue >>= 8;
+//	hue = -hue; //reverse rainbow order
+//	hue += 43; //start yellow
 	return EHSVtoHEX( hue, sat, val );
 }
+
 
 function EHSVtoHEX( hue, sat, val )  //0..255 for all
 {
@@ -460,41 +562,39 @@ function EHSVtoHEX( hue, sat, val )  //0..255 for all
 
 	var or = 0, og = 0, ob = 0;
 
-	hue -= SIXTH1; //Off by 60 degrees.
-
 	hue = (hue+256)%256;
-	//TODO: There are colors that overlap here, consider 
-	//tweaking this to make the best use of the colorspace.
 
-	if( hue < SIXTH1 ) //Ok: Yellow->Red.
+	// move in rainbow order RYGCBM as hue from 0 to 255
+
+	if( hue < SIXTH1 ) //Ok: Red->Yellow
 	{
 		or = 255;
-		og = 255 - (hue * 255) / (SIXTH1);
+		og = (hue * 255) / (SIXTH1);
 	}
-	else if( hue < SIXTH2 ) //Ok: Red->Purple
+	else if( hue < SIXTH2 ) //Ok: Yellow->Green
+	{
+		og = 255;
+		or = 255 - (hue - SIXTH1) *255 / SIXTH1;
+	}
+	else if( hue < SIXTH3 )  //Ok: Green->Cyan
+	{
+		og = 255;
+		ob = (hue - SIXTH2) * 255 / (SIXTH1);
+	}
+	else if( hue < SIXTH4 ) //Ok: Cyan->Blue
+	{
+		ob = 255;
+		og = 255 - (hue - SIXTH3) * 255 / SIXTH1;
+	}
+	else if( hue < SIXTH5 ) //Ok: Blue->Magenta
+	{
+		ob = 255;
+		or = (hue - SIXTH4) * 255 / SIXTH1;
+	}
+	else //Magenta->Red
 	{
 		or = 255;
-		ob = hue*255 / SIXTH1 - 255;
-	}
-	else if( hue < SIXTH3 )  //Ok: Purple->Blue
-	{
-		ob = 255;
-		or = ((SIXTH3-hue) * 255) / (SIXTH1);
-	}
-	else if( hue < SIXTH4 ) //Ok: Blue->Cyan
-	{
-		ob = 255;
-		og = (hue - SIXTH3)*255 / SIXTH1;
-	}
-	else if( hue < SIXTH5 ) //Ok: Cyan->Green.
-	{
-		og = 255;
-		ob = ((SIXTH5-hue)*255) / SIXTH1;
-	}
-	else //Green->Yellow
-	{
-		og = 255;
-		or = (hue - SIXTH5) * 255 / SIXTH1;
+		ob = 255 - (hue - SIXTH5) * 255 / SIXTH1;
 	}
 
 	var rv = val;
@@ -503,27 +603,19 @@ function EHSVtoHEX( hue, sat, val )  //0..255 for all
 	if( rs > 128 ) rs++;
 
 	//or, og, ob range from 0...255 now.
-	//Need to apply saturation and value.
-
-	or = (or * val)>>8;
-	og = (og * val)>>8;
-	ob = (ob * val)>>8;
-
-	//OR..OB == 0..65025
+	//Apply saturation giving OR..OB == 0..65025
 	or = or * rs + 255 * (256-rs);
 	og = og * rs + 255 * (256-rs);
 	ob = ob * rs + 255 * (256-rs);
-//printf( "__%d %d %d =-> %d\n", or, og, ob, rs );
-
 	or >>= 8;
 	og >>= 8;
 	ob >>= 8;
-
-	if( or > 255 ) or = 255;
-	if( og > 255 ) og = 255;
-	if( ob > 255 ) ob = 255;
-
-	return "#" + tohex8(og) + tohex8(or) + tohex8(ob);
+	//back to or, og, ob range 0...255 now.
+	//Need to apply saturation and value.
+	or = (or * val)>>8;
+	og = (og * val)>>8;
+	ob = (ob * val)>>8;
+	return "#" + tohex8(or) + tohex8(og) + tohex8(ob);
 }
 
 function tohex8( c )

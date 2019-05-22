@@ -49,13 +49,14 @@ function init()
 {
 	if( did_init ) return;
 	did_init = true;
+/*
 	GPIOlines = '';
 	for(var i=0; i<16; ++i)
 		GPIOlines += "<td align=center>"+ i
 			+ "<input type=button id=ButtonGPIO"+ i +" value=0 onclick=\"TwiddleGPIO("+ i +");\">"
 			+ "<input type=button id=BGPIOIn"+ i +" value=In onclick=\"GPIOInput("+ i +");\" class=\"inbutton\">"
 			+ "</td>";
-
+*/
 	$('#MainMenu > tbody:first-child').before( "\
 		<tr><td width=1> \
 		<input type=submit onclick=\"ShowHideEvent( 'SystemStatus' ); SystemInfoTick();\" value='System Status' id=SystemStatusClicker></td><td> \
@@ -63,7 +64,7 @@ function init()
 		<table width=100% border=1><tr><td> \
 <div id=output></div><div id=systemsettings></div> \n		</td></tr></table></div></td></tr>"
 	);
-
+/*
 	$('#MainMenu > tbody:last-child').after( "\
 		<tr><td width=1> \
 		<input type=submit onclick=\"ShowHideEvent( 'WifiSettings' ); KickWifiTicker();\" value=\"Wifi Settings\"></td><td> \
@@ -125,11 +126,11 @@ function init()
 	$(document).on('drop', donothing );
 	$(document).on('dragover', donothing );
 	$(document).on('dragenter', donothing );
-
+*/
 	output = document.getElementById("output");
 
-	KickWifiTicker();
-	GPIODataTickerStart();
+//	KickWifiTicker();
+//	GPIODataTickerStart();
 	InitSystemTicker();
 
 	console.log( "Load complete.\n" );
@@ -287,7 +288,7 @@ function IssueCustomCommand()
 
 
 
-
+/*
 
 
 function MakeDragDrop( divname, callback )
@@ -326,7 +327,7 @@ function MakeDragDrop( divname, callback )
 
 
 
-
+*/
 
 
 
@@ -417,6 +418,7 @@ function InitSystemTicker()
 {
 	sysset = document.getElementById( "systemsettings" );
 	SystemInfoTick();
+/*
 	sysset.innerHTML = "<TABLE style='width:150'><TR><TD>System Name:</TD><TD><INPUT TYPE=TEXT ID='SystemName' maxlength=10></TD><TD><INPUT TYPE=SUBMIT VALUE=Change ONCLICK='QueueOperation(\"IN\" + document.getElementById(\"SystemName\").value ); snchanged = false;'></TD></TR>\
 		<TR><TD NOWRAP>System Description:</TD><TD><INPUT TYPE=TEXT ID='SystemDescription' maxlength=16></TD><TD><INPUT TYPE=SUBMIT VALUE=Change ONCLICK='QueueOperation(\"ID\" + document.getElementById(\"SystemDescription\").value ); sdchanged = false;'></TD></TR><TR><TD>Service Name:</TD><TD><DIV ID=\"ServiceName\"></DIV></TD></TR><TR><TD>Free Heap:</TD><TD><DIV ID=\"FreeHeap\"></DIV></TD></TR></TABLE>\
 		<INPUT TYPE=SUBMIT VALUE=\"Reset To Current\" ONCLICK='SystemChangesReset();'>\
@@ -428,13 +430,15 @@ function InitSystemTicker()
 		<DIV id=peers></DIV>";
 	$("#SystemName").on("input propertychange paste",function(){snchanged = true; $("#SystemName").addClass( "unsaved-input"); });
 	$("#SystemDescription").on("input propertychange paste",function(){sdchanged = true;$("#SystemDescription").addClass( "unsaved-input"); });
+*/
 }
 
 
-
+/*
 did_wifi_get_config = false;
 is_data_ticker_running = false;
 is_waiting_on_stations = false;
+
 
 function ScanForWifi()
 {
@@ -706,6 +710,7 @@ function WebPagePushImageFunction( ok, comment, pushop )
 	return true;
 }
 
+
 function DragDropSystemFiles( file )
 {
 	if( file.length == 1 )
@@ -796,7 +801,7 @@ function tohex8( c )
 	var hex = c.toString(16);
 	return hex.length == 1 ? "0" + hex : hex;
 }
-
+*/
 
 function HexToIP( hexstr )
 {
@@ -806,7 +811,7 @@ function HexToIP( hexstr )
 		parseInt( hexstr.substr( 2, 2 ), 16 ) + "." +
 		parseInt( hexstr.substr( 0, 2 ), 16 );
 }
-
+/*
 function ContinueSystemFlash( fsrd, flashresponse, pushop )
 {
 	if( flashresponse[0] == '!' )
@@ -866,7 +871,7 @@ function PushImageTo( arraydata, location, status_callback, ctx )
 	return pushop;
 }
 
-
+*/
 
 
 
