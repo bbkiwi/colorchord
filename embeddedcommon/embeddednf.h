@@ -5,6 +5,11 @@
 
 #include <ccconfig.h>
 
+#ifndef MAX_AMP2_LOG2
+#define MAX_AMP2_LOG2 16
+#endif
+
+
 //Use a 32-bit DFT.  It won't work for AVRs, but for any 32-bit systems where
 //they can multiply quickly, this is the bees knees.
 #define USE_32DFT
@@ -57,16 +62,34 @@
 #define MAX_COMBINE_DISTANCE 7
 #endif
 
-//These control how quickly the IIR for the note strengths respond.  AMP 1 is
-//the response for the slow-response, or what we use to determine size of
-//splotches, AMP 2 is the quick response, or what we use to see the visual
-//strength of the notes.
-#ifndef AMP_1_IIR_BITS
-#define AMP_1_IIR_BITS 4
+//These control how quickly the IIR for the note strengths respond for
+// both attack when increasing and decay when decreasing.
+// AMP1 is the (slow) response to determine size of splotches
+// AMP2 is the (quick) response to set the brightness of the notes.
+
+#ifndef AMP1_ATTACK_BITS
+#define AMP1_ATTACK_BITS 4
 #endif
 
-#ifndef AMP_2_IIR_BITS
-#define AMP_2_IIR_BITS 2
+#ifndef AMP1_DECAY_BITS
+#define AMP1_DECAY_BITS 4
+#endif
+
+#ifndef AMP2_ATTACK_BITS
+#define AMP2_ATTACK_BITS 2
+#endif
+
+#ifndef AMP2_DECAY_BITS
+#define AMP2_DECAY_BITS 2
+#endif
+
+// the amps are scaled by mult/16
+#ifndef AMP_1_MULT
+#define AMP_1_MULT 16
+#endif
+
+#ifndef AMP_2_MULT
+#define AMP_2_MULT 16
 #endif
 
 //This is the amplitude, coming from folded_bins.  If the value is below this
@@ -84,20 +107,24 @@
 //This prevents compilation of any floating-point code, but it does come with
 //an added restriction: Both DFREQ and BASE_FREQ must be #defined to be
 //constants.
+//Currently only works for FIXBPERO 12, 24 and 36
 #define PRECOMPUTE_FREQUENCY_TABLE
 
 #include "DFT32.h"
 
 extern uint16_t fuzzed_bins[]; //[FIXBINS]  <- The Full DFT after IIR, Blur and Taper
-
+extern uint16_t max_bins[]; //[FIXBINS]  <- Max of bins after Full DFT after IIR, Blur and Taper
+extern uint32_t maxallbins;
 extern uint16_t folded_bins[]; //[FIXBPERO] <- The folded fourier output.
 
-//frequency of note; Note if it is == 255, then it means it is not set. It is
+//frequency of note; Note if it is <0, then  it is not set. It is
 //generally a value from 
-extern uint8_t  note_peak_freqs[]; //[MAXNOTES]
+extern int16_t  note_peak_freqs[]; //[MAXNOTES]
 extern uint16_t note_peak_amps[];  //[MAXNOTES] 
 extern uint16_t note_peak_amps2[]; //[MAXNOTES]  (Responds quicker)
 extern uint8_t  note_jumped_to[];  //[MAXNOTES] When a note combines into another one,
+extern uint16_t octave_bins[OCTAVES];
+
 	//this records where it went.  I.e. if your note just disappeared, check this flag.
 
 void UpdateFreqs();		//Not user-useful on most systems.
