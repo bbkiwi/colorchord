@@ -1,4 +1,4 @@
-#ESP8266 ColorChord
+# ESP8266 ColorChord
 
 ## WARNING THIS IS UNDER CONSTRUCTION
 
@@ -36,3 +36,21 @@ If you have problems with burning the firmware or transfering page data over net
 in `makeconf.inc`. This way the esp checks if the flash is written correctly.
 Especially with some ESP-01 modules there has been a problem with the flash
 not being written correctly.
+
+## UDP Commands
+
+These commands can be sent to port 7878, defined in user.cfg. Custom commands from custom_commands.c all start with 'C'. All others from commonservices.c do not. The non-custom commands reference can be found at https://github.com/cnlohr/esp82xx#commands
+
+| Command | Name | Description |
+| -------------- | ---- | ----------- |
+| CB | Bins | Given an integer, return the bins vals in a string over UDP. 0 == embeddedBins32, 1 == fizzed_bins, 3 == folded_bins |
+| CL | LEDs | Return the LED values in a string over UDP |
+| CM | Oscilloscope | Return the sounddata values in a string over UDP |
+| CN | Notes | Return the note peak frequency, peak amplitudes, and jumps in a string over UDP |
+| CSD | Config Default | Set all configurables to default values | 
+| CSR | Config Read | Read all configurables from struct SaveLoad |
+| CSS | Config Save | Write all configurables to SPI flash |
+| CVR | Colorchord Values Read | Return all configurables in string form over UDP |
+| CVW | Colorchord Values Write | Given a name and value pair, set a configurable |
+
+Also there's a UDP server on port 7777 which can set the LEDs. Just send it an array of raw bytes for the LEDs in RGB order. So index 0 is LED1_R, index 1 is LED1_G, index 2 is LED1_B, index 3 is LED2_R, etc. It seems to ignore the first three bytes sent (first LED), but reads three bytes past where the data ends, so that may be a bug.

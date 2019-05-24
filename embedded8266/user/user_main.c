@@ -1,6 +1,10 @@
 //Copyright 2015 <>< Charles Lohr Under the MIT/x11 License, NewBSD License or
 // ColorChord License.  You Choose.
 
+/*============================================================================
+ * Includes
+ *==========================================================================*/
+
 #include "mem.h"
 #include "c_types.h"
 #include "user_interface.h"
@@ -18,6 +22,12 @@
 #include <commonservices.h>
 #include "ets_sys.h"
 #include "gpio.h"
+#include "custom_commands.h"
+
+/*============================================================================
+ * Defines
+ *==========================================================================*/
+
 //#define PROFILE
 
 #define PORT 7777
@@ -25,29 +35,46 @@
 #define MAX_CONNS 5
 #define MAX_FRAME 2000
 
-#define procTaskPrio        0
-#define procTaskQueueLen    1
+#define PROC_TASK_PRIO        0
+#define PROC_TASK_QUEUE_LEN    1
 
-struct CCSettings CCS;
-static os_timer_t some_timer;
-static struct espconn *pUdpServer;
+/*============================================================================
+ * Variables
+ *==========================================================================*/
 
-void EnterCritical();
-void ExitCritical();
+struct CCSettings CCS = {0};
+static volatile os_timer_t some_timer = {0};
+static struct espconn *pUdpServer = NULL;
+
+static bool hpa_is_paused_for_wifi = false;
+
+os_event_t    procTaskQueue[PROC_TASK_QUEUE_LEN] = {0};
+uint32_t samp_iir = 0;
+int samplesProcessed = 0;
 
 extern volatile uint8_t sounddata[HPABUFFSIZE];
 extern volatile uint16_t soundhead;
 uint16_t soundtail;
 
-static uint8_t hpa_running = 0;
-static uint8_t hpa_is_paused_for_wifi;
-void ICACHE_FLASH_ATTR CustomStart( );
+/*============================================================================
+ * Functions
+ *==========================================================================*/
 
+void EnterCritical();
+void ExitCritical();
 
-//Call this once we've stacked together one full colorchord frame.
+/**
+ * Called from procTask() when 128 sound samples, a colorchord frame,
+ * have been received and filtered.
+ *
+ * This updates the LEDs.
+ */
 static void NewFrame()
 {
-	if( !COLORCHORD_ACTIVE ) return;
+	if( !COLORCHORD_ACTIVE )
+	{
+		return;
+	}
 
 	int i;
 	HandleFrameInfo();
@@ -65,50 +92,53 @@ static void NewFrame()
 	ws2812_push( ledOut, USE_NUM_LIN_LEDS * 3, LED_DRIVER_MODE );
 }
 
-os_event_t    procTaskQueue[procTaskQueueLen];
-uint32_t samp_iir = 0;
-int wf = 0;
-
-
 void fpm_wakup_cb_func1(void) { wifi_fpm_close(); }
 
-
-//Tasks that happen all the time.
-
+/**
+ * The main process that runs all the time. Registered with system_os_task(),
+ * priority 0 (PROC_TASK_PRIO). Always posts an event to itself to stay running.
+ *
+ * This task filters samples stored in the sounddata[] queue and feeds them into PushSample32()
+ *
+ * When enough samples have been filtered, it'll call NewFrame() to change the LEDs.
+ *
+ * If no samples are queued for filtering, call CSTick()
+ *
+ * @param events OS signals, sent through system_os_post(). If sig an par
+ *               are 0, call CSTick()
+ */
 static void procTask(os_event_t *events)
 {
-	system_os_post(procTaskPrio, 0, 0 );
+	// TODO why this instead of a while(1) loop?
+	system_os_post(PROC_TASK_PRIO, 0, 0 );
 
-	if( COLORCHORD_ACTIVE && !hpa_running )
+	if( COLORCHORD_ACTIVE && !isHpaRunning() )
 	{
 		ExitCritical();
-		hpa_running = 1;
 	}
 
-	if( !COLORCHORD_ACTIVE && hpa_running )
+	if( !COLORCHORD_ACTIVE && isHpaRunning() )
 	{
 		EnterCritical();
-		hpa_running = 0;
 	}
 	
 	//For profiling so we can see how much CPU is spent in this loop.
 #ifdef PROFILE
 	WRITE_PERI_REG( PERIPHS_GPIO_BASEADDR + GPIO_ID_PIN(0), 1 );
 #endif
-	while( soundtail != soundhead )
+	while( sampleAvailable() )
 	{
-		int32_t samp = sounddata[soundtail];
+		int32_t samp = getSample();
 		samp_iir = samp_iir - (samp_iir>>10) + samp;
 		samp = (samp - (samp_iir>>10))*16;
 		samp = (samp * CCS.gINITIAL_AMP) >> 4;
 		PushSample32( samp );
-		soundtail = (soundtail+1)&(HPABUFFSIZE-1);
 
-		wf++;
-		if( wf == 128 )
+		samplesProcessed++;
+		if( samplesProcessed == 128 )
 		{
 			NewFrame();
-			wf = 0; 
+			samplesProcessed = 0; 
 		}
 	}
 #ifdef PROFILE
@@ -121,7 +151,14 @@ static void procTask(os_event_t *events)
 	}
 }
 
-//Timer event.
+/**
+ * Timer handler for a software timer set to fire every 100ms, forever.
+ * Calls CSTick() every 100ms.
+ * If the hardware is in wifi station mode, this Enables the hardware timer
+ * to sample the ADC once the IP address has been received and printed
+ *
+ * @param arg unused
+ */
 static void ICACHE_FLASH_ATTR myTimer(void *arg)
 {
 	CSTick( 1 );
@@ -144,8 +181,7 @@ static void ICACHE_FLASH_ATTR myTimer(void *arg)
 	if( hpa_is_paused_for_wifi && printed_ip )
 	{
 		StartHPATimer(); //Init the high speed  ADC timer.
-		hpa_running = 1;
-		hpa_is_paused_for_wifi = 0; // only need to do once prevents unstable ADC
+		hpa_is_paused_for_wifi = false; // only need to do once prevents unstable ADC
 	}
 //	uart0_sendStr(".");
 //	printf( "%d/%d\n",soundtail,soundhead );
@@ -155,7 +191,14 @@ static void ICACHE_FLASH_ATTR myTimer(void *arg)
 }
 
 
-//Called when new packet comes in.
+/**
+ * UDP Packet handler, registered with espconn_regist_recvcb().
+ * It takes the UDP data and jams it right into the LEDs
+ *
+ * @param arg The espconn struct for this packet
+ * @param pusrdata
+ * @param len
+ */
 static void ICACHE_FLASH_ATTR udpserver_recv(void *arg, char *pusrdata, unsigned short len)
 {
 	struct espconn *pespconn = (struct espconn *)arg;
@@ -165,11 +208,19 @@ static void ICACHE_FLASH_ATTR udpserver_recv(void *arg, char *pusrdata, unsigned
 	ws2812_push( pusrdata+3, len, LED_DRIVER_MODE );
 }
 
+/**
+ * UART RX handler, called by uart0_rx_intr_handler(). Currently does nothing
+ *
+ * @param c The char received on the UART
+ */
 void ICACHE_FLASH_ATTR charrx( uint8_t c )
 {
 	//Called from UART.
 }
 
+/**
+ * The main initialization function
+ */
 void ICACHE_FLASH_ATTR user_init(void)
 {
 	uart_init(BIT_RATE_115200, BIT_RATE_115200);
@@ -177,9 +228,10 @@ void ICACHE_FLASH_ATTR user_init(void)
 
 	uart0_sendStr("\r\nColorChord\r\n");
 
-//Uncomment this to force a system restore.
-//	system_restore();
+	//Uncomment this to force a system restore.
+	//	system_restore();
 
+	// Load configurable parameters from SPI memory
 	CustomStart();
 
 #ifdef PROFILE
@@ -190,8 +242,10 @@ void ICACHE_FLASH_ATTR user_init(void)
 	GPIO_OUTPUT_SET( GPIO_ID_PIN(14), 1);
 	PIN_FUNC_SELECT( PERIPHS_IO_MUX_MTMS_U, 3 );
 
+	// Common services (wifi) pre-init.
 	CSPreInit();
 
+	// Set up UDP server to receive LED data, udpserver_recv()
     pUdpServer = (struct espconn *)os_zalloc(sizeof(struct espconn));
 	ets_memset( pUdpServer, 0, sizeof( struct espconn ) );
 	espconn_create( pUdpServer );
@@ -205,12 +259,14 @@ void ICACHE_FLASH_ATTR user_init(void)
 		while(1) { uart0_sendStr( "\r\nFAULT\r\n" ); }
 	}
 
+	// Common services (wifi) init. Sets up another UDP server to receive
+	// commands (issue_command)and an HTTP server
 	CSInit( 1 );
 
-	//Add a process
-	system_os_task(procTask, procTaskPrio, procTaskQueue, procTaskQueueLen);
+	// Add a process to filter queued ADC samples and output LED signals
+	system_os_task(procTask, PROC_TASK_PRIO, procTaskQueue, PROC_TASK_QUEUE_LEN);
 
-	//Timer example
+	// Start a software timer to call CSTick() every 100ms and start the hw timer eventually
 	os_timer_disarm(&some_timer);
 	os_timer_setfn(&some_timer, (os_timer_func_t *)myTimer, NULL);
 	os_timer_arm(&some_timer, 100, 1);
@@ -229,19 +285,21 @@ void ICACHE_FLASH_ATTR user_init(void)
 
 	system_update_cpu_freq(SYS_CPU_160MHZ);
 
-	InitColorChord(); //Init colorchord
+    // Init colorchord
+	InitColorChord();
 
-	//Tricky: If we are in station mode, wait for that to get resolved before enabling the high speed timer.
+	// Tricky: If we are in station mode, wait for that to get resolved before enabling the high speed timer.
 	if( wifi_get_opmode() == 1 )
 	{
-		hpa_is_paused_for_wifi = 1;
+		hpa_is_paused_for_wifi = true;
 	}
 	else
 	{
-		StartHPATimer(); //Init the high speed  ADC timer.
-		hpa_running = 1;
+		// Init the high speed  ADC timer.
+		StartHPATimer();
 	}
 
+	// Initialize LEDs
 	ws2812_init();
 
 	printf( "RST REASON: %d\n", system_get_rst_info()->reason );
@@ -252,15 +310,24 @@ void ICACHE_FLASH_ATTR user_init(void)
 	wifi_set_sleep_type(MODEM_SLEEP_T); // on its own stopped wifi working?
 	//wifi_fpm_set_sleep_type(NONE_SLEEP_T); // with this seemed no difference
 
-	system_os_post(procTaskPrio, 0, 0 );
+	// Post an event to procTask() to get it started
+	system_os_post(PROC_TASK_PRIO, 0, 0 );
 }
 
+/**
+ * If the firmware leaves a critical section, enable the hardware timer
+ * used to sample the ADC. This allows the interrupt to fire.
+ */
 void ICACHE_FLASH_ATTR EnterCritical()
 {
 	PauseHPATimer();
 	//ets_intr_lock();
 }
 
+/**
+ * If the firmware enters a critical section, disable the hardware timer
+ * used to sample the ADC and the corresponding interrupt
+ */
 void ICACHE_FLASH_ATTR ExitCritical()
 {
 	//ets_intr_unlock();
@@ -333,6 +400,12 @@ static const partition_item_t partition_table_opt4[] =
 
 
 /**
+ * Required. Users can call system_phy_set_rfoption to set the RF option in user_rf_pre_init,
+ * or call system_deep_sleep_set_option before Deep-sleep. If RF is disabled,
+ * ESP8266 Station and SoftAP will both be disabled, so the related APIs must not be
+ * called. Wi-Fi radio functions and network stack management APIs are not available
+ * when the radio is disabled
+ *
  * This is called on boot for versions ESP8266_NONOS_SDK_v1.5.2 to
  * ESP8266_NONOS_SDK_v2.2.1. system_phy_set_rfoption() may be called here
  */
