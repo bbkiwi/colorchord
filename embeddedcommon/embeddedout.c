@@ -487,7 +487,7 @@ void DFTInLights()
 	uint16_t amp;
 	uint16_t  * bins;
 	uint8_t nbins;
-
+	uint8_t led_spacing_gap = COLORCHORD_SHIFT_DISTANCE>>6;
 	switch( NERF_NOTE_PORP )
 		{
 		case 1:
@@ -534,7 +534,7 @@ void DFTInLights()
 		amp = NOTE_FINAL_AMP;
 */
 		uint32_t color = ECCtoAdjustedHEX( freq, NOTE_FINAL_SATURATION, amp );
-		AssignColorledOut(color, i, 0x00, SYMMETRY_REPEAT, 0x01 );
+		AssignColorledOut(color, i, 0x00, SYMMETRY_REPEAT, led_spacing_gap );
 	}
 } // end DFTInLights()
 
