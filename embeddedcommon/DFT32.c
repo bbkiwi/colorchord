@@ -9,7 +9,7 @@
 #include <math.h>
 static float * goutbins;
 #endif
-
+#include <stdio.h>
 uint16_t embeddedbins32[FIXBINS]; 
 
 //NOTES to self:
@@ -90,7 +90,8 @@ int main()
 uint16_t Sdatspace32A[FIXBINS*2];  //(advances,places) full revolution is 256. 8bits integer part 8bit fractional
 int32_t Sdatspace32B[FIXBINS*2];  //(isses,icses)
 
-//This is updated every time the DFT hits the octavecount, or 1 out of (1<<OCTAVES) times which is (1<<(OCTAVES-1)) samples
+//This is updated every time the DFT hits the octavecount, or 1 out of DFT_UPDATE*(1<<OCTAVES) times
+//               which is DFT_UPDATE*(1<<(OCTAVES-1)) samples
 int32_t Sdatspace32BOut[FIXBINS*2];  //(isses,icses)
 
 //Sdo_this_octave is a scheduling state for the running SIN/COS states for
@@ -102,6 +103,8 @@ static uint8_t Sdo_this_octave[BINCYCLE];
 
 static int32_t Saccum_octavebins[OCTAVES];
 static uint8_t Swhichoctaveplace;
+static uint8_t UpdateCount = 0;
+
 
 //
 uint16_t embeddedbins[FIXBINS]; 
@@ -166,13 +169,23 @@ void UpdateOutputBins32()
 {
 	int i;
 	int32_t * ipt = &Sdatspace32BOut[0];
+#if SHOWSAMP
+	printf("--> Update Output Bins \n");
+#endif
+// empirical log_2 of multiplier to adjust
+//        static const uint16_t adjrmuxbits[17] = {
+//		6, 5, 4, 4, 3, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+//       static const uint16_t adjstrens[17] = {
+//		642, 394, 248, 141, 76, 40, 23, 15, 11, 10, 9, 8, 8, 8, 8, 8, 8};
+//        static const uint16_t adjstrens[17] = {
+//		1.25, 1.54, 1.94, 1.1, 1.19, 1.25, 1.44, 1.88, 1.38, 1.25, 1.13, 1, 1, 1, 1, 1, 1};
 	for( i = 0; i < FIXBINS; i++ )
 	{
 #if APPROXNORM == 1
 		int32_t isps = *(ipt++); //can keep 32 bits as no need to square
 		int32_t ispc = *(ipt++);
 #else
-		int16_t isps = *(ipt++)>>16; //might loose some precision with this
+		int16_t isps = *(ipt++)>>16; //might loose some precsion with this
 		int16_t ispc = *(ipt++)>>16;
 #endif
 
@@ -192,20 +205,35 @@ void UpdateOutputBins32()
 		isps = isps<0? -isps : isps;
 		ispc = ispc<0? -ispc : ispc;
 		uint32_t rmux = isps>ispc? isps + (ispc>>1) : ispc + (isps>>1);
-		rmux = rmux>>16;
 #else
 		uint32_t rmux = ( (isps) * (isps)) + ((ispc) * (ispc));
 		rmux = SquareRootRounded( rmux );
+		rmux = rmux << 16;
 #endif
+		//empirical adjust embeddedbins32 via a logistic data so between 0 and 65536 
+#if ADJUST_DFT_WITH_OCTAVE == 1 && PROGRESSIVE_DFT == 1
+		//uint8_t rmuxshift = RMUXSHIFT - adjrmuxbits[DFTIIR] + octave;
+		uint8_t rmuxshift = RMUXSHIFT + DFTIIR + octave;
+#else
+		//No adjustment using octave may be too noisy in high octaves
+		//   also get jumps at octave boundarys giving false peaks
+		//uint8_t rmuxshift = RMUXSHIFTSTART - adjrmuxbits[DFTIIR];
+		uint8_t rmuxshift = RMUXSHIFT + DFTIIR;
+#endif
+		rmux = rmux<<2; // make a bit bigger
+		rmux = rmux>>rmuxshift; // *adjstrens[DFTIIR] // if had floating point could refine further
+		rmux = rmux / DFT_UPDATE;
+		embeddedbins32[i] = rmux;
 
-		//bump up all outputs here, so when we nerf it by bit shifting by
-		//octave we don't lose a lot of detail.
-		rmux = rmux << 1;
-
-		embeddedbins32[i] = rmux >> octave;
+#if CHECKOVERFLOW
+		if (rmux > 65535) {
+			fprintf( stderr, "Overflow embeddedbins\n" );
+		}
+#endif
 	}
 }
 
+#if PROGRESSIVE_DFT
 static void HandleInt( int16_t sample )
 {
 	int i;
@@ -225,23 +253,33 @@ static void HandleInt( int16_t sample )
 	if( oct > 128 )
 	{
 		//Special: This is when we can update everything.
-		//This gets run once out of every (1<<OCTAVES) times.
+		//This gets run once out of every DFT_UPDATE*(1<<OCTAVES) times.
 		// which is half as many samples
 		//It handles updating part of the DFT.
 		//It should happen at the very first call to HandleInit
 		int32_t * bins = &Sdatspace32B[0];
 		int32_t * binsOut = &Sdatspace32BOut[0];
+		UpdateCount++;
+		if (UpdateCount >= DFT_UPDATE) {
+			UpdateCount=0;
+#if SHOWSAMP
+			printf(" update binsOut and lower bins\noct %d: ",SHOWSAMP-1 );
+#endif
+			for( i = 0; i < FIXBINS; i++ )
+			{
+				//First for the SIN then the COS.
+				int32_t val = *(bins);
+				*(binsOut++) = val;
+				*(bins++) -= val>>DFTIIR;
 
-		for( i = 0; i < FIXBINS; i++ )
-		{
-			//First for the SIN then the COS.
-			int32_t val = *(bins);
-			*(binsOut++) = val;
-			*(bins++) -= val>>DFTIIR;
-
-			val = *(bins);
-			*(binsOut++) = val;
-			*(bins++) -= val>>DFTIIR;
+				val = *(bins);
+				*(binsOut++) = val;
+				*(bins++) -= val>>DFTIIR;
+			}
+#if SHOWSAMP
+		} else {
+			printf("\noct %d: ",SHOWSAMP-1);
+#endif
 		}
 		return;
 	}
@@ -252,14 +290,22 @@ static void HandleInt( int16_t sample )
 
 	filteredsample = Saccum_octavebins[oct]>>(OCTAVES-oct);
 	Saccum_octavebins[oct] = 0;
-
+#if SHOWSAMP
+	if (oct == SHOWSAMP-1) printf("%d ", filteredsample);
+	//printf("%d (%d) ", filteredsample, oct);
+#endif
 	for( i = 0; i < FIXBPERO; i++ )
 	{
 		adv = *(dsA++);
 		localipl = *(dsA) >> 8;
 		*(dsA++) += adv;
-
-		*(dsB++) += (Ssinonlytable[localipl] * filteredsample);
+		*(dsB) += (Ssinonlytable[localipl] * filteredsample);
+#if CHECKOVERFLOW
+		if ((*(dsB)>>16) > 65535) {
+			fprintf( stderr, "Overflow potential\n" );
+		}
+#endif
+		dsB++;
 		//Get the cosine (1/4 wavelength out-of-phase with sin)
 		localipl += 64;
 		*(dsB++) += (Ssinonlytable[localipl] * filteredsample);
@@ -297,8 +343,76 @@ int SetupDFTProgressive32()
 	return 0;
 }
 
+#else
+// Here is simple DFT on all bins
+static void HandleInt( int16_t sample )
+{
+	int i;
+	uint16_t adv;
+	uint8_t localipl;
+	int32_t val;
+	uint16_t * dsA;
+	int32_t * bins;
+	int32_t * binsOut;
+
+	// process sample for all bins
+        //  and every DFT_UPDATE times update binsOut and attenuate bins via DFTIIR
+	UpdateCount++;
+	dsA = &Sdatspace32A[0];
+	bins = &Sdatspace32B[0];
 
 
+	if (UpdateCount >= DFT_UPDATE)
+	{
+		binsOut = &Sdatspace32BOut[0];
+	}
+#if SHOWSAMP
+	printf("%d ", sample);
+#endif
+	for( i = 0; i < FIXBINS; i++ )
+	{
+		adv = *(dsA++);
+		localipl = *(dsA) >> 8;
+		*(dsA++) += adv;
+		val = *(bins);
+		if (UpdateCount >= DFT_UPDATE)
+		{
+			*(binsOut++) = val;
+			val -= val>>DFTIIR;
+		}
+#if CHECKOVERFLOW
+		*(bins) = val + (Ssinonlytable[localipl] * sample);
+		if ((*(bins)>>16) > 65535) {
+			fprintf( stderr, "Overflow potential\n" );
+		}
+		bins++;
+#else
+		*(bins++) = val + (Ssinonlytable[localipl] * sample);
+#endif
+		//Get the cosine (1/4 wavelength out-of-phase with sin)
+		localipl += 64;
+		val = *(bins);
+		if (UpdateCount >= DFT_UPDATE)
+		{
+			*(binsOut++) = val;
+			val -= val>>DFTIIR;
+		}
+		*(bins++) = val + (Ssinonlytable[localipl] * sample);
+	}
+	if (UpdateCount >= DFT_UPDATE)
+	{
+		UpdateCount = 0;
+	}
+}
+
+int SetupDFTProgressive32()
+{
+	return 0;
+}
+
+#endif
+
+#if PROGRESSIVE_DFT
 void UpdateBins32( const uint16_t * frequencies )
 {
 	int i;
@@ -307,14 +421,54 @@ void UpdateBins32( const uint16_t * frequencies )
 	{
 		if (imod >= FIXBPERO) imod=0;
 		uint16_t freq = frequencies[imod];
-		Sdatspace32A[i*2] = freq;// / oneoveroctave;
+		Sdatspace32A[i*2] = freq;
 	}
 }
+#else
+void UpdateBins32( const uint16_t * frequencies )
+{
+	int i;
+	int imod = 0;
+	int oct = 0;
+	for( i = 0; i < FIXBINS; i++, imod++ )
+	{
+		if (imod >= FIXBPERO)
+		{
+			imod=0;
+			oct += 1;
+		}
+		uint16_t freq = frequencies[imod];
+		Sdatspace32A[i*2] = freq >> (OCTAVES-1-oct);
+	}
+}
+#endif
+
 
 void PushSample32( int16_t dat )
 {
+#if DFTSAMPLE
+#include <math.h>;
+	//Sends out blocks of incoming data starting at an
+	//zerocrossing that is non-decreasing - so plotting will look nice
+	// to be used with embeddedlinux when testing
+	static int cnt=0;
+	static olddat;
+	static zerocrossing;
+	zerocrossing = (abs(dat) <100) ? 1 :0 ;
+	if ((cnt==0 && zerocrossing && (dat >= olddat)) || cnt>0) {
+		printf("%d ", dat);
+		cnt++;
+		if (cnt>128) {
+			printf("\n");
+			cnt=0;
+		}
+	}
+	olddat = dat;
+#endif
 	HandleInt( dat );
+#if PROGRESSIVE_DFT
 	HandleInt( dat );
+#endif
 }
 
 

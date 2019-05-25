@@ -71,15 +71,15 @@ function ReceiveParameters(req,data) {
 
 	}
 
-	for( var v in globalParams )
+	for( var v in globalParams ) //set values in parameter table
 	{
 		var vp = globalParams[v];
 		var p = $("#param"+v);
 		if( !p.is(":focus" ) )
 			p.val(vp);
 	}
-// Needed twice??
-	for( var v in globalParams )
+
+	for( var v in globalParams ) //set values of sliders
 	{
 		var vp = globalParams[v];
 		var p = $("#parms"+v);
@@ -145,7 +145,7 @@ function GotOScope(req,data)
 		var y2 = ( 0.5 - mult* (samp / 255 - OSCOPE_ZERO) ) * canvas.clientHeight;
 		// if want samp 0 to be at bottom and samp 255 at top use
 		//var y2 = ( 1.0 - mult * samp / 255 ) * canvas.clientHeight;
-                // after use make init3v3 and disconnect A0 to see if noise in power
+                // after use make init3v3 and disconnect A0 to see if noice in power
 		// 3.3v gives 255, 0v gives 0
 		
 		if( i == 0 )
@@ -210,7 +210,7 @@ function ToggleDFTPause()
 function GotDFT(req,data)
 {
 	var mult = Number(document.getElementById('DFTMultIn').value);
-	document.getElementById('DFTMultOut').innerHTML = Math.floor(2047/ mult);
+	document.getElementById('DFTMultOut').innerHTML = Math.floor(65535/ mult);
 	var parmsgDFTIIR = Number(document.getElementById('parmsgDFTIIR').value);
 	document.getElementById('parmsgDFTIIROut').innerHTML = parmsgDFTIIR;
 	var parmsgDFTIIR = Number(document.getElementById('parmsgDFT_UPDATE').value);
@@ -249,7 +249,7 @@ function GotDFT(req,data)
 	{
 		var x2 = i * canvas.clientWidth / samps;
 		var samp = parseInt( data.substr(i*4,4),16 );
-		var y2 = ( 1.-mult*samp / 2047 ) * canvas.clientHeight;
+		var y2 = ( 1.-mult*samp / 65535 ) * canvas.clientHeight;
 
 		ctx.fillStyle = CCColor( i % globalParams["rFIXBPERO"] );
 		ctx.fillRect( x2, y2, canvas.clientWidth / samps, canvas.clientHeight-y2 );
@@ -304,7 +304,7 @@ function brighten(color, note_final_amp) {
 	var r=parseInt(color.substr(1,2),16);
 	var g=parseInt(color.substr(3,2),16);
 	var b=parseInt(color.substr(5,2),16);
-	var scale = 2047/note_final_amp; // 255*255 = 65025
+	var scale = 65025/note_final_amp; // 255*255 = 65025
 	return '#'+
 		("0" + Math.floor(Math.pow(r/255,1/2.2)*scale).toString(16)).slice(-2)+
 		("0" + Math.floor(Math.pow(g/255,1/2.2)*scale).toString(16)).slice(-2)+
@@ -447,16 +447,18 @@ function GotNotes(req,data)
 
 	for( var i = 0; i < elems; i++ )
 	{
-		var peak   = parseInt( data.substr(i*12+0,2),16 );
-		var amped  = parseInt( data.substr(i*12+2,4),16 );
-		var amped2 = parseInt( data.substr(i*12+6,4),16 );
-		var jump   = parseInt( data.substr(i*12+10,2),16 );
-
+		var peak   = parseInt( data.substr(i*14+0,4),16 );
+		if ((peak & 0x8000) > 0) {
+			peak = -1;
+		}
+		var amped  = parseInt( data.substr(i*14+4,4),16 );
+		var amped2 = parseInt( data.substr(i*14+8,4),16 );
+		var jump   = parseInt( data.substr(i*14+12,2),16 );
 
 		ctx.fillStyle = "#ffffff";
 		ctx.fillText( i+1, 0, i*25 + 20 );
 
-		if( peak == 255  )
+		if( peak < 0 )
 		{
 			ctx.fillStyle = "#00ff00";
 			ctx.fillText( jump, 30, i*25 + 20 );
@@ -466,8 +468,8 @@ function GotNotes(req,data)
 		ctx.fillStyle = CCColorDetail( peak );
 		ctx.lineWidth = 0;
 		ctx.fillRect( 70, i*25, 40,25);
-		ctx.fillRect( 151, i*25, amped/50,25);
-		ctx.fillRect( 419, i*25, amped2/50,25);
+		ctx.fillRect( 151, i*25, amped>>8,25);
+		ctx.fillRect( 419, i*25, amped2>>8,25);
 
 		// use complementary color for text
 		ctx.fillStyle = CCColorDetail( peak + globalParams["rNOTERANGE"]/2 );
