@@ -412,8 +412,9 @@ void ICACHE_FLASH_ATTR user_init(void)
                    READ_PERI_REG(RTC_GPIO_ENABLE) & (uint32)0xfffffffe);	//out disable
 #endif
 
-	system_update_cpu_freq(SYS_CPU_160MHZ); //bb not have so ran at 80MHZ
-
+#if CPU_FREQ == 160
+	system_update_cpu_freq(SYS_CPU_160MHZ);
+#endif
 	InitColorChord(); //Init colorchord
 
 	//Tricky: If we are in station mode, wait for that to get resolved before enabling the high speed timer.
