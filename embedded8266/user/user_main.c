@@ -166,9 +166,9 @@ static void procTask(os_event_t *events)
 
 		while( soundtail != soundhead )
 		{
-// #if PROTECT_SOUNDDATA code
-// cleans noise and shows vcc/2 when oscope open or gui not showing page
-//    seems more sensitive to mic too.
+// #if PROTECT_SOUNDDATA == 1
+// cleans noise and ADC gives 0,127,255 for 0, vcc/2, vcc
+// when PROTECT_SOUNDDATA == 0, ADC only gives 11, 75, 139 and noisier
 //  if showing gui and oscope closed or off get noise!, if gpio open less noise
 //  when oscope closed or off for NUM_LEDS 18 more noise than when 255
 //  still very sharp spikes dropping to vcc/3. Previously noise was drops
