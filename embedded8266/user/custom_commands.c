@@ -72,6 +72,7 @@ char * gConfigurableNames[CONFIGURABLES] = { "gINITIAL_AMP", "gRMUXSHIFT", "gROO
 
 void ICACHE_FLASH_ATTR SaveSettingsToFlash( )
 {
+	printf("Save Settings To Flash\n");
 	settings.SaveLoadKey = 0xAA;
 	EnterCritical();
 	ets_intr_lock();
@@ -183,15 +184,15 @@ int ICACHE_FLASH_ATTR CustomCommand(char * buffer, int retsize, char *pusrdata, 
 
 	case 'm': case 'M': //Oscilloscope
 	{
-//		buffend += ets_sprintf( buffend, "CM\t512\t" );
-		buffend += ets_sprintf( buffend, "CM\t128\t" );
+		buffend += ets_sprintf( buffend, "CM\t512\t" );
+//		buffend += ets_sprintf( buffend, "CM\t128\t" );
 #if PROTECT_OSOUNDDATA
 		EnterCritical();
 #endif
 //		int i, it = soundhead;
 		int i, it = 0;
-//		for( i = 0; i < 512; i++ )
-		for( i = 0; i < 128; i++ )
+		for( i = 0; i < 512; i++ )
+//		for( i = 0; i < 128; i++ )
 		{
 //TODO  if replace below with uint8_t samp = 127; to test why oscope causes interferance
 //      get wdt resets coninually. Why?? should have used 0x7f instead of 127
