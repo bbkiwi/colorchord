@@ -108,6 +108,7 @@ function ToggleOScopePause()
 	KickOscilloscope();
 }
 
+var yplot = [];
 function GotOScope(req,data)
 {
 	var parmsgINITIAL_AMP = Number(document.getElementById('parmsgINITIAL_AMP').value);
@@ -135,34 +136,42 @@ function GotOScope(req,data)
 	var data = secs[2];
 	ctx.clearRect( 0, 0, canvas.width, canvas.height );
 	ctx.beginPath();
+	var ave = 0;
+	// adjust samples and save
 	for( var i = 0; i < samps; i++ )
 	{
-		var x2 = (i+1) * canvas.clientWidth / samps;
-		var samp = parseInt( data.substr(i*2+2,2),16 );
+		var samp = parseInt( data.substr(i*2,2),16 );
 		// set OSCOPE_ZERO between 0 and 1. Corresponds to samp/255 when no sound in mic
 		//    depends on circuit, then oscope in gui will be flat line half way and mult
 		//    will scale. (0.225 using MAX9812 board with 3.3v on VCC, OUT 500Kohm to 3.3 and out to A0)
-		var y2 = ( 0.5 - mult* (samp / 255 - OSCOPE_ZERO) ) * canvas.clientHeight;
+		yplot[i] = ( 0.5 - mult* (samp / 255 - OSCOPE_ZERO) ) * canvas.clientHeight;
 		// if want samp 0 to be at bottom and samp 255 at top use
-		//var y2 = ( 1.0 - mult * samp / 255 ) * canvas.clientHeight;
+		//var yplot = ( 1.0 - mult * samp / 255 ) * canvas.clientHeight;
                 // after use make init3v3 and disconnect A0 to see if noice in power
 		// 3.3v gives 255, 0v gives 0
-		
+		ave += yplot[i];
+	}
+	ave = ave/samps;
+	// Find when sample near average and increasing
+	for( var istart = 0; istart < samps - 1; istart++ )
+	{
+		if ((Math.abs(yplot[istart] - ave) < 2) && (yplot[istart] < yplot[istart+1]) ) break;
+	}
+	//plot the sample starting at the crossing
+	istart = 0;
+	for( var i = 0; i < samps; i++ )
+	{
+		var x = (i+1) * canvas.clientWidth / samps;
+		var iuse = i + istart;
+		if (iuse >= samps) iuse -= samps;
 		if( i == 0 )
 		{
-			samp = parseInt( data.substr(0,2),16 );
-			var y1 =  ( 0.5 - mult* (samp / 255 - OSCOPE_ZERO) ) * canvas.clientHeight;
-			// if want samp 0 to be at bottom and samp 255 at top use
-			//var y1 =  (1.0 - mult * samp / 255 ) * canvas.clientHeight;
-			ctx.moveTo(0, y1 );
+			ctx.moveTo(0, yplot[iuse] );
 		}
 
-		ctx.lineTo( x2, y2 );
-
+		ctx.lineTo( x, yplot[iuse] );
 	}
 	ctx.stroke();
-
-	var samp = parseInt( data.substr(i*2,2),16 );
 
 	OScopeDataTicker();
 } 
