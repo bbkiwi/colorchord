@@ -109,6 +109,8 @@ function ToggleOScopePause()
 }
 
 var yplot = [];
+var ave = 0;
+var slow_running_ave = 0;
 function GotOScope(req,data)
 {
 	var parmsgINITIAL_AMP = Number(document.getElementById('parmsgINITIAL_AMP').value);
@@ -116,11 +118,10 @@ function GotOScope(req,data)
 	var parmsgRMUXSHIFT = Number(document.getElementById('parmsgRMUXSHIFT').value);
 	document.getElementById('parmsgRMUXSHIFTOut').innerHTML = parmsgRMUXSHIFT;
 	var mult = Number(document.getElementById('OSCMultIn').value);
-	var zerolevel = Number(document.getElementById('OSCZeroIn').value);
-	var OSCOPE_ZERO = zerolevel/255;
+	var OSCOPE_ZERO = slow_running_ave/255;  //ave/255;
 	document.getElementById('OSCMultOut').innerHTML = "mult: " + mult + " from " +
                       Math.floor(255 * (-0.5/mult + OSCOPE_ZERO)) + " to " + Math.floor(255 * (0.5/mult + OSCOPE_ZERO)) +
-                      " with center at " + zerolevel;
+                      " with center at " + Math.round(255*OSCOPE_ZERO);
 	var canvas = document.getElementById('OScopeCanvas');
 	var ctx = canvas.getContext('2d');
 	var h = canvas.height;
@@ -136,7 +137,7 @@ function GotOScope(req,data)
 	var data = secs[2];
 	ctx.clearRect( 0, 0, canvas.width, canvas.height );
 	ctx.beginPath();
-	var ave = 0;
+	ave = 0;
 	// adjust samples and save
 	for( var i = 0; i < samps; i++ )
 	{
@@ -149,16 +150,18 @@ function GotOScope(req,data)
 		//var yplot = ( 1.0 - mult * samp / 255 ) * canvas.clientHeight;
                 // after use make init3v3 and disconnect A0 to see if noice in power
 		// 3.3v gives 255, 0v gives 0
-		ave += yplot[i];
+		ave += samp;
 	}
-	ave = ave/samps;
+	ave = Math.round(ave/samps);
+	slow_running_ave = 0.999 * slow_running_ave + 0.001 * ave; // slow tracks mean signal
+
 	// Find when sample near average and increasing
 	for( var istart = 0; istart < samps - 1; istart++ )
 	{
 		if ((Math.abs(yplot[istart] - ave) < 2) && (yplot[istart] < yplot[istart+1]) ) break;
 	}
 	//plot the sample starting at the crossing
-	istart = 0;
+	//istart = 0;
 	for( var i = 0; i < samps; i++ )
 	{
 		var x = (i+1) * canvas.clientWidth / samps;
