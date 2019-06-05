@@ -6,7 +6,7 @@ var output;
 var websocket;
 var commsup = 0;
 
-var mpfs_start_at = 65536; //1048576; NOTE: If you select 1048576, it will override the 65536 sector, but has much more room.
+var mpfs_start_at = 65536; //NEED to set from user.cfg so will have to change Makefile in esp8266 1048576; NOTE: If you select 1048576, it will override the 65536 sector, but has much more room.
 var flash_scratchpad_at = 524288;
 var flash_blocksize = 65536;
 var flash_sendsize = 256;
@@ -44,13 +44,13 @@ function QueueOperation( command, callback )
 	workqueue.push( vp );
 }
 
-did_init = false;
+var did_init = false;
 function init()
 {
 	if( did_init ) return;
 	did_init = true;
 
-	GPIOlines = '';
+	var GPIOlines = '';
 	for(var i=0; i<16; ++i)
 		GPIOlines += "<td align=center>"+ i
 			+ "<input type=button id=ButtonGPIO"+ i +" value=0 onclick=\"TwiddleGPIO("+ i +");\">"
@@ -122,7 +122,7 @@ function init()
 	$("#custom_command_response").val( "" );
 
 	//Preclude drag and drop on rest of document in event user misses firmware boxes.
-	donothing = function(e) {e.stopPropagation();e.preventDefault();};
+	var donothing = function(e) {e.stopPropagation();e.preventDefault();};
 	$(document).on('drop', donothing );
 	$(document).on('dragover', donothing );
 	$(document).on('dragenter', donothing );
@@ -435,9 +435,9 @@ function InitSystemTicker()
 
 
 
-did_wifi_get_config = false;
-is_data_ticker_running = false;
-is_waiting_on_stations = false;
+var did_wifi_get_config = false;
+var is_data_ticker_running = false;
+var is_waiting_on_stations = false;
 
 
 function ScanForWifi()
