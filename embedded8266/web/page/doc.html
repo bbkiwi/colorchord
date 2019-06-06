@@ -39,9 +39,9 @@ input:after {right: 0em;content: attr(max);}
         </nav>
         <article>
 
-   <h1 style="font-size:40px;margin-bottom:0;">Colorchord for ESP8266<br>
+   <h1 style="font-size:40px;margin-bottom:0;">Colorchord for ESP8266 <br>with extra Features
     </h1>
-<i style="font-size:0.9em;color:#888;margin-bottom:2em;display:block">Bill Baritompa 31 March, 2019</i>
+<i style="font-size:0.9em;color:#888;margin-bottom:2em;display:block">Bill Baritompa 6 June, 2019</i>
 
  <h3 id=intro>Introduction</h3>
    <div>
@@ -59,7 +59,7 @@ input:after {right: 0em;content: attr(max);}
 
 
    <h3 id=backgr>Background</h3>
-  <div>On branch <b>newfeatures</b> of <a href="https://github.com/bbkiwi/colorchord">my fork of colorchord</a> using branch <b>tmp</b> of <a href="https://github.com/bbkiwi/esp82xx">my fork of  esp82xx</a>  has extended the control gui and added many
+  <div>The branch <b>masterwithallnew</b> of <a href="https://github.com/bbkiwi/colorchord">my fork of colorchord</a> has extended the control gui and added many
 	LED display features.
 	Parameters control behavior. The Gui allows adjustment of key
 	parameters via sliders. Parameters are stored in FLASH (initally as defaults) so persist between restarts (if the number of LEDs is changed and code recompiled, the
@@ -105,9 +105,9 @@ See <a href="https://en.wikipedia.org/wiki/Low-pass_filter">Low-pass filter</a> 
 	</li>
 
 	<li>Oscilloscope<br>
-	The microphone signal is biased at about 1.65V to generate an ADC reading of 127. Ideally audio input  should range from 0 to 3.3V to give full 8 bit resolution.  DC is filtered from the signal, glitches caused by web-socket interference partial removed, and digitally amplified.  This is passed to the Discrete Fourier Transform section of the code. This input with the DC offset restored (and clipped between 0 and 255)) is displayed by the oscilloscope.
+	The microphone signal is biased at about 1.65V. Ideally audio input  should range from 0 to 3.3V to give full 8 bit resolution. The setting of  PROTECT_SOUNDDATA in user.cfg determines the generated ADC readings. If set to 1 the range will be from 0 to 255 centered at 127 (however the wifi may become unstable), if set to 0 the range is from 11 to 139 centered at 74.  However DC is filtered from the signal, glitches caused by web-socket interference partial removed, and digitally amplified.  This is passed to the Discrete Fourier Transform section of the code. This input with the DC offset restored (and clipped between 0 and 255) is displayed by the oscilloscope.
 		<ul style="list-style-type:circle">
-		<li>Slider controls multiplier and center for display.
+		<li>Slider controls multiplier and the display centers automatically around the mean value.
 		<li>The amplification faction is the displayed value divided by 8. This affects the display and input to DFT routines. 
 		<li>RMUXSHIFT , a multiplication by 2<sup>(2-RMUXSHIFT)</sup> is done in the DFT routine. Lowering RMUXSHIFT by 1 is equivalent to doubling the amplification factor above, but does not affect the display. 
 
@@ -233,7 +233,7 @@ See <a href="https://en.wikipedia.org/wiki/Low-pass_filter">Low-pass filter</a> 
 			</li><li>Same as 0 but 2-fold symmetry
 			</li><li>Same as 0 but 3-fold symmetry
 			</li><li>Same as 0 but 4-fold symmetry
-			</li><li>Marque - Same as 0 but insert half the LEDs with gap of 1, but shift 1 on peaks
+			</li><li>Marque - Same as 0 but inserts a third the LEDs with gap of 2, but shift 1 on peaks
 			</li><li>Same as 0 but use equal arcs and slower decay
 			</li><li>Top Amplitude note spins and flips on octave sum
 			</li>
