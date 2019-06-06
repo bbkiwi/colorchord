@@ -46,6 +46,22 @@ void ICACHE_FLASH_ATTR hs_adc_start(void)
     SET_PERI_REG_MASK(0x60000D50, 0x02);    //force_en=1
 }
 
+void hs_read_sar_dout(uint16 * buf)
+{
+   volatile uint32 * sar_regs = &((volatile uint32_t*)0x60000D00)[32];
+   int i, x, z;
+   for(i = 0; i < 8; i++) {
+      x = ~(*sar_regs++);
+      z = (x & 0xFF) - 21;
+      x &= 0x700;
+      if(z > 0) x = ((z * 279) >> 8) + x;
+      buf[i] = x;
+   }
+}
+
+//See if more stable in station mode
+//used astateofblank code from https://github.com/cnlohr/colorchord/issues/84
+
 uint16 hs_adc_read(void)
 {
     uint8 i;
@@ -54,7 +70,7 @@ uint16 hs_adc_read(void)
 
     while (GET_PERI_REG_BITS(0x60000D50, 26, 24) > 0); //wait r_state == 0
 
-    read_sar_dout(sardata);
+    hs_read_sar_dout(sardata);
 
     for (i = 0; i < 8; i++) {
         sar_dout += sardata[i];
