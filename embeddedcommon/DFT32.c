@@ -181,34 +181,33 @@ void UpdateOutputBins32()
 //		1.25, 1.54, 1.94, 1.1, 1.19, 1.25, 1.44, 1.88, 1.38, 1.25, 1.13, 1, 1, 1, 1, 1, 1};
 	for( i = 0; i < FIXBINS; i++ )
 	{
-#if APPROXNORM == 1
-		int32_t isps = *(ipt++); //can keep 32 bits as no need to square
+		int32_t isps = *(ipt++); //keep 32 bits
 		int32_t ispc = *(ipt++);
-#else
-		int16_t isps = *(ipt++)>>16; //might loose some precsion with this
-		int16_t ispc = *(ipt++)>>16;
-#endif
-
+		// take absolute values
+		isps = isps<0? -isps : isps;
+		ispc = ispc<0? -ispc : ispc;
 		int octave = i / FIXBPERO;
 
 		//If we are running DFT32 on regular ColorChord, then we will need to
 		//also update goutbins[]... But if we're on embedded systems, we only
 		//update embeddedbins32.
 #ifndef CCEMBEDDED
-		uint32_t mux = ( (isps) * (isps)) + ((ispc) * (ispc));
-		goutbins[i] = sqrtf( (float)mux );
+		// convert 32 bit precision isps and ispc to floating point
+		float mux = ( (float)isps * (float)isps) + ((float)ispc * (float)ispc);
+		goutbins[i] = sqrtf(mux)/65536.0; // scale by 2^16
 		//reasonable (but arbitrary attenuation)
 		goutbins[i] /= (78<<DFTIIR)*(1<<octave); 
 #endif
 
 #if APPROXNORM == 1
-		isps = isps<0? -isps : isps;
-		ispc = ispc<0? -ispc : ispc;
+		// using full 32 bit precision for isps and ispc
 		uint32_t rmux = isps>ispc? isps + (ispc>>1) : ispc + (isps>>1);
 #else
-		uint32_t rmux = ( (isps) * (isps)) + ((ispc) * (ispc));
+		// use the most significant 16 bits of isps and ispc when squaring
+		// since isps and ispc are non-negative right bit shifing is well defined
+		uint32_t rmux = ( (isps>>16) * (isps>>16)) + ((ispc>16) * (ispc>>16));
 		rmux = SquareRootRounded( rmux );
-		rmux = rmux << 16;
+		rmux = rmux<<16;
 #endif
 		//empirical adjust embeddedbins32 via a logistic data so between 0 and 65536 
 #if ADJUST_DFT_WITH_OCTAVE == 1 && PROGRESSIVE_DFT == 1
