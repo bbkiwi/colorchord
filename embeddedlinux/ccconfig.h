@@ -2,8 +2,8 @@
 #define _CCCONFIG_H
 
 #define CCEMBEDDED
-#define NUM_LIN_LEDS 300
-#define USE_NUM_LIN_LEDS 300
+#define NUM_LIN_LEDS 13
+#define USE_NUM_LIN_LEDS 13
 #define DFREQ 16000
 
 

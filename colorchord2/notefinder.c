@@ -156,6 +156,11 @@ printf( "%d %d %f %f %f\n", ret->freqbins, ret->octaves, ret->base_hz, ret->dft_
 		ret->ofreqs = freqs;
 	}
 
+//TODO naming is confusing
+//   freqs is number of bins
+//   freqbins is number of bins in an octave
+//   units for frequencies[i] is samples/cycle for ith bin.
+//        this is period, so frequencies might not be a good name
 	for( i = 0; i < freqs; i++ )
 	{
 		ret->frequencies[i] = ( ret->sps_rec / ret->base_hz ) / pow( 2, (float)i / ret->freqbins );
