@@ -13,7 +13,7 @@
 #define DFTSAMPLE 0
 #define SHOWSAMP 0     // > 0 shows filtered samples for octave SHOWSAMP-1
 #define SHOWNOTES 0
-#define SHOWTIME 1 //Gives time to process each sample for profiling
+#define SHOWTIME 0 //Gives time to process each sample for profiling
 #define RING
 #define LEDS_PER_ROW 16
 #define NUM_LIN_LEDS 60
